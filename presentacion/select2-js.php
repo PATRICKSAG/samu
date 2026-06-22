@@ -1,0 +1,1 @@
+<script src="<?= BASE_URL . '/lib/select2/select2.min.js' ?>"></script>

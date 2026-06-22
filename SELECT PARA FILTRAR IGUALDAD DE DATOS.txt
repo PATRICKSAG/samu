@@ -1,0 +1,106 @@
+
+SELECT 
+    e.numeroActa, 
+    es.ruc, 
+    se.direccion
+FROM expediente e
+INNER JOIN sede se ON se.idSede = e.idSede
+INNER JOIN establecimiento es ON es.idEstablecimiento = se.idEstablecimiento -- Unimos con la tabla establecimiento
+WHERE e.numeroActa IN (
+    SELECT e.numeroActa
+    FROM expediente e
+    INNER JOIN sede se ON se.idSede = e.idSede
+    GROUP BY e.numeroActa
+    HAVING COUNT(e.numeroActa) > 1
+);  
+
+SACAR LAS ACTAS IGUALES 
+
+======================================================================================
+SELECT s.direccion, e.ruc, s.idSede
+FROM sede s
+ISELECT s.direccion, e.ruc, s.idSede
+FROM sede s
+INNER JOIN establecimiento e ON e.idEstablecimiento = s.idEstablecimiento
+WHERE s.direccion IN (
+    SELECT s.direccion
+    FROM sede s
+    INNER JOIN establecimiento e ON e.idEstablecimiento = s.idEstablecimiento
+    GROUP BY s.direccion
+    HAVING COUNT(*) > 1
+);
+las direcciones iguales 
+
+==================================================
+
+SELECT 
+s.idSede,
+s.numeroEstacion, 
+(SELECT nombre FROM categoria c WHERE c.idCategoria = s.idCategoria) AS categoria,
+e.ruc, e.razonSocial, 
+s.nombre, 
+s.direccion, 
+s.idDistrito, 
+s.idProvincia,
+(SELECT se.nombre FROM situacion_establecimiento se WHERE se.idSituacionEstablecimiento = s.idSituacionEstablecimiento) AS situacion, 
+(SELECT sd.nombre FROM situacion_digemid sd WHERE sd.idSituacionDigemid = s.idSituacionDigemid) AS situacionDigemid, 
+(SELECT nombre FROM distrito d WHERE d.idDistrito= s.idDistrito) AS distrito,
+(SELECT nombre FROM provincia p WHERE p.idProvincia = s.idProvincia ) AS provincia,
+(SELECT COUNT(ex.idExpediente) FROM expediente ex WHERE s.idSede = ex.idSede) AS 'totalInspecciones'
+FROM sede s 
+INNER JOIN establecimiento e 
+ON s.idEstablecimiento = e.idEstablecimiento;
+
+======================================================================
+RUC INCORRECTO 		B-358			PROCEDE BPOF		MOCHE	BOTICA LUZ CELESTIAL 	20608102266	AV. LA MARINA LOTE-17 INT. 2 
+
+
+
+CORRECCCION DE RUC INCORRECTO A RUC CORRECTO 
+
+======================================================================
+
+
+SELECT t1.idExpediente + 1 AS idFaltante
+FROM EXPEDIENTE t1
+LEFT JOIN EXPEDIENTE t2 ON t1.idExpediente + 1 = t2.idExpediente
+WHERE t2.idExpediente IS NULL
+ORDER BY t1.idExpediente;
+
+SELECT * FROM expediente
+
+
+IDS FLOTANTES  DEL MYSQL DE UNA TABLA 
+
+=============================================================================
+
+INSERT INTO EXPEDIENTE (
+    idSede, 
+    codigoInterno,
+	 judicializado, 
+	  responsable,
+    observacion, 
+    numeroFolios, 
+    numeroActa,
+    fechaInspeccion
+)
+VALUES (
+   396, 
+   'B-327',
+   '2025-03-18',
+   'SGRS',
+   'PARA SANCIÓN',
+    '26', 
+    '012-IVP-2023', 
+    '2023-04-04'
+    
+);
+
+
+SELECT * FROM expediente 
+
+DELETE FROM EXPEDIENTE
+WHERE idExpediente = 1835
+
+
+INSERTAR DATOS EN MYSQL 
