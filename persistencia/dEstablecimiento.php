@@ -35,3 +35,10 @@ function actualizarEstablecimiento(PDO $pdo, array $data)
     $stmt->execute([$ruc, $razonSocial, $responsableLegal,$cargoRepresentanteLegal, $informal, $idEstablecimiento]);
     return $pdo->lastInsertId();
 }
+function eliminarEstablecimiento(PDO $pdo, $idEstablecimiento)
+{
+    $sql = "UPDATE establecimiento SET activo = 0 WHERE idEstablecimiento = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idEstablecimiento]);
+    return $stmt->rowCount();
+}

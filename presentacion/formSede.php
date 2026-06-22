@@ -252,7 +252,17 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
     <?php include 'select2-css.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ... mismos estilos que antes, más agregar para campos condicionales */
+        /* Evitar que los badges se rompan en dos líneas */
+        .badge-qf, .badge-noqf {
+            white-space: nowrap;
+        }
+
+        /* Dar un ancho mínimo a la columna Q.F. (columna 11 en el orden de la tabla) */
+        #example th:nth-child(11),
+        #example td:nth-child(11) {
+            min-width: 70px;
+            white-space: nowrap;
+        }
         .renipress-fields {
             display: none;
         }

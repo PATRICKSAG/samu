@@ -141,4 +141,12 @@ function listarSedes(PDO $pdo)
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+function eliminarSede(PDO $pdo, $idSede)
+{
+    // Borrado lógico (actualizar activo = 0)
+    $sql = "UPDATE sede SET activo = 0 WHERE idSede = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idSede]);
+    return $stmt->rowCount();
+}
 
