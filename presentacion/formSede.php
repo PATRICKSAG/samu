@@ -263,6 +263,11 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
             min-width: 70px;
             white-space: nowrap;
         }
+        #example th:nth-child(10),
+        #example td:nth-child(10) {
+            min-width: 20px;
+            white-space: nowrap;
+        }
         .renipress-fields {
             display: none;
         }
@@ -386,7 +391,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
 
                         <!-- Establecimiento -->
                         <div class="col-md-8">
-                            <label for="txtEstablecimiento" class="form-label"><i class="fas fa-store me-1"></i>Establecimiento <span class="text-danger">*</span></label>
+                            <label for="txtEstablecimiento" class="form-label"><i class="fas fa-store me-1"></i>Dueño <span class="text-danger">*</span></label>
                             <select name="txtEstablecimiento" id="txtEstablecimiento" class="form-select select2-auto" required>
                                 <option value="">Seleccionar</option>
                                 <?php foreach ($establecimientos as $est): ?>

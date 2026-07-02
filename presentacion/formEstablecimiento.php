@@ -292,7 +292,7 @@ if (isset($_GET['editar'])) {
         <div class="card card-modern mb-4">
             <div class="card-body">
                 <h5 class="card-title fw-bold mb-3" style="color: #0b2a4a;">
-                    <i class="fas fa-pen-alt me-2"></i><?= $txtIdEstablecimiento ? 'Editar Establecimiento' : 'Nuevo Establecimiento' ?>
+                    <i class="fas fa-pen-alt me-2"></i><?= $txtIdEstablecimiento ? 'Editar Dueño' : 'Nuevo Dueño' ?>
                 </h5>
                 <form method="POST" action="">
                     <input type="hidden" name="txtIdEstablecimiento" id="txtIdEstablecimiento" value="<?= $txtIdEstablecimiento ?>">

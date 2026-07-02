@@ -126,7 +126,7 @@ $mensaje = isset($_GET['mensaje']) ? $_GET['mensaje'] : '';
                                 <?php foreach ($sedes as $sede): ?>
                                     <option value="<?= $sede['idSede'] ?>" 
                                         <?= ($expedienteEditar && $expedienteEditar['idSede'] == $sede['idSede']) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($sede['idSede'] . ' - ' . $sede['razonSocial'] . ' - ' . $sede['direccion']) ?>
+                                        <?= htmlspecialchars($sede['idSede'] . ' - ' . $sede['nombre'] . ' - ' . $sede['direccion']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>

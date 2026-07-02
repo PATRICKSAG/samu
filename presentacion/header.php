@@ -13,9 +13,9 @@
             Expediente
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="<?= BASE_URL . '/presentacion/formExpediente.php' ?>">Expediente UFREMID</a></li>
-            <li><a class="dropdown-item" href="<?= BASE_URL . '/presentacion/formExpediente.php' ?>">Expediente UFRESA</a></li>
-            <li><a class="dropdown-item" href="<?= BASE_URL . '/presentacion/formExpediente.php' ?>">Expediente UFRESBIT</a></li>
+            <li><a class="dropdown-item" href="<?= BASE_URL . '/presentacion/formExpedienteUFREMID.php' ?>">Expediente UFREMID</a></li>
+            <li><a class="dropdown-item" href="<?= BASE_URL . '/presentacion/formExpedienteUFRESA.php' ?>">Expediente UFRESA</a></li>
+            <li><a class="dropdown-item" href="<?= BASE_URL . '/presentacion/formExpedienteUFRESBIT.php' ?>">Expediente UFRESBIT</a></li>
           </ul>
         </li>
         <li class="nav-item"><a class="nav-link" href="<?= BASE_URL . '/presentacion/reporte1.php' ?>">Reporte</a></li>

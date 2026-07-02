@@ -264,13 +264,13 @@
                         <h5 class="card-title-modern">Expedientes</h5>
                         <p class="card-text-modern">Expedientes según área de origen: UFREMID, UFRESA y UFRESBIT.</p>
                         <div class="d-grid gap-2 mt-2">
-                            <a href="<?= BASE_URL . '/presentacion/formExpediente.php' ?>" class="btn btn-primary-custom btn-sm">
+                            <a href="<?= BASE_URL . '/presentacion/formExpedienteUFREMID.php' ?>" class="btn btn-primary-custom btn-sm">
                                 <i class="fas fa-file-alt me-1"></i> UFREMID
                             </a>
-                            <a href="<?= BASE_URL . '/presentacion/formExpediente.php' ?>" class="btn btn-primary-custom btn-sm">
+                            <a href="<?= BASE_URL . '/presentacion/formExpedienteUFRESA.php' ?>" class="btn btn-primary-custom btn-sm">
                                 <i class="fas fa-file-alt me-1"></i> UFRESA
                             </a>
-                            <a href="<?= BASE_URL . '/presentacion/formExpediente.php' ?>" class="btn btn-primary-custom btn-sm">
+                            <a href="<?= BASE_URL . '/presentacion/formExpedienteUFRESBIT.php' ?>" class="btn btn-primary-custom btn-sm">
                                 <i class="fas fa-file-alt me-1"></i> UFRESBIT
                             </a>
                         </div>
