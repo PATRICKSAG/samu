@@ -489,7 +489,7 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                                             <i class="fas fa-cogs"></i> Acciones
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#"><i class="fas fa-gavel me-2"></i>Fase Instructora (FI)</a></li>
+                                            <li><a class="dropdown-item" href="formExpedienteFI.php?idExpediente=<?= $exp['idExpediente'] ?>"><i class="fas fa-gavel me-2"></i>Fase Instructora (FI)</a></li>
                                             <li><a class="dropdown-item" href="#"><i class="fas fa-balance-scale me-2"></i>Fase Sancionadora (FS)</a></li>
                                             <li><a class="dropdown-item" href="#"><i class="fas fa-money-bill-wave me-2"></i>Pagos</a></li>
                                             <li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>Ver Plazos</a></li>
