@@ -117,4 +117,21 @@ function eliminarExpediente(PDO $pdo, $idExpediente)
     $stmt->execute([$idExpediente]);
     return $stmt->rowCount();
 }
+
+function listarExpedientesUFREMID(PDO $pdo)
+{
+    $sql = "SELECT 
+                e.idExpediente,
+                e.numeroActa,
+                e.fechaInspeccion,
+                e.estadoExpediente,
+                e.responsable,
+                (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
+            FROM expediente e
+            WHERE e.areaOrigen = 'UFREMID'   
+            ORDER BY e.idExpediente DESC";
+    $stmt = $pdo->query($sql);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
+
