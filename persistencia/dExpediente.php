@@ -397,5 +397,271 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificaci
         throw $e;
     }
 }
+// 1. Obtener/crear FS para un FI
+function obtenerOCrearFS(PDO $pdo, $idExpedienteFI)
+{
+    // Buscar si ya existe FS para este FI
+    $sql = "SELECT * FROM expediente_fs WHERE idExpedienteFI = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idExpedienteFI]);
+    $fs = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($fs) {
+        return $fs;
+    }
+    // Si no existe, crear un registro vacío (solo con idExpedienteFI e idExpediente)
+    // Primero obtener idExpediente desde FI
+    $sqlFI = "SELECT idExpediente FROM expediente_fi WHERE idExpedienteFI = ?";
+    $stmtFI = $pdo->prepare($sqlFI);
+    $stmtFI->execute([$idExpedienteFI]);
+    $rowFI = $stmtFI->fetch();
+    if (!$rowFI) {
+        return null;
+    }
+    $idExpediente = $rowFI['idExpediente'];
+    $sqlInsert = "INSERT INTO expediente_fs (idExpediente, idExpedienteFI) VALUES (?, ?)";
+    $stmtInsert = $pdo->prepare($sqlInsert);
+    $stmtInsert->execute([$idExpediente, $idExpedienteFI]);
+    $idFS = $pdo->lastInsertId();
+    // Obtener el registro recién creado
+    $sqlGet = "SELECT * FROM expediente_fs WHERE idExpedienteFS = ?";
+    $stmtGet = $pdo->prepare($sqlGet);
+    $stmtGet->execute([$idFS]);
+    return $stmtGet->fetch(PDO::FETCH_ASSOC);
+}
+// 2. Listar FS (con plazos)
+function listarExpedienteFS(PDO $pdo, $idExpedienteFI)
+{
+    $sql = "SELECT 
+                fs.*,
+                (SELECT TOP 1 estado FROM expediente_plazos 
+                 WHERE idExpediente = fs.idExpediente AND evento = 'DESCARGO_IFI' 
+                 AND idExpedienteFS = fs.idExpedienteFS ORDER BY idPlazo DESC) AS estadoDescargoIFI,
+                (SELECT TOP 1 fechaVencimiento FROM expediente_plazos 
+                 WHERE idExpediente = fs.idExpediente AND evento = 'DESCARGO_IFI' 
+                 AND idExpedienteFS = fs.idExpedienteFS ORDER BY idPlazo DESC) AS fechaVencimientoDescargoIFI,
+                (SELECT TOP 1 estado FROM expediente_plazos 
+                 WHERE idExpediente = fs.idExpediente AND evento = 'RECURSO_SANCION' 
+                 AND idExpedienteFS = fs.idExpedienteFS ORDER BY idPlazo DESC) AS estadoRecursoSancion,
+                (SELECT TOP 1 fechaVencimiento FROM expediente_plazos 
+                 WHERE idExpediente = fs.idExpediente AND evento = 'RECURSO_SANCION' 
+                 AND idExpedienteFS = fs.idExpedienteFS ORDER BY idPlazo DESC) AS fechaVencimientoRecursoSancion,
+                (SELECT TOP 1 estado FROM expediente_plazos 
+                 WHERE idExpediente = fs.idExpediente AND evento = 'CUMPLIMIENTO_CONSENTIDA' 
+                 AND idExpedienteFS = fs.idExpedienteFS ORDER BY idPlazo DESC) AS estadoCumplimientoConsentida,
+                (SELECT TOP 1 fechaVencimiento FROM expediente_plazos 
+                 WHERE idExpediente = fs.idExpediente AND evento = 'CUMPLIMIENTO_CONSENTIDA' 
+                 AND idExpedienteFS = fs.idExpedienteFS ORDER BY idPlazo DESC) AS fechaVencimientoCumplimientoConsentida
+            FROM expediente_fs fs
+            WHERE fs.idExpedienteFI = ?
+            ORDER BY fs.idExpedienteFS DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idExpedienteFI]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+//3. Obtener un registro FS por ID
+function obtenerExpedienteFS(PDO $pdo, $idExpedienteFS)
+{
+    $sql = "SELECT * FROM expediente_fs WHERE idExpedienteFS = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idExpedienteFS]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+//4. Guardar/Actualizar FS
+function guardarExpedienteFS(PDO $pdo, array $data)
+{
+    $idExpedienteFS = $data['idExpedienteFS'] ?? null;
+    $idExpedienteFI = $data['idExpedienteFI'] ?? null;
+    $oficioTrasladaIFI = $data['oficioTrasladaIFI'] ?? null;
+    $fechaNotificacionIFI = $data['fechaNotificacionIFI'] ?? null;
+    $fechaDescargoIFI = $data['fechaDescargoIFI'] ?? null;
+    $nResolucionSancion = $data['nResolucionSancion'] ?? null;
+    $nInfraccion = $data['nInfraccion'] ?? null;
+    $sancionImpuesta = $data['sancionImpuesta'] ?? null;
+    $fechaNotificacionSancion = $data['fechaNotificacionSancion'] ?? null;
+    $recursoInterpuestoSancion = $data['recursoInterpuestoSancion'] ?? null;
+    $fechaRecursoSancion = $data['fechaRecursoSancion'] ?? null;
+    $pagoApela = $data['pagoApela'] ?? null;
+    $resolucionRecursoSancion = $data['resolucionRecursoSancion'] ?? null;
+    $resultadoRecurso = $data['resultadoRecurso'] ?? null;
+    $fechaNotificacionRecursoSancion = $data['fechaNotificacionRecursoSancion'] ?? null;
+    $resolucionConsentida = $data['resolucionConsentida'] ?? null;
+    $fechaNotificacionConsentida = $data['fechaNotificacionConsentida'] ?? null;
+    $oficioElevaApelacion = $data['oficioElevaApelacion'] ?? null;
+    $resolucionApelacion = $data['resolucionApelacion'] ?? null;
+    $fechaNotificacionApelacion = $data['fechaNotificacionApelacion'] ?? null;
+    $pagaDemandaContenciosa = $data['pagaDemandaContenciosa'] ?? null;
+    $oficioSolicitaInfoProcurador = $data['oficioSolicitaInfoProcurador'] ?? null;
+    $estadoContencioso = $data['estadoContencioso'] ?? null;
+    $observacionesContencioso = $data['observacionesContencioso'] ?? null;
+
+    try {
+        $pdo->beginTransaction();
+
+        // Obtener idExpediente desde FI
+        $sqlFI = "SELECT idExpediente FROM expediente_fi WHERE idExpedienteFI = ?";
+        $stmtFI = $pdo->prepare($sqlFI);
+        $stmtFI->execute([$idExpedienteFI]);
+        $rowFI = $stmtFI->fetch();
+        if (!$rowFI) {
+            throw new Exception("Expediente FI no encontrado");
+        }
+        $idExpediente = $rowFI['idExpediente'];
+
+        if ($idExpedienteFS) {
+            // Actualizar
+            $sql = "UPDATE expediente_fs SET
+                        oficioTrasladaIFI = ?,
+                        fechaNotificacionIFI = ?,
+                        fechaDescargoIFI = ?,
+                        nResolucionSancion = ?,
+                        nInfraccion = ?,
+                        sancionImpuesta = ?,
+                        fechaNotificacionSancion = ?,
+                        recursoInterpuestoSancion = ?,
+                        fechaRecursoSancion = ?,
+                        pagoApela = ?,
+                        resolucionRecursoSancion = ?,
+                        resultadoRecurso = ?,
+                        fechaNotificacionRecursoSancion = ?,
+                        resolucionConsentida = ?,
+                        fechaNotificacionConsentida = ?,
+                        oficioElevaApelacion = ?,
+                        resolucionApelacion = ?,
+                        fechaNotificacionApelacion = ?,
+                        pagaDemandaContenciosa = ?,
+                        oficioSolicitaInfoProcurador = ?,
+                        estadoContencioso = ?,
+                        observacionesContencioso = ?
+                    WHERE idExpedienteFS = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $oficioTrasladaIFI, $fechaNotificacionIFI, $fechaDescargoIFI,
+                $nResolucionSancion, $nInfraccion, $sancionImpuesta,
+                $fechaNotificacionSancion, $recursoInterpuestoSancion, $fechaRecursoSancion,
+                $pagoApela, $resolucionRecursoSancion, $resultadoRecurso,
+                $fechaNotificacionRecursoSancion, $resolucionConsentida, $fechaNotificacionConsentida,
+                $oficioElevaApelacion, $resolucionApelacion, $fechaNotificacionApelacion,
+                $pagaDemandaContenciosa, $oficioSolicitaInfoProcurador,
+                $estadoContencioso, $observacionesContencioso,
+                $idExpedienteFS
+            ]);
+        } else {
+            // Insertar
+            $sql = "INSERT INTO expediente_fs (
+                        idExpediente, idExpedienteFI, oficioTrasladaIFI, fechaNotificacionIFI,
+                        fechaDescargoIFI, nResolucionSancion, nInfraccion, sancionImpuesta,
+                        fechaNotificacionSancion, recursoInterpuestoSancion, fechaRecursoSancion,
+                        pagoApela, resolucionRecursoSancion, resultadoRecurso,
+                        fechaNotificacionRecursoSancion, resolucionConsentida, fechaNotificacionConsentida,
+                        oficioElevaApelacion, resolucionApelacion, fechaNotificacionApelacion,
+                        pagaDemandaContenciosa, oficioSolicitaInfoProcurador, estadoContencioso,
+                        observacionesContencioso
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $idExpediente, $idExpedienteFI, $oficioTrasladaIFI, $fechaNotificacionIFI,
+                $fechaDescargoIFI, $nResolucionSancion, $nInfraccion, $sancionImpuesta,
+                $fechaNotificacionSancion, $recursoInterpuestoSancion, $fechaRecursoSancion,
+                $pagoApela, $resolucionRecursoSancion, $resultadoRecurso,
+                $fechaNotificacionRecursoSancion, $resolucionConsentida, $fechaNotificacionConsentida,
+                $oficioElevaApelacion, $resolucionApelacion, $fechaNotificacionApelacion,
+                $pagaDemandaContenciosa, $oficioSolicitaInfoProcurador, $estadoContencioso,
+                $observacionesContencioso
+            ]);
+            $idExpedienteFS = $pdo->lastInsertId();
+        }
+
+        // Recalcular plazos: eliminar plazos antiguos de este FS
+        $sqlDelete = "DELETE FROM expediente_plazos WHERE idExpedienteFS = ? AND evento IN ('DESCARGO_IFI', 'RECURSO_SANCION', 'CUMPLIMIENTO_CONSENTIDA')";
+        $stmtDelete = $pdo->prepare($sqlDelete);
+        $stmtDelete->execute([$idExpedienteFS]);
+
+        // Generar nuevos plazos si hay fecha de notificación IFI
+        if (!empty($fechaNotificacionIFI)) {
+            $fechaVencimientoDescargo = sumarDiasHabiles($pdo, $fechaNotificacionIFI, 5);
+            if ($fechaVencimientoDescargo) {
+                $sqlPlazo = "INSERT INTO expediente_plazos (
+                                idExpediente, idExpedienteFS, evento, fechaOrigen, plazo, unidad,
+                                fechaVencimiento, estado, alarmaEnviada
+                            ) VALUES (?, ?, 'DESCARGO_IFI', ?, 5, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+                $stmtPlazo = $pdo->prepare($sqlPlazo);
+                $stmtPlazo->execute([$idExpediente, $idExpedienteFS, $fechaNotificacionIFI, $fechaVencimientoDescargo]);
+                // Si hay fecha de descargo, actualizar estado
+                if (!empty($fechaDescargoIFI)) {
+                    $estado = (strtotime($fechaDescargoIFI) <= strtotime($fechaVencimientoDescargo)) ? 'CUMPLIDO' : 'VENCIDO';
+                    $sqlUpdate = "UPDATE expediente_plazos SET estado = ?, fechaCumplimiento = ? 
+                                  WHERE idExpedienteFS = ? AND evento = 'DESCARGO_IFI'";
+                    $stmtUpdate = $pdo->prepare($sqlUpdate);
+                    $stmtUpdate->execute([$estado, $fechaDescargoIFI, $idExpedienteFS]);
+                }
+            }
+        }
+
+        // Generar plazo para recurso de sanción (15 días hábiles desde fechaNotificacionSancion)
+        if (!empty($fechaNotificacionSancion)) {
+            $fechaVencimientoRecurso = sumarDiasHabiles($pdo, $fechaNotificacionSancion, 15);
+            if ($fechaVencimientoRecurso) {
+                $sqlPlazo = "INSERT INTO expediente_plazos (
+                                idExpediente, idExpedienteFS, evento, fechaOrigen, plazo, unidad,
+                                fechaVencimiento, estado, alarmaEnviada
+                            ) VALUES (?, ?, 'RECURSO_SANCION', ?, 15, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+                $stmtPlazo = $pdo->prepare($sqlPlazo);
+                $stmtPlazo->execute([$idExpediente, $idExpedienteFS, $fechaNotificacionSancion, $fechaVencimientoRecurso]);
+            }
+        }
+
+        // Generar plazo para cumplimiento de consentida (15 días hábiles desde fechaNotificacionConsentida)
+        if (!empty($fechaNotificacionConsentida)) {
+            $fechaVencimientoCumplimiento = sumarDiasHabiles($pdo, $fechaNotificacionConsentida, 15);
+            if ($fechaVencimientoCumplimiento) {
+                $sqlPlazo = "INSERT INTO expediente_plazos (
+                                idExpediente, idExpedienteFS, evento, fechaOrigen, plazo, unidad,
+                                fechaVencimiento, estado, alarmaEnviada
+                            ) VALUES (?, ?, 'CUMPLIMIENTO_CONSENTIDA', ?, 15, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+                $stmtPlazo = $pdo->prepare($sqlPlazo);
+                $stmtPlazo->execute([$idExpediente, $idExpedienteFS, $fechaNotificacionConsentida, $fechaVencimientoCumplimiento]);
+            }
+        }
+
+        $pdo->commit();
+        return $idExpedienteFS;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+//5. Funciones para Pagos
+function listarPagosPorFS(PDO $pdo, $idExpedienteFS)
+{
+    $sql = "SELECT * FROM expediente_pagos WHERE idExpedienteFS = ? ORDER BY idExpedientePago DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idExpedienteFS]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function insertarPago(PDO $pdo, array $data)
+{
+    $sql = "INSERT INTO expediente_pagos (idExpediente, idExpedienteFS, tipoPago, numeroComprobante, fechaPago, monto, observaciones)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $data['idExpediente'],
+        $data['idExpedienteFS'],
+        $data['tipoPago'],
+        $data['numeroComprobante'],
+        $data['fechaPago'],
+        $data['monto'],
+        $data['observaciones']
+    ]);
+    return $pdo->lastInsertId();
+}
+
+function eliminarPago(PDO $pdo, $idExpedientePago)
+{
+    $sql = "DELETE FROM expediente_pagos WHERE idExpedientePago = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idExpedientePago]);
+    return $stmt->rowCount();
+}
 ?>
 

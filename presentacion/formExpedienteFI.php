@@ -359,6 +359,9 @@ if (isset($_GET['mensaje'])) {
                                     <a href="?idExpediente=<?= $idExpediente ?>&accion=editar&idFI=<?= $fi['idExpedienteFI'] ?>" class="btn btn-sm btn-primary accion-boton" title="Editar fecha de notificación">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <a href="formExpedienteFS.php?idFI=<?= $fi['idExpedienteFI'] ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
+                                        <i class="fas fa-balance-scale"></i> FS
+                                    </a>
                                     <!-- No hay botón eliminar (solo historial) -->
                                 </td>
                             </tr>

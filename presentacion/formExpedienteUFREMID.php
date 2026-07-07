@@ -437,8 +437,8 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                         <button type="submit" name="btnGuardar" class="btn btn-primary-custom">
                             <i class="fas fa-save me-2"></i>Guardar Expediente
                         </button>
-                        <button type="reset" class="btn btn-outline-secondary-custom">
-                            <i class="fas fa-undo me-2"></i>Limpiar
+                        <button type="button" class="btn btn-outline-secondary-custom" onclick="cancelar();">
+                            <i class="fas fa-times me-2"></i>Limpiar
                         </button>
                     </div>
                 </form>
@@ -555,6 +555,9 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                 }
             });
         });
+        function cancelar() {
+            window.location.href = '<?php echo $_SERVER['PHP_SELF'] ?>';
+        }
     </script>
 </body>
 </html>
