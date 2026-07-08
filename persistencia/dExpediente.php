@@ -259,26 +259,32 @@ function eliminarExpediente(PDO $pdo, $idExpediente)
 {
     $pdo->beginTransaction();
     try {
-        $sql = "DELETE FROM expediente_plazos WHERE idExpediente = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$idExpediente]);
-
+        // 1. Pagos (dependen de expediente_fs y expediente)
         $sql = "DELETE FROM expediente_pagos WHERE idExpediente = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$idExpediente]);
 
-        $sql = "DELETE FROM expediente_fi WHERE idExpediente = ?";
+        // 2. Plazos (dependen de expediente, expediente_fi, expediente_fs)
+        $sql = "DELETE FROM expediente_plazos WHERE idExpediente = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$idExpediente]);
 
+        // 3. Fase Sancionadora (depende de expediente_fi)
         $sql = "DELETE FROM expediente_fs WHERE idExpediente = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$idExpediente]);
 
+        // 4. Fase Instructora (depende de expediente)
+        $sql = "DELETE FROM expediente_fi WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        // 5. MS (depende de expediente)
         $sql = "DELETE FROM expediente_ms WHERE idExpediente = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$idExpediente]);
 
+        // 6. Finalmente, el expediente principal
         $sql = "DELETE FROM expediente WHERE idExpediente = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$idExpediente]);
