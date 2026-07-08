@@ -6,16 +6,25 @@ include_once(__DIR__ . '/../persistencia/dExpediente.php');
 $pdo = Database::getConexion();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+$area = $_GET['area'] ?? '';
+if ($area === 'UFREMID' OR $area === 'UFRESA' OR $area === 'UFRESBIT'){
+    $area = $area;
+} else {
+    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Área no válida"));
+    exit;
+}
+
+
 $idExpediente = isset($_GET['idExpediente']) ? intval($_GET['idExpediente']) : 0;
 if (!$idExpediente) {
-    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("ID de expediente no válido"));
+    header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de expediente no válido"));
     exit;
 }
 
 // Obtener datos del expediente
 $expediente = obtenerExpediente($pdo, $idExpediente);
 if (!$expediente) {
-    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Expediente no encontrado"));
+    header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("Expediente no encontrado"));
     exit;
 }
 
@@ -30,7 +39,7 @@ $datosEdicion = null;
 if ($accion === 'editar' && $idFI) {
     $datosEdicion = obtenerExpedienteFI($pdo, $idFI);
     if (!$datosEdicion) {
-        header("Location: formExpedienteFI.php?idExpediente=$idExpediente&mensaje=" . urlencode("Registro no encontrado"));
+        header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode("Registro no encontrado"));
         exit;
     }
 }
@@ -39,16 +48,16 @@ if ($accion === 'editar' && $idFI) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
     $tipoEvento = $_POST['tipoEvento'] ?? 'INICIO';
     $oficioIniciaPAS = $_POST['oficioIniciaPAS'] ?? '';
-    $fechaNotificacion = $_POST['fechaNotificacionInicioPAS'] ?? '';
-    $fechaDescargo = $_POST['fechaDescargoPresentado'] ?? '';
+    $fechaNotificacion = !empty($_POST['fechaNotificacionInicioPAS']) ? $_POST['fechaNotificacionInicioPAS'] : null;
+    $fechaDescargo = !empty($_POST['fechaDescargoPresentado']) ? $_POST['fechaDescargoPresentado'] : null;
     $informeTecnico = $_POST['informeTecnicoInicioPAS'] ?? '';
-    $fechaInforme = $_POST['fechaInformeTecnico'] ?? '';
+    $fechaInforme = !empty($_POST['fechaInformeTecnico']) ? $_POST['fechaInformeTecnico'] : null;
     $documentoEleva = $_POST['documentoElevaEscrito'] ?? '';
     $informeLegal = $_POST['informeLegalCaducidad'] ?? '';
     $resolucionCaducidad = $_POST['resolucionCaducidad'] ?? '';
     $recurso = $_POST['recursoInterpuesto'] ?? '';
     $resolucionRecurso = $_POST['resolucionRecurso'] ?? '';
-    $fechaNotifRecurso = $_POST['fechaNotificacionRecurso'] ?? '';
+    $fechaNotifRecurso = !empty($_POST['fechaNotificacionRecurso']) ? $_POST['fechaNotificacionRecurso'] : null;
     $informeFinal = $_POST['informeFinalInstruccion'] ?? '';
 
     // Si estamos editando
@@ -61,10 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
         if (empty($errores)) {
             try {
                 // Llamamos a la nueva función que actualiza ambas fechas
-                actualizarExpedienteFI($pdo, $idFI, $fechaNotificacion, $fechaDescargo);
-                $mensaje = "Fecha de notificación y descargo actualizadas correctamente.";
-                header("Location: formExpedienteFI.php?idExpediente=$idExpediente&mensaje=" . urlencode($mensaje));
-                exit;
+                    actualizarExpedienteFI($pdo, $idFI, $fechaNotificacion, $fechaDescargo, $area);
+                    $mensaje = "Fecha de notificación y descargo actualizadas correctamente.";
+                    header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
+                    exit;
+
+                
             } catch (Exception $e) {
                 $mensajeError = "Error al actualizar: " . $e->getMessage();
             }
@@ -95,10 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
                     'fechaNotificacionRecurso' => $fechaNotifRecurso,
                     'informeFinalInstruccion' => $informeFinal
                 ];
-                $idNuevo = insertarExpedienteFI($pdo, $data);
-                $mensaje = "Registro FI guardado correctamente (ID: $idNuevo).";
-                header("Location: formExpedienteFI.php?idExpediente=$idExpediente&mensaje=" . urlencode($mensaje));
-                exit;
+                    $idNuevo = insertarExpedienteFI($pdo, $data, $area);
+                    $mensaje = "Registro FI guardado correctamente (ID: $idNuevo).";
+                    header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" .  urlencode($mensaje));
+                    exit;
+                
             } catch (Exception $e) {
                 $mensajeError = "Error al guardar: " . $e->getMessage();
             }
@@ -110,7 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
 
 // Obtener listado de FI
 $registrosFI = listarExpedienteFI($pdo, $idExpediente);
-
 // Mensaje desde GET
 if (isset($_GET['mensaje'])) {
     $mensaje = $_GET['mensaje'];
@@ -293,10 +304,10 @@ if (isset($_GET['mensaje'])) {
                         <button type="submit" name="btnGuardarFI" class="btn btn-primary-custom">
                             <i class="fas fa-save me-2"></i><?= ($accion === 'editar') ? 'Actualizar Fecha' : 'Guardar Inicio PAS' ?>
                         </button>
-                        <a href="formExpedienteFI.php?idExpediente=<?= $idExpediente ?>" class="btn btn-outline-secondary-custom">
+                        <a href="formExpedienteFI.php?idExpediente=<?= $idExpediente ?>&area=<?= urlencode($area) ?>" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-times me-2"></i>Cancelar
                         </a>
-                        <a href="formExpedienteUFREMID.php" class="btn btn-outline-secondary-custom">
+                        <a href="formExpediente<?php echo urlencode($area); ?>.php" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-arrow-left me-2"></i>Volver a Expedientes
                         </a>
                     </div>
@@ -356,10 +367,10 @@ if (isset($_GET['mensaje'])) {
                                     <span class="badge <?= $badgeClass2 ?>"><?= $estadoCad ?></span>
                                 </td>
                                 <td>
-                                    <a href="?idExpediente=<?= $idExpediente ?>&accion=editar&idFI=<?= $fi['idExpedienteFI'] ?>" class="btn btn-sm btn-primary accion-boton" title="Editar fecha de notificación">
+                                    <a href="?idExpediente=<?= $idExpediente ?>&accion=editar&idFI=<?= $fi['idExpedienteFI'] ?>&area=<?= urlencode($area) ?>" class="btn btn-sm btn-primary accion-boton" title="Editar fecha de notificación">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="formExpedienteFS.php?idFI=<?= $fi['idExpedienteFI'] ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
+                                    <a href="formExpedienteFS.php?idFI=<?= (int)$fi['idExpedienteFI'] ?>&area=<?= urlencode($area) ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
                                         <i class="fas fa-balance-scale"></i> FS
                                     </a>
                                     <!-- No hay botón eliminar (solo historial) -->

@@ -6,28 +6,38 @@ include_once(__DIR__ . '/../persistencia/dExpediente.php');
 $pdo = Database::getConexion();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+
+$area = $_GET['area'] ?? '';
+if ($area === 'UFREMID' OR $area === 'UFRESA' OR $area === 'UFRESBIT'){
+    $area = $area;
+} else {
+    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Área no válida"));
+    exit;
+}
+
 $idExpedienteFI = isset($_GET['idFI']) ? intval($_GET['idFI']) : 0;
 if (!$idExpedienteFI) {
-    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("ID de FI no válido"));
+    header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de FI no válido"));
     exit;
 }
 
 // Obtener datos del expediente y FI
 $fi = obtenerExpedienteFI($pdo, $idExpedienteFI);
 if (!$fi) {
-    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Registro FI no encontrado"));
+    header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de FI no válido"));
     exit;
 }
 $expediente = obtenerExpediente($pdo, $fi['idExpediente']);
 if (!$expediente) {
-    header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Expediente no encontrado"));
+    header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de FI no válido"));
     exit;
 }
+
 
 // Obtener o crear FS
 $fs = obtenerOCrearFS($pdo, $idExpedienteFI);
 if (!$fs) {
-    header("Location: formExpedienteFI.php?idExpediente=" . $fi['idExpediente'] . "&mensaje=" . urlencode("Error al crear FS"));
+    header("Location: formExpedienteFI.php?idExpediente=" . $fi['idExpediente'] . "&area=" . urlencode($area) . "&mensaje=" . urlencode("Error al crear FS"));
     exit;
 }
 
@@ -42,23 +52,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFS'])) {
         'idExpedienteFS' => $idExpedienteFS,
         'idExpedienteFI' => $idExpedienteFI,
         'oficioTrasladaIFI' => $_POST['oficioTrasladaIFI'] ?? '',
-        'fechaNotificacionIFI' => $_POST['fechaNotificacionIFI'] ?? '',
-        'fechaDescargoIFI' => $_POST['fechaDescargoIFI'] ?? '',
+        'fechaNotificacionIFI' => !empty($_POST['fechaNotificacionIFI']) ? $_POST['fechaNotificacionIFI'] : null,
+        'fechaDescargoIFI' => !empty($_POST['fechaDescargoIFI']) ? $_POST['fechaDescargoIFI'] : null,
         'nResolucionSancion' => $_POST['nResolucionSancion'] ?? '',
         'nInfraccion' => $_POST['nInfraccion'] ?? '',
         'sancionImpuesta' => $_POST['sancionImpuesta'] ?? '',
-        'fechaNotificacionSancion' => $_POST['fechaNotificacionSancion'] ?? '',
+        'fechaNotificacionSancion' => !empty($_POST['fechaNotificacionSancion']) ? $_POST['fechaNotificacionSancion'] : null,
         'recursoInterpuestoSancion' => $_POST['recursoInterpuestoSancion'] ?? '',
-        'fechaRecursoSancion' => $_POST['fechaRecursoSancion'] ?? '',
+        'fechaRecursoSancion' => !empty($_POST['fechaRecursoSancion']) ? $_POST['fechaRecursoSancion'] : null,
         'pagoApela' => $_POST['pagoApela'] ?? '',
         'resolucionRecursoSancion' => $_POST['resolucionRecursoSancion'] ?? '',
         'resultadoRecurso' => $_POST['resultadoRecurso'] ?? '',
-        'fechaNotificacionRecursoSancion' => $_POST['fechaNotificacionRecursoSancion'] ?? '',
+        'fechaNotificacionRecursoSancion' => !empty($_POST['fechaNotificacionRecursoSancion']) ? $_POST['fechaNotificacionRecursoSancion'] : null,
         'resolucionConsentida' => $_POST['resolucionConsentida'] ?? '',
-        'fechaNotificacionConsentida' => $_POST['fechaNotificacionConsentida'] ?? '',
+        'fechaNotificacionConsentida' => !empty($_POST['fechaNotificacionConsentida']) ? $_POST['fechaNotificacionConsentida'] : null,
         'oficioElevaApelacion' => $_POST['oficioElevaApelacion'] ?? '',
         'resolucionApelacion' => $_POST['resolucionApelacion'] ?? '',
-        'fechaNotificacionApelacion' => $_POST['fechaNotificacionApelacion'] ?? '',
+        'fechaNotificacionApelacion' => !empty($_POST['fechaNotificacionApelacion']) ? $_POST['fechaNotificacionApelacion'] : null,
         'pagaDemandaContenciosa' => $_POST['pagaDemandaContenciosa'] ?? '',
         'oficioSolicitaInfoProcurador' => $_POST['oficioSolicitaInfoProcurador'] ?? '',
         'estadoContencioso' => $_POST['estadoContencioso'] ?? '',
@@ -99,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAgregarPago'])) {
             insertarPago($pdo, $dataPago);
             $mensaje = "Pago agregado correctamente.";
             // Redirigir para evitar reenvío
-            header("Location: formExpedienteFS.php?idFI=$idExpedienteFI&mensaje=" . urlencode($mensaje));
+            header("Location: formExpedienteFS.php?idFI=$idExpedienteFI&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
             exit;
         } catch (Exception $e) {
             $mensajeError = "Error al agregar pago: " . $e->getMessage();
@@ -115,7 +125,7 @@ if (isset($_GET['eliminarPago'])) {
     try {
         eliminarPago($pdo, $idPago);
         $mensaje = "Pago eliminado correctamente.";
-        header("Location: formExpedienteFS.php?idFI=$idExpedienteFI&mensaje=" . urlencode($mensaje));
+        header("Location: formExpedienteFS.php?idFI=$idExpedienteFI&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
         exit;
     } catch (Exception $e) {
         $mensajeError = "Error al eliminar pago: " . $e->getMessage();
@@ -210,6 +220,7 @@ if (isset($_GET['mensaje'])) {
                     <i class="fas fa-edit me-2"></i>Gestión de Fase Sancionadora
                 </h5>
                 <form method="POST" action="">
+                    <input type="hidden" name="area" value="<?= htmlspecialchars($area) ?>">
                     <input type="hidden" name="idExpedienteFS" value="<?= $idExpedienteFS ?>">
                     <div class="row g-3">
                         <!-- Traslado IFI -->
@@ -339,10 +350,10 @@ if (isset($_GET['mensaje'])) {
                         <button type="submit" name="btnGuardarFS" class="btn btn-primary-custom">
                             <i class="fas fa-save me-2"></i>Guardar Fase Sancionadora
                         </button>
-                        <a href="formExpedienteFI.php?idExpediente=<?= $fi['idExpediente'] ?>" class="btn btn-outline-secondary-custom">
+                        <a href="formExpedienteFI.php?idExpediente=<?= $fi['idExpediente'] ?>&area=<?= urlencode($area) ?>" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-arrow-left me-2"></i>Volver a FI
                         </a>
-                        <a href="formExpedienteUFREMID.php" class="btn btn-outline-secondary-custom">
+                        <a href="formExpediente<?= urlencode($area) ?>.php" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-home me-2"></i>Inicio
                         </a>
                     </div>
@@ -455,7 +466,9 @@ if (isset($_GET['mensaje'])) {
                                 <td><?= number_format($pago['monto'] ?? 0, 2) ?></td>
                                 <td><?= htmlspecialchars($pago['observaciones'] ?? '') ?></td>
                                 <td>
-                                    <a href="?idFI=<?= $idExpedienteFI ?>&eliminarPago=<?= $pago['idExpedientePago'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este pago?')">
+                                    <a href="?idFI=<?= $idExpedienteFI ?>&area=<?= urlencode($area) ?>&eliminarPago=<?= $pago['idExpedientePago'] ?>" 
+                                    class="btn btn-sm btn-danger" 
+                                    onclick="return confirm('¿Eliminar este pago?')">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                 </td>
@@ -478,6 +491,7 @@ if (isset($_GET['mensaje'])) {
                 </div>
                 <form method="POST" action="">
                     <div class="modal-body">
+                        <input type="hidden" name="area" value="<?= htmlspecialchars($area) ?>">
                         <input type="hidden" name="idExpedienteFS" value="<?= $idExpedienteFS ?>">
                         <div class="mb-3">
                             <label for="tipoPago" class="form-label">Tipo de Pago</label>

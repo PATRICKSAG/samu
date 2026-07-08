@@ -453,7 +453,7 @@ function sumarMeses($fechaInicio, $meses)
 /**
  * Inserta un nuevo registro FI y genera los plazos
  */
-function insertarExpedienteFI(PDO $pdo, array $data)
+function insertarExpedienteFI(PDO $pdo, array $data, $area = 'UFREMID') 
 {
     $idExpediente = $data['idExpediente'];
     $tipoEvento = $data['tipoEvento'] ?? 'INICIO';
@@ -469,6 +469,10 @@ function insertarExpedienteFI(PDO $pdo, array $data)
     $resolucionRecurso = $data['resolucionRecurso'] ?? null;
     $fechaNotificacionRecurso = $data['fechaNotificacionRecurso'] ?? null;
     $informeFinalInstruccion = $data['informeFinalInstruccion'] ?? null;
+
+    $plazos = getPlazosArea($area);
+    $diasDescargo = $plazos['descargoPAS'];
+    $mesesCaducidad = $plazos['caducidadPAS'];
 
     try {
         $pdo->beginTransaction();
@@ -493,26 +497,28 @@ function insertarExpedienteFI(PDO $pdo, array $data)
 
         // 2. Generar plazos si hay fecha de notificación
         if (!empty($fechaNotificacionInicioPAS)) {
-            // Plazo de descargo (5 días hábiles)
-            $fechaVencimientoDescargo = sumarDiasHabiles($pdo, $fechaNotificacionInicioPAS, 5);
+            // Plazo de descargo
+            $fechaVencimientoDescargo = sumarDiasHabiles($pdo, $fechaNotificacionInicioPAS, $diasDescargo);
             if ($fechaVencimientoDescargo) {
                 $sqlPlazo = "INSERT INTO expediente_plazos (
                                 idExpediente, idExpedienteFI, evento, fechaOrigen, plazo, unidad,
                                 fechaVencimiento, estado, alarmaEnviada
-                            ) VALUES (?, ?, 'DESCARGO_PAS', ?, 5, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+                            ) VALUES (?, ?, 'DESCARGO_PAS', ?, ?, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
                 $stmtPlazo = $pdo->prepare($sqlPlazo);
-                $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $fechaNotificacionInicioPAS, $fechaVencimientoDescargo]);
+                // Ahora pasamos 5 valores: idExpediente, idExpedienteFI, fechaOrigen, plazo, fechaVencimiento
+                $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $fechaNotificacionInicioPAS, $diasDescargo, $fechaVencimientoDescargo]);
             }
 
-            // Plazo de caducidad (9 meses)
-            $fechaVencimientoCaducidad = sumarMeses($fechaNotificacionInicioPAS, 9);
+            // Plazo de caducidad
+            $fechaVencimientoCaducidad = sumarMeses($fechaNotificacionInicioPAS, $mesesCaducidad);
             if ($fechaVencimientoCaducidad) {
                 $sqlPlazo = "INSERT INTO expediente_plazos (
                                 idExpediente, idExpedienteFI, evento, fechaOrigen, plazo, unidad,
                                 fechaVencimiento, estado, alarmaEnviada
-                            ) VALUES (?, ?, 'CADUCIDAD_PAS', ?, 9, 'MESES', ?, 'VIGENTE', 0)";
+                            ) VALUES (?, ?, 'CADUCIDAD_PAS', ?, ?, 'MESES', ?, 'VIGENTE', 0)";
                 $stmtPlazo = $pdo->prepare($sqlPlazo);
-                $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $fechaNotificacionInicioPAS, $fechaVencimientoCaducidad]);
+                // Ahora pasamos 5 valores: idExpediente, idExpedienteFI, fechaOrigen, plazo, fechaVencimiento
+                $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $fechaNotificacionInicioPAS, $mesesCaducidad, $fechaVencimientoCaducidad]);
             }
         }
 
@@ -527,8 +533,11 @@ function insertarExpedienteFI(PDO $pdo, array $data)
 /**
  * Actualiza solo la fecha de notificación de un registro FI y recalcula plazos
  */
-function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificacion, $nuevaFechaDescargo = null)
+function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificacion, $nuevaFechaDescargo = null, $area = 'UFREMID')
 {
+    $plazos = getPlazosArea($area);
+    $diasDescargo = $plazos['descargoPAS'];
+    $mesesCaducidad = $plazos['caducidadPAS'];
     try {
         $pdo->beginTransaction();
 
@@ -561,28 +570,29 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificaci
         // Generar nuevos plazos si hay fecha de notificación
         $fechaVencimientoDescargo = null;
         if (!empty($nuevaFechaNotificacion)) {
-            // Plazo de descargo (5 días hábiles)
-            $fechaVencimientoDescargo = sumarDiasHabiles($pdo, $nuevaFechaNotificacion, 5);
-            if ($fechaVencimientoDescargo) {
-                $sqlPlazo = "INSERT INTO expediente_plazos (
-                                idExpediente, idExpedienteFI, evento, fechaOrigen, plazo, unidad,
-                                fechaVencimiento, estado, alarmaEnviada
-                            ) VALUES (?, ?, 'DESCARGO_PAS', ?, 5, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
-                $stmtPlazo = $pdo->prepare($sqlPlazo);
-                $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $nuevaFechaNotificacion, $fechaVencimientoDescargo]);
-            }
-
-            // Plazo de caducidad (9 meses)
-            $fechaVencimientoCaducidad = sumarMeses($nuevaFechaNotificacion, 9);
-            if ($fechaVencimientoCaducidad) {
-                $sqlPlazo = "INSERT INTO expediente_plazos (
-                                idExpediente, idExpedienteFI, evento, fechaOrigen, plazo, unidad,
-                                fechaVencimiento, estado, alarmaEnviada
-                            ) VALUES (?, ?, 'CADUCIDAD_PAS', ?, 9, 'MESES', ?, 'VIGENTE', 0)";
-                $stmtPlazo = $pdo->prepare($sqlPlazo);
-                $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $nuevaFechaNotificacion, $fechaVencimientoCaducidad]);
-            }
+    // Plazo de descargo
+        $fechaVencimientoDescargo = sumarDiasHabiles($pdo, $nuevaFechaNotificacion, $diasDescargo);
+        if ($fechaVencimientoDescargo) {
+            $sqlPlazo = "INSERT INTO expediente_plazos (
+                            idExpediente, idExpedienteFI, evento, fechaOrigen, plazo, unidad,
+                            fechaVencimiento, estado, alarmaEnviada
+                        ) VALUES (?, ?, 'DESCARGO_PAS', ?, ?, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+            $stmtPlazo = $pdo->prepare($sqlPlazo);
+            // Ahora 5 valores
+            $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $nuevaFechaNotificacion, $diasDescargo, $fechaVencimientoDescargo]);
         }
+
+        // Plazo de caducidad
+        $fechaVencimientoCaducidad = sumarMeses($nuevaFechaNotificacion, $mesesCaducidad);
+        if ($fechaVencimientoCaducidad) {
+            $sqlPlazo = "INSERT INTO expediente_plazos (
+                            idExpediente, idExpedienteFI, evento, fechaOrigen, plazo, unidad,
+                            fechaVencimiento, estado, alarmaEnviada
+                        ) VALUES (?, ?, 'CADUCIDAD_PAS', ?, ?, 'MESES', ?, 'VIGENTE', 0)";
+            $stmtPlazo = $pdo->prepare($sqlPlazo);
+            $stmtPlazo->execute([$idExpediente, $idExpedienteFI, $nuevaFechaNotificacion, $mesesCaducidad, $fechaVencimientoCaducidad]);
+        }
+    }
 
         // Actualizar el estado del plazo de descargo SOLO si se proporcionó una fecha de descargo válida
         if (!empty($nuevaFechaDescargo) && !empty($fechaVencimientoDescargo)) {

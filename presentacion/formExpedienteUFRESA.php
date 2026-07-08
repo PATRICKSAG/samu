@@ -474,7 +474,7 @@ $expedientes = listarExpedientesUFRESA($pdo);
                                             <i class="fas fa-cogs"></i> Acciones
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="formExpedienteFI.php?idExpediente=<?= $exp['idExpediente'] ?>"><i class="fas fa-gavel me-2"></i>Fase Instructora (FI)</a></li>
+                                            <li><a class="dropdown-item" href="formExpedienteFI.php?idExpediente=<?= $exp['idExpediente'] ?>&area=UFRESA"><i class="fas fa-gavel me-2"></i>Fase Instructora (FI)</a></li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item" href="?editar=<?= $exp['idExpediente'] ?>"><i class="fas fa-edit me-2"></i>Editar Expediente</a></li>
                                             <li><a class="dropdown-item text-danger" href="eliminarExpediente.php?id=<?= $exp['idExpediente'] ?>&area=UFRESA" onclick="return confirm('¿Está seguro de eliminar este expediente?')"><i class="fas fa-trash-alt me-2"></i>Eliminar</a></li>
