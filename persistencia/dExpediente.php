@@ -1,5 +1,34 @@
 <?php
 // persistencia/dExpediente.php
+function getPlazosArea($area) {
+    $plazos = [
+        'UFREMID' => [
+            'descargoActa' => 7,
+            'descargoPAS' => 5,
+            'caducidadPAS' => 9,
+            'descargoIFI' => 5,
+            'resolucionSancion' => 15,
+            'consentida' => 15,
+        ],
+        'UFRESA' => [
+            'descargoActa' => 10,
+            'descargoPAS' => 10,
+            'caducidadPAS' => 9,
+            'descargoIFI' => 10,
+            'resolucionSancion' => 15,
+            'consentida' => 15,
+        ],
+        'UFRESBIT' => [
+            'descargoActa' => 25,
+            'descargoPAS' => 5,
+            'caducidadPAS' => 9,
+            'descargoIFI' => 5,
+            'resolucionSancion' => 15,
+            'consentida' => 15,
+        ],
+    ];
+    return $plazos[$area] ?? $plazos['UFREMID'];
+}
 
 function listarExpedientes(PDO $pdo)
 {
@@ -21,96 +50,256 @@ function listarExpedientes(PDO $pdo)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function insertarExpediente(PDO $pdo, array $data)
+function insertarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
 {
-    $campos = [
-        'idSede', 'codigoUfremid', 'judicializado', 'responsable', 'observacion',
-        'numeroFolios', 'numeroActa', 'fechaInspeccion', 'msfechaDescargoDeActa',
-        'msinformeTecnicoInspeccion', 'msinformeTecnicoInspeccionFecha',
-        'msNCertificadoBuenasPracticas', 'mscertificadoBuenasPracticasFechaInicio',
-        'mscertificadoBuenasPracticasFechaFin', 'msresolucionCierreTemporal',
-        'msnotificacionDeResolucionCierreTemporalFecha', 'msdescargoDeResolucionDeCierre',
-        'msresolucionLevantamientoCierre', 'msnotificacionLevantamientoCierreFecha',
-        'fiOficioInicioPas', 'fiOficioInicioPasFechaNotificacion', 'fiFechaDescargo5Dias',
-        'fiCaducidadOficio', 'fiCaducidadFecha', 'fiOficioElevaResolverNulidad',
-        'fiOficioElevaResolverNulidadFecha', 'fiRespuestaNulidad', 'fiRespuestaNulidadFecha',
-        'fsInformeFinalQf', 'fsInformeFinalQfFecha', 'fsOficioEmitidoGeresaSgrs',
-        'fsOficioEmitidoGeresaSgrsFechaNotificacion', 'fsFechaDescargo5Dias',
-        'fsOficioElevaResolverNulidad', 'fsOficioElevaResolverNulidadFecha',
-        'fsRespuestaNulidad', 'fsRespuestaNulidadFecha', 'tipodeInspeccion',
-        'numeroCertificadoBuenasPracticas', 'fechaInicioCertificacionBuenasPracticas',
-        'fechaFinCertificacionBuenasPracticas', 'registroCierreTemporal',
-        'fechaNotificacionMedidasControl', 'fechaRecursoInterpuesto',
-        'registroSuspensionCierre', 'fechaNotificacionSuspension', 'idPersonal',
-        'codigoSubgerencia', 'areaOrigen', 'idTipoExpediente'
-    ];
-    $placeholders = array_fill(0, count($campos), '?');
-    $values = [];
-    foreach ($campos as $campo) {
-        $values[] = isset($data[$campo]) && $data[$campo] !== '' ? $data[$campo] : null;
-    }
-    // Agregar fechas de creación y modificación (sin activo)
-    $campos[] = 'fechaCreacion';
-    $campos[] = 'fechaModificacion';
-    $placeholders[] = '?';
-    $placeholders[] = '?';
-    $values[] = date('Y-m-d H:i:s');
-    $values[] = date('Y-m-d H:i:s');
+    $pdo->beginTransaction();
+    try {
+        // Insertar en expediente
+        $sql = "INSERT INTO expediente (
+                    idSede, numeroActa, fechaInspeccion, estadoExpediente,
+                    idTipoExpediente, codigoUfremid, responsable, numeroFolios,
+                    observacion, judicializado, falsificado, areaOrigen,
+                    fechaCreacion, fechaModificacion
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['idSede'],
+            $data['numeroActa'],
+            $data['fechaInspeccion'] ?? null,
+            $data['estadoExpediente'],
+            $data['idTipoExpediente'] ?? null,
+            $data['codigoUFREMID'] ?? null,
+            $data['responsable'] ?? null,
+            $data['numeroFolios'] ?? null,
+            $data['observacion'] ?? null,
+            $data['judicializado'] ?? null,
+            $data['falsificado'] ?? 0,
+            $area
+        ]);
+        $idExpediente = $pdo->lastInsertId();
 
-    $sql = "INSERT INTO expediente (" . implode(',', $campos) . ") VALUES (" . implode(',', $placeholders) . ")";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($values);
-    return $pdo->lastInsertId();
+        // Insertar MS si hay datos
+        if (!empty($data['fechaDescargoActa']) || !empty($data['oficioOtorgaDeniegaPlazo']) || !empty($data['idSituacionDigemidSeleccionada'])) {
+            $sqlMS = "INSERT INTO expediente_ms (
+                        idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
+                        idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
+                        informeTecnicoInspeccion, nCertificadoBuenasPracticas,
+                        fechaInicioCertificadoBP, fechaFinCertificadoBP,
+                        rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
+                        descargoApelacion, nDocResuelveRecurso,
+                        rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
+                        cierreDefinitivo, fechaNotificacionCierreDefinitivo
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmtMS = $pdo->prepare($sqlMS);
+            $stmtMS->execute([
+                $idExpediente,
+                $data['fechaDescargoActa'] ?? null,
+                $data['oficioOtorgaDeniegaPlazo'] ?? null,
+                $data['idSituacionDigemidSeleccionada'] ?? null,
+                $data['docElevaNulidad'] ?? null,
+                $data['resuelveNulidad'] ?? null,
+                $data['informeTecnicoInspeccion'] ?? null,
+                $data['nCertificadoBuenasPracticas'] ?? null,
+                $data['fechaInicioCertificadoBP'] ?? null,
+                $data['fechaFinCertificadoBP'] ?? null,
+                $data['rgrRatificaCierreTemporal'] ?? null,
+                $data['fechaNotificacionRGRCierre'] ?? null,
+                $data['descargoApelacion'] ?? null,
+                $data['nDocResuelveRecurso'] ?? null,
+                $data['rsgLevantamientoCierre'] ?? null,
+                $data['fechaNotificacionRSGLevantamiento'] ?? null,
+                $data['cierreDefinitivo'] ?? null,
+                $data['fechaNotificacionCierreDefinitivo'] ?? null
+            ]);
+        }
+
+        // Actualizar estado de sede si se seleccionó
+        if (!empty($data['idSituacionDigemidSeleccionada'])) {
+            $sqlUpdateSede = "UPDATE sede SET idSituacionDigemid = ? WHERE idSede = ?";
+            $stmtUpdate = $pdo->prepare($sqlUpdateSede);
+            $stmtUpdate->execute([$data['idSituacionDigemidSeleccionada'], $data['idSede']]);
+        }
+
+        // Insertar plazo de descargo del acta (si hay fechaInspeccion y plazo > 0)
+        if (!empty($data['fechaInspeccion'])) {
+            $plazos = getPlazosArea($area);
+            $dias = $plazos['descargoActa'];
+            if ($dias > 0) {
+                $fechaVencimiento = sumarDiasHabiles($pdo, $data['fechaInspeccion'], $dias);
+                if ($fechaVencimiento) {
+                    $sqlPlazo = "INSERT INTO expediente_plazos (
+                                    idExpediente, evento, fechaOrigen, plazo, unidad,
+                                    fechaVencimiento, estado, alarmaEnviada
+                                ) VALUES (?, 'DESCARGO_ACTA', ?, ?, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+                    $stmtPlazo = $pdo->prepare($sqlPlazo);
+                    $stmtPlazo->execute([$idExpediente, $data['fechaInspeccion'], $dias, $fechaVencimiento]);
+                }
+            }
+        }
+
+        $pdo->commit();
+        return $idExpediente;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }
 
-function actualizarExpediente(PDO $pdo, array $data)
+function actualizarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
 {
-    $idExpediente = $data['idExpediente'];
-    $campos = [
-        'idSede', 'codigoUfremid', 'judicializado', 'responsable', 'observacion',
-        'numeroFolios', 'numeroActa', 'fechaInspeccion', 'msfechaDescargoDeActa',
-        'msinformeTecnicoInspeccion', 'msinformeTecnicoInspeccionFecha',
-        'msNCertificadoBuenasPracticas', 'mscertificadoBuenasPracticasFechaInicio',
-        'mscertificadoBuenasPracticasFechaFin', 'msresolucionCierreTemporal',
-        'msnotificacionDeResolucionCierreTemporalFecha', 'msdescargoDeResolucionDeCierre',
-        'msresolucionLevantamientoCierre', 'msnotificacionLevantamientoCierreFecha',
-        'fiOficioInicioPas', 'fiOficioInicioPasFechaNotificacion', 'fiFechaDescargo5Dias',
-        'fiCaducidadOficio', 'fiCaducidadFecha', 'fiOficioElevaResolverNulidad',
-        'fiOficioElevaResolverNulidadFecha', 'fiRespuestaNulidad', 'fiRespuestaNulidadFecha',
-        'fsInformeFinalQf', 'fsInformeFinalQfFecha', 'fsOficioEmitidoGeresaSgrs',
-        'fsOficioEmitidoGeresaSgrsFechaNotificacion', 'fsFechaDescargo5Dias',
-        'fsOficioElevaResolverNulidad', 'fsOficioElevaResolverNulidadFecha',
-        'fsRespuestaNulidad', 'fsRespuestaNulidadFecha', 'tipodeInspeccion',
-        'numeroCertificadoBuenasPracticas', 'fechaInicioCertificacionBuenasPracticas',
-        'fechaFinCertificacionBuenasPracticas', 'registroCierreTemporal',
-        'fechaNotificacionMedidasControl', 'fechaRecursoInterpuesto',
-        'registroSuspensionCierre', 'fechaNotificacionSuspension', 'idPersonal',
-        'codigoSubgerencia', 'areaOrigen', 'idTipoExpediente'
-    ];
-    $sets = [];
-    $values = [];
-    foreach ($campos as $campo) {
-        $sets[] = "$campo = ?";
-        $values[] = isset($data[$campo]) && $data[$campo] !== '' ? $data[$campo] : null;
-    }
-    $sets[] = "fechaModificacion = ?";
-    $values[] = date('Y-m-d H:i:s');
-    $values[] = $idExpediente;
+    $pdo->beginTransaction();
+    try {
+        // Actualizar expediente
+        $sql = "UPDATE expediente SET 
+                    idSede = ?,
+                    numeroActa = ?,
+                    fechaInspeccion = ?,
+                    estadoExpediente = ?,
+                    idTipoExpediente = ?,
+                    codigoUfremid = ?,
+                    responsable = ?,
+                    numeroFolios = ?,
+                    observacion = ?,
+                    judicializado = ?,
+                    falsificado = ?,
+                    fechaModificacion = GETDATE()
+                WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['idSede'],
+            $data['numeroActa'],
+            $data['fechaInspeccion'] ?? null,
+            $data['estadoExpediente'],
+            $data['idTipoExpediente'] ?? null,
+            $data['codigoUFREMID'] ?? null,
+            $data['responsable'] ?? null,
+            $data['numeroFolios'] ?? null,
+            $data['observacion'] ?? null,
+            $data['judicializado'] ?? null,
+            $data['falsificado'] ?? 0,
+            $data['idExpediente']
+        ]);
 
-    $sql = "UPDATE expediente SET " . implode(',', $sets) . " WHERE idExpediente = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($values);
-    return $stmt->rowCount();
+        // Actualizar MS (eliminar y volver a insertar para simplificar)
+        $sqlDeleteMS = "DELETE FROM expediente_ms WHERE idExpediente = ?";
+        $stmtDeleteMS = $pdo->prepare($sqlDeleteMS);
+        $stmtDeleteMS->execute([$data['idExpediente']]);
+
+        if (!empty($data['fechaDescargoActa']) || !empty($data['oficioOtorgaDeniegaPlazo']) || !empty($data['idSituacionDigemidSeleccionada'])) {
+            $sqlMS = "INSERT INTO expediente_ms (
+                        idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
+                        idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
+                        informeTecnicoInspeccion, nCertificadoBuenasPracticas,
+                        fechaInicioCertificadoBP, fechaFinCertificadoBP,
+                        rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
+                        descargoApelacion, nDocResuelveRecurso,
+                        rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
+                        cierreDefinitivo, fechaNotificacionCierreDefinitivo
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmtMS = $pdo->prepare($sqlMS);
+            $stmtMS->execute([
+                $data['idExpediente'],
+                $data['fechaDescargoActa'] ?? null,
+                $data['oficioOtorgaDeniegaPlazo'] ?? null,
+                $data['idSituacionDigemidSeleccionada'] ?? null,
+                $data['docElevaNulidad'] ?? null,
+                $data['resuelveNulidad'] ?? null,
+                $data['informeTecnicoInspeccion'] ?? null,
+                $data['nCertificadoBuenasPracticas'] ?? null,
+                $data['fechaInicioCertificadoBP'] ?? null,
+                $data['fechaFinCertificadoBP'] ?? null,
+                $data['rgrRatificaCierreTemporal'] ?? null,
+                $data['fechaNotificacionRGRCierre'] ?? null,
+                $data['descargoApelacion'] ?? null,
+                $data['nDocResuelveRecurso'] ?? null,
+                $data['rsgLevantamientoCierre'] ?? null,
+                $data['fechaNotificacionRSGLevantamiento'] ?? null,
+                $data['cierreDefinitivo'] ?? null,
+                $data['fechaNotificacionCierreDefinitivo'] ?? null
+            ]);
+        }
+
+        // Actualizar sede si se cambió estado
+        if (!empty($data['idSituacionDigemidSeleccionada'])) {
+            $sqlUpdateSede = "UPDATE sede SET idSituacionDigemid = ? WHERE idSede = ?";
+            $stmtUpdate = $pdo->prepare($sqlUpdateSede);
+            $stmtUpdate->execute([$data['idSituacionDigemidSeleccionada'], $data['idSede']]);
+        }
+
+        // Recalcular plazo de descargo del acta: eliminar antiguo y crear nuevo
+        $sqlDeletePlazo = "DELETE FROM expediente_plazos WHERE idExpediente = ? AND evento = 'DESCARGO_ACTA'";
+        $stmtDeletePlazo = $pdo->prepare($sqlDeletePlazo);
+        $stmtDeletePlazo->execute([$data['idExpediente']]);
+
+        if (!empty($data['fechaInspeccion'])) {
+            $plazos = getPlazosArea($area);
+            $dias = $plazos['descargoActa'];
+            if ($dias > 0) {
+                $fechaVencimiento = sumarDiasHabiles($pdo, $data['fechaInspeccion'], $dias);
+                if ($fechaVencimiento) {
+                    $sqlPlazo = "INSERT INTO expediente_plazos (
+                                    idExpediente, evento, fechaOrigen, plazo, unidad,
+                                    fechaVencimiento, estado, alarmaEnviada
+                                ) VALUES (?, 'DESCARGO_ACTA', ?, ?, 'DIAS_HABILES', ?, 'VIGENTE', 0)";
+                    $stmtPlazo = $pdo->prepare($sqlPlazo);
+                    $stmtPlazo->execute([$data['idExpediente'], $data['fechaInspeccion'], $dias, $fechaVencimiento]);
+                }
+            }
+        }
+
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }
 
 function eliminarExpediente(PDO $pdo, $idExpediente)
 {
-    $sql = "DELETE FROM expediente WHERE idExpediente = ?";
+    $pdo->beginTransaction();
+    try {
+        $sql = "DELETE FROM expediente_plazos WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        $sql = "DELETE FROM expediente_pagos WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        $sql = "DELETE FROM expediente_fi WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        $sql = "DELETE FROM expediente_fs WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        $sql = "DELETE FROM expediente_ms WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        $sql = "DELETE FROM expediente WHERE idExpediente = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpediente]);
+
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+function obtenerExpedienteCompleto(PDO $pdo, $idExpediente)
+{
+    $sql = "SELECT e.*, ms.* 
+            FROM expediente e
+            LEFT JOIN expediente_ms ms ON e.idExpediente = ms.idExpediente
+            WHERE e.idExpediente = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$idExpediente]);
-    return $stmt->rowCount();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
-
 function listarExpedientesUFREMID(PDO $pdo)
 {
     $sql = "SELECT 
@@ -145,7 +334,22 @@ function obtenerExpediente(PDO $pdo, $idExpediente)
     $stmt->execute([$idExpediente]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
-
+function listarExpedientesPorArea(PDO $pdo, $area)
+{
+    $sql = "SELECT 
+                e.idExpediente,
+                e.numeroActa,
+                e.fechaInspeccion,
+                e.estadoExpediente,
+                e.responsable,
+                (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
+            FROM expediente e
+            WHERE e.areaOrigen = ?
+            ORDER BY e.idExpediente DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$area]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 /**
  * Lista todos los registros de FI de un expediente
  */
@@ -217,13 +421,13 @@ function obtenerExpedienteFI(PDO $pdo, $idExpedienteFI)
  */
 function sumarDiasHabiles(PDO $pdo, $fechaInicio, $dias)
 {
-    if (empty($fechaInicio)) return null;
+    if (empty($fechaInicio) || $dias <= 0) return null;
     $fecha = new DateTime($fechaInicio);
     $contador = 0;
     while ($contador < $dias) {
         $fecha->modify('+1 day');
-        $diaSemana = $fecha->format('N'); // 1=Lunes, 7=Domingo
-        // Verificar si es feriado (tabla FeriadosPeru)
+        $diaSemana = $fecha->format('N');
+        // Verificar feriado
         $sql = "SELECT COUNT(*) FROM FeriadosPeru WHERE Fecha = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$fecha->format('Y-m-d')]);
@@ -240,7 +444,7 @@ function sumarDiasHabiles(PDO $pdo, $fechaInicio, $dias)
  */
 function sumarMeses($fechaInicio, $meses)
 {
-    if (empty($fechaInicio)) return null;
+    if (empty($fechaInicio) || $meses <= 0) return null;
     $fecha = new DateTime($fechaInicio);
     $fecha->modify("+$meses months");
     return $fecha->format('Y-m-d');
@@ -663,5 +867,22 @@ function eliminarPago(PDO $pdo, $idExpedientePago)
     $stmt->execute([$idExpedientePago]);
     return $stmt->rowCount();
 }
+// Función para UFRESA
+function listarExpedientesUFRESA(PDO $pdo)
+{
+    $sql = "SELECT 
+                e.idExpediente,
+                e.numeroActa,
+                e.fechaInspeccion,
+                e.estadoExpediente,
+                e.responsable,
+                (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
+            FROM expediente e
+            WHERE e.areaOrigen = 'UFRESA'   
+            ORDER BY e.idExpediente DESC";
+    $stmt = $pdo->query($sql);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 ?>
 

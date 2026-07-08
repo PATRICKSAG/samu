@@ -5,13 +5,13 @@ include_once(__DIR__ . '/../persistencia/dSede.php');
 include_once(__DIR__ . '/../persistencia/dEstablecimiento.php');
 include_once(__DIR__ . '/../persistencia/dSituacionDigemid.php');
 include_once(__DIR__ . '/../persistencia/dTipoExpediente.php');
-include_once(__DIR__ . '/../persistencia/dExpediente.php');  
+include_once(__DIR__ . '/../persistencia/dExpediente.php');
 
 $pdo = Database::getConexion();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 // Inicializar variables
-$idExpediente = '';
+$idExpediente = 0;
 $idSede = '';
 $numeroActa = '';
 $fechaInspeccion = '';
@@ -24,7 +24,7 @@ $observacion = '';
 $judicializado = '';
 $falsificado = 0;
 
-// Variables de MS
+// MS
 $fechaDescargoActa = '';
 $oficioOtorgaDeniegaPlazo = '';
 $idSituacionDigemidSeleccionada = '';
@@ -45,9 +45,52 @@ $fechaNotificacionCierreDefinitivo = '';
 
 $mensaje = '';
 $mensajeError = '';
+$esEdicion = false;
+
+// Detectar edición por GET para cargar datos
+$idEditar = isset($_GET['editar']) ? intval($_GET['editar']) : 0;
+if ($idEditar > 0) {
+    $expData = obtenerExpedienteCompleto($pdo, $idEditar);
+    if ($expData) {
+        $esEdicion = true;
+        $idExpediente = intval($expData['idExpediente']);
+        $idSede = $expData['idSede'];
+        $numeroActa = $expData['numeroActa'];
+        $fechaInspeccion = $expData['fechaInspeccion'];
+        $estadoExpediente = $expData['estadoExpediente'];
+        $idTipoExpediente = $expData['idTipoExpediente'] ?? '';
+        $codigoUFREMID = $expData['codigoUfremid'] ?? '';
+        $responsable = $expData['responsable'] ?? '';
+        $numeroFolios = $expData['numeroFolios'] ?? '';
+        $observacion = $expData['observacion'] ?? '';
+        $judicializado = $expData['judicializado'] ?? '';
+        $falsificado = $expData['falsificado'] ?? 0;
+        // MS
+        $fechaDescargoActa = $expData['fechaDescargoActa'] ?? '';
+        $oficioOtorgaDeniegaPlazo = $expData['oficioOtorgaDeniegaPlazo'] ?? '';
+        $idSituacionDigemidSeleccionada = $expData['idSituacionDigemidSeleccionada'] ?? '';
+        $docElevaNulidad = $expData['docElevaNulidad'] ?? '';
+        $resuelveNulidad = $expData['resuelveNulidad'] ?? '';
+        $informeTecnicoInspeccion = $expData['informeTecnicoInspeccion'] ?? '';
+        $nCertificadoBuenasPracticas = $expData['nCertificadoBuenasPracticas'] ?? '';
+        $fechaInicioCertificadoBP = $expData['fechaInicioCertificadoBP'] ?? '';
+        $fechaFinCertificadoBP = $expData['fechaFinCertificadoBP'] ?? '';
+        $rgrRatificaCierreTemporal = $expData['rgrRatificaCierreTemporal'] ?? '';
+        $fechaNotificacionRGRCierre = $expData['fechaNotificacionRGRCierre'] ?? '';
+        $descargoApelacion = $expData['descargoApelacion'] ?? '';
+        $nDocResuelveRecurso = $expData['nDocResuelveRecurso'] ?? '';
+        $rsgLevantamientoCierre = $expData['rsgLevantamientoCierre'] ?? '';
+        $fechaNotificacionRSGLevantamiento = $expData['fechaNotificacionRSGLevantamiento'] ?? '';
+        $cierreDefinitivo = $expData['cierreDefinitivo'] ?? '';
+        $fechaNotificacionCierreDefinitivo = $expData['fechaNotificacionCierreDefinitivo'] ?? '';
+    }
+}
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
+    // Obtener ID de GET (editar) o de POST (campo oculto) como respaldo
+    $idPost = isset($_GET['editar']) ? intval($_GET['editar']) : (isset($_POST['idExpediente']) ? intval($_POST['idExpediente']) : 0);
+
     // Recoger datos
     $idSede = $_POST['idSede'] ?? '';
     $numeroActa = trim($_POST['numeroActa'] ?? '');
@@ -60,8 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $observacion = $_POST['observacion'] ?? '';
     $judicializado = $_POST['judicializado'] ?? '';
     $falsificado = isset($_POST['falsificado']) ? 1 : 0;
-
-    // MS
     $fechaDescargoActa = $_POST['fechaDescargoActa'] ?? '';
     $oficioOtorgaDeniegaPlazo = $_POST['oficioOtorgaDeniegaPlazo'] ?? '';
     $idSituacionDigemidSeleccionada = $_POST['idSituacionDigemidSeleccionada'] ?? '';
@@ -82,85 +123,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
 
     // Validaciones
     $errores = [];
-    if (empty($idSede)) {
-        $errores[] = "La sede es requerida.";
-    }
-    if (empty($numeroActa)) {
-        $errores[] = "El número de acta es requerido.";
-    }
-    if (empty($estadoExpediente)) {
-        $errores[] = "El estado del expediente es requerido.";
-    }
+    if (empty($idSede)) $errores[] = "La sede es requerida.";
+    if (empty($numeroActa)) $errores[] = "El número de acta es requerido.";
+    if (empty($estadoExpediente)) $errores[] = "El estado del expediente es requerido.";
 
     if (empty($errores)) {
+        $data = [
+            'idSede' => $idSede,
+            'numeroActa' => $numeroActa,
+            'fechaInspeccion' => $fechaInspeccion,
+            'estadoExpediente' => $estadoExpediente,
+            'idTipoExpediente' => $idTipoExpediente,
+            'codigoUFREMID' => $codigoUFREMID,
+            'responsable' => $responsable,
+            'numeroFolios' => $numeroFolios,
+            'observacion' => $observacion,
+            'judicializado' => $judicializado,
+            'falsificado' => $falsificado,
+            'fechaDescargoActa' => $fechaDescargoActa,
+            'oficioOtorgaDeniegaPlazo' => $oficioOtorgaDeniegaPlazo,
+            'idSituacionDigemidSeleccionada' => $idSituacionDigemidSeleccionada,
+            'docElevaNulidad' => $docElevaNulidad,
+            'resuelveNulidad' => $resuelveNulidad,
+            'informeTecnicoInspeccion' => $informeTecnicoInspeccion,
+            'nCertificadoBuenasPracticas' => $nCertificadoBuenasPracticas,
+            'fechaInicioCertificadoBP' => $fechaInicioCertificadoBP,
+            'fechaFinCertificadoBP' => $fechaFinCertificadoBP,
+            'rgrRatificaCierreTemporal' => $rgrRatificaCierreTemporal,
+            'fechaNotificacionRGRCierre' => $fechaNotificacionRGRCierre,
+            'descargoApelacion' => $descargoApelacion,
+            'nDocResuelveRecurso' => $nDocResuelveRecurso,
+            'rsgLevantamientoCierre' => $rsgLevantamientoCierre,
+            'fechaNotificacionRSGLevantamiento' => $fechaNotificacionRSGLevantamiento,
+            'cierreDefinitivo' => $cierreDefinitivo,
+            'fechaNotificacionCierreDefinitivo' => $fechaNotificacionCierreDefinitivo
+        ];
+
         try {
-            $pdo->beginTransaction();
-
-            // 1. Insertar en expediente
-            $sql = "INSERT INTO expediente (
-                        idSede, numeroActa, fechaInspeccion, estadoExpediente,
-                        idTipoExpediente, codigoUfremid, responsable, numeroFolios,
-                        observacion, judicializado, falsificado, areaOrigen, fechaCreacion, fechaModificacion
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UFREMID', GETDATE(), GETDATE())";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                $idSede, $numeroActa, $fechaInspeccion, $estadoExpediente,
-                $idTipoExpediente, $codigoUFREMID, $responsable, $numeroFolios,
-                $observacion, $judicializado, $falsificado
-            ]);
-            $idExpediente = $pdo->lastInsertId();
-
-            // 2. Insertar en expediente_ms
-            if (!empty($fechaDescargoActa) || !empty($oficioOtorgaDeniegaPlazo) || !empty($idSituacionDigemidSeleccionada)) {
-                $sqlMS = "INSERT INTO expediente_ms (
-                            idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
-                            idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
-                            informeTecnicoInspeccion, nCertificadoBuenasPracticas,
-                            fechaInicioCertificadoBP, fechaFinCertificadoBP,
-                            rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
-                            descargoApelacion, nDocResuelveRecurso,
-                            rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
-                            cierreDefinitivo, fechaNotificacionCierreDefinitivo
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmtMS = $pdo->prepare($sqlMS);
-                $stmtMS->execute([
-                    $idExpediente,
-                    !empty($fechaDescargoActa) ? $fechaDescargoActa : null,
-                    $oficioOtorgaDeniegaPlazo,
-                    !empty($idSituacionDigemidSeleccionada) ? $idSituacionDigemidSeleccionada : null,
-                    $docElevaNulidad,
-                    $resuelveNulidad,
-                    $informeTecnicoInspeccion,
-                    $nCertificadoBuenasPracticas,
-                    !empty($fechaInicioCertificadoBP) ? $fechaInicioCertificadoBP : null,
-                    !empty($fechaFinCertificadoBP) ? $fechaFinCertificadoBP : null,
-                    $rgrRatificaCierreTemporal,
-                    !empty($fechaNotificacionRGRCierre) ? $fechaNotificacionRGRCierre : null,
-                    $descargoApelacion,
-                    $nDocResuelveRecurso,
-                    $rsgLevantamientoCierre,
-                    !empty($fechaNotificacionRSGLevantamiento) ? $fechaNotificacionRSGLevantamiento : null,
-                    $cierreDefinitivo,
-                    !empty($fechaNotificacionCierreDefinitivo) ? $fechaNotificacionCierreDefinitivo : null
-                ]);
+            if ($idPost > 0) {
+                $data['idExpediente'] = $idPost;
+                actualizarExpediente($pdo, $data, 'UFREMID');
+                $mensaje = "Expediente actualizado correctamente.";
+            } else {
+                $idNuevo = insertarExpediente($pdo, $data, 'UFREMID');
+                $mensaje = "Expediente creado correctamente con ID: $idNuevo";
             }
-
-            // 3. Si se seleccionó un nuevo estado para la sede, actualizar
-            if (!empty($idSituacionDigemidSeleccionada)) {
-                $sqlUpdateSede = "UPDATE sede SET idSituacionDigemid = ? WHERE idSede = ?";
-                $stmtUpdate = $pdo->prepare($sqlUpdateSede);
-                $stmtUpdate->execute([$idSituacionDigemidSeleccionada, $idSede]);
-            }
-
-            $pdo->commit();
-            $mensaje = "Expediente UFREMID creado correctamente con ID: $idExpediente";
-            // Limpiar campos (opcional)
-            // redirigir para evitar reenvío
             header("Location: " . $_SERVER['PHP_SELF'] . "?mensaje=" . urlencode($mensaje));
             exit;
-
-        } catch (PDOException $e) {
-            $pdo->rollBack();
+        } catch (Exception $e) {
             $mensajeError = "Error al guardar: " . $e->getMessage();
         }
     } else {
@@ -168,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     }
 }
 
-// Si hay mensaje en GET
+// Mensaje GET
 if (isset($_GET['mensaje'])) {
     $mensaje = $_GET['mensaje'];
 }
@@ -177,8 +187,7 @@ if (isset($_GET['mensaje'])) {
 $sedes = listarSedes($pdo);
 $tiposExpediente = listarTiposExpediente($pdo);
 $situacionesDigemid = listarSituacionesDigemid($pdo);
-// Para el listado de expedientes (solo los UFREMID)
-$expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpediente.php
+$expedientes = listarExpedientesUFREMID($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -191,7 +200,6 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
     <?php include 'select2-css.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ... estilos similares a formSede.php ... */
         body { background-color: #f0f4fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .page-header { background: linear-gradient(135deg, #0b2a4a 0%, #1b4f8b 100%); color: white; padding: 30px 0 25px; border-radius: 0 0 40px 40px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         .page-header h2 { font-weight: 700; margin: 0; }
@@ -258,9 +266,12 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
         <div class="card card-modern mb-4">
             <div class="card-body">
                 <h5 class="card-title fw-bold mb-3" style="color: #0b2a4a;">
-                    <i class="fas fa-pen-alt me-2"></i>Nuevo Expediente UFREMID
+                    <i class="fas fa-pen-alt me-2"></i><?= $esEdicion ? 'Editar Expediente UFREMID' : 'Nuevo Expediente UFREMID' ?>
                 </h5>
                 <form method="POST" action="">
+                    <!-- Campo oculto con el ID (0 para nuevo) -->
+                    <input type="hidden" name="idExpediente" value="<?= $idExpediente ?>">
+
                     <!-- Sección 1: Datos Generales -->
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -268,65 +279,69 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                             <select name="idSede" id="idSede" class="form-select select2-auto" required>
                                 <option value="">Seleccionar</option>
                                 <?php foreach ($sedes as $sede): ?>
-                                    <option value="<?= $sede['idSede'] ?>"><?= htmlspecialchars($sede['numeroEstacion'] . ' - ' . $sede['nombre'] . ' - ' . $sede['direccion']) ?></option>
+                                    <option value="<?= $sede['idSede'] ?>" <?= ($idSede == $sede['idSede']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($sede['numeroEstacion'] . ' - ' . $sede['nombre'] . ' - ' . $sede['direccion']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="numeroActa" class="form-label"><i class="fas fa-hashtag me-1"></i>N° de Acta <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-modern" name="numeroActa" id="numeroActa" placeholder="Ingrese el número de acta" required>
+                            <input type="text" class="form-control form-control-modern" name="numeroActa" id="numeroActa" value="<?= htmlspecialchars($numeroActa ?? '') ?>" placeholder="Ingrese el número de acta" required>
                         </div>
                         <div class="col-md-4">
                             <label for="fechaInspeccion" class="form-label"><i class="fas fa-calendar-alt me-1"></i>Fecha de Inspección</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaInspeccion" id="fechaInspeccion">
+                            <input type="date" class="form-control form-control-modern" name="fechaInspeccion" id="fechaInspeccion" value="<?= $fechaInspeccion ?? '' ?>">
                         </div>
                         <div class="col-md-4">
                             <label for="estadoExpediente" class="form-label"><i class="fas fa-info-circle me-1"></i>Estado del Expediente <span class="text-danger">*</span></label>
                             <select name="estadoExpediente" id="estadoExpediente" class="form-select" required>
                                 <option value="">Seleccionar</option>
-                                <option value="EN PROCESO">EN PROCESO</option>
-                                <option value="CERRADO">CERRADO</option>
-                                <option value="ARCHIVADO">ARCHIVADO</option>
-                                <option value="ENVIADO AL EJECUTOR">ENVIADO AL EJECUTOR</option>
-                                <option value="OTRO">OTRO</option>
+                                <option value="EN PROCESO" <?= ($estadoExpediente == 'EN PROCESO') ? 'selected' : '' ?>>EN PROCESO</option>
+                                <option value="CERRADO" <?= ($estadoExpediente == 'CERRADO') ? 'selected' : '' ?>>CERRADO</option>
+                                <option value="ARCHIVADO" <?= ($estadoExpediente == 'ARCHIVADO') ? 'selected' : '' ?>>ARCHIVADO</option>
+                                <option value="ENVIADO AL EJECUTOR" <?= ($estadoExpediente == 'ENVIADO AL EJECUTOR') ? 'selected' : '' ?>>ENVIADO AL EJECUTOR</option>
+                                <option value="OTRO" <?= ($estadoExpediente == 'OTRO') ? 'selected' : '' ?>>OTRO</option>
                             </select>
                         </div>
-                        <div class="col-md-4" id="divOtroEstado" style="display:none;">
+                        <div class="col-md-4" id="divOtroEstado" style="<?= ($estadoExpediente == 'OTRO') ? '' : 'display:none;' ?>">
                             <label for="otroEstado" class="form-label">Especificar estado</label>
-                            <input type="text" class="form-control form-control-modern" name="otroEstado" id="otroEstado" placeholder="Ingrese el estado">
+                            <input type="text" class="form-control form-control-modern" name="otroEstado" id="otroEstado" value="<?= htmlspecialchars($_POST['otroEstado'] ?? '') ?>" placeholder="Ingrese el estado">
                         </div>
                         <div class="col-md-6">
                             <label for="idTipoExpediente" class="form-label"><i class="fas fa-tag me-1"></i>Tipo Expediente UFREMID</label>
                             <select name="idTipoExpediente" id="idTipoExpediente" class="form-select select2-auto">
                                 <option value="">Seleccionar</option>
                                 <?php foreach ($tiposExpediente as $tipo): ?>
-                                    <option value="<?= $tipo['idTipoExpediente'] ?>"><?= htmlspecialchars($tipo['nombre'] . ' - ' . $tipo['descripcion']) ?></option>
+                                    <option value="<?= $tipo['idTipoExpediente'] ?>" <?= ($idTipoExpediente == $tipo['idTipoExpediente']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($tipo['nombre'] . ' - ' . $tipo['descripcion']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="codigoUFREMID" class="form-label"><i class="fas fa-barcode me-1"></i>Código UFREMID</label>
-                            <input type="text" class="form-control form-control-modern" name="codigoUFREMID" id="codigoUFREMID" placeholder="Código interno UFREMID">
+                            <input type="text" class="form-control form-control-modern" name="codigoUFREMID" id="codigoUFREMID" value="<?= htmlspecialchars($codigoUFREMID ?? '') ?>" placeholder="Código interno UFREMID">
                         </div>
                         <div class="col-md-6">
                             <label for="responsable" class="form-label"><i class="fas fa-user me-1"></i>Responsable</label>
-                            <input type="text" class="form-control form-control-modern" name="responsable" id="responsable" placeholder="Nombre del responsable">
+                            <input type="text" class="form-control form-control-modern" name="responsable" id="responsable" value="<?= htmlspecialchars($responsable ?? '') ?>" placeholder="Nombre del responsable">
                         </div>
                         <div class="col-md-6">
                             <label for="numeroFolios" class="form-label"><i class="fas fa-file-alt me-1"></i>Número de Folios</label>
-                            <input type="text" class="form-control form-control-modern" name="numeroFolios" id="numeroFolios" placeholder="Cantidad de folios">
+                            <input type="text" class="form-control form-control-modern" name="numeroFolios" id="numeroFolios" value="<?= htmlspecialchars($numeroFolios ?? '') ?>" placeholder="Cantidad de folios">
                         </div>
                         <div class="col-12">
                             <label for="observacion" class="form-label"><i class="fas fa-comment me-1"></i>Observaciones</label>
-                            <textarea class="form-control form-control-modern" name="observacion" id="observacion" rows="2" placeholder="Observaciones generales"></textarea>
+                            <textarea class="form-control form-control-modern" name="observacion" id="observacion" rows="2" placeholder="Observaciones generales"><?= htmlspecialchars($observacion ?? '') ?></textarea>
                         </div>
                         <div class="col-md-6">
                             <label for="judicializado" class="form-label"><i class="fas fa-gavel me-1"></i>Judicializado</label>
-                            <input type="text" class="form-control form-control-modern" name="judicializado" id="judicializado" placeholder="Número o descripción">
+                            <input type="text" class="form-control form-control-modern" name="judicializado" id="judicializado" value="<?= htmlspecialchars($judicializado ?? '') ?>" placeholder="Número o descripción">
                         </div>
                         <div class="col-md-6">
                             <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" name="falsificado" id="falsificado" value="1">
+                                <input class="form-check-input" type="checkbox" name="falsificado" id="falsificado" value="1" <?= $falsificado ? 'checked' : '' ?>>
                                 <label class="form-check-label" for="falsificado">
                                     <i class="fas fa-exclamation-triangle me-1" style="color: #dc3545;"></i> ¿Es falsificado?
                                 </label>
@@ -351,81 +366,83 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                                             <label for="fechaDescargoActa" class="form-label">Descargo al Acta de Inspección (7 días) 
                                                 <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="SOLICITUD DE AMPLIACION DE PLAZO, NULIDAD U OTROS"></i>
                                             </label>
-                                            <input type="date" class="form-control form-control-modern" name="fechaDescargoActa" id="fechaDescargoActa">
+                                            <input type="date" class="form-control form-control-modern" name="fechaDescargoActa" id="fechaDescargoActa" value="<?= $fechaDescargoActa ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="oficioOtorgaDeniegaPlazo" class="form-label">Oficio que otorga o deniega el plazo</label>
-                                            <input type="text" class="form-control form-control-modern" name="oficioOtorgaDeniegaPlazo" id="oficioOtorgaDeniegaPlazo" placeholder="N° de oficio">
+                                            <input type="text" class="form-control form-control-modern" name="oficioOtorgaDeniegaPlazo" id="oficioOtorgaDeniegaPlazo" value="<?= htmlspecialchars($oficioOtorgaDeniegaPlazo ?? '') ?>" placeholder="N° de oficio">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="idSituacionDigemidSeleccionada" class="form-label">Seleccionar Estado del Local</label>
                                             <select name="idSituacionDigemidSeleccionada" id="idSituacionDigemidSeleccionada" class="form-select">
                                                 <option value="">-- Seleccionar --</option>
                                                 <?php foreach ($situacionesDigemid as $sit): ?>
-                                                    <option value="<?= $sit['idSituacionDigemid'] ?>"><?= htmlspecialchars($sit['nombre']) ?></option>
+                                                    <option value="<?= $sit['idSituacionDigemid'] ?>" <?= ($idSituacionDigemidSeleccionada == $sit['idSituacionDigemid']) ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($sit['nombre']) ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                             <small class="text-muted">Al guardar, se actualizará el estado de la sede seleccionada.</small>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="docElevaNulidad" class="form-label">Doc. Eleva nulidad</label>
-                                            <input type="text" class="form-control form-control-modern" name="docElevaNulidad" id="docElevaNulidad" placeholder="N° de documento">
+                                            <input type="text" class="form-control form-control-modern" name="docElevaNulidad" id="docElevaNulidad" value="<?= htmlspecialchars($docElevaNulidad ?? '') ?>" placeholder="N° de documento">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="resuelveNulidad" class="form-label">Resuelve nulidad</label>
-                                            <input type="text" class="form-control form-control-modern" name="resuelveNulidad" id="resuelveNulidad" placeholder="N° de resolución">
+                                            <input type="text" class="form-control form-control-modern" name="resuelveNulidad" id="resuelveNulidad" value="<?= htmlspecialchars($resuelveNulidad ?? '') ?>" placeholder="N° de resolución">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="informeTecnicoInspeccion" class="form-label">Informe técnico de Inspección</label>
-                                            <input type="text" class="form-control form-control-modern" name="informeTecnicoInspeccion" id="informeTecnicoInspeccion" placeholder="N° de informe">
+                                            <input type="text" class="form-control form-control-modern" name="informeTecnicoInspeccion" id="informeTecnicoInspeccion" value="<?= htmlspecialchars($informeTecnicoInspeccion ?? '') ?>" placeholder="N° de informe">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="nCertificadoBuenasPracticas" class="form-label">N° certificado buenas prácticas</label>
-                                            <input type="text" class="form-control form-control-modern" name="nCertificadoBuenasPracticas" id="nCertificadoBuenasPracticas" placeholder="N° de certificado">
+                                            <input type="text" class="form-control form-control-modern" name="nCertificadoBuenasPracticas" id="nCertificadoBuenasPracticas" value="<?= htmlspecialchars($nCertificadoBuenasPracticas ?? '') ?>" placeholder="N° de certificado">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="fechaInicioCertificadoBP" class="form-label">Fecha Inicio Certificado B.P.
                                                 <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="FECHA DE INICIO DE LA CERTIFICACIÓN BUENAS PRACTICAS"></i>
                                             </label>
-                                            <input type="date" class="form-control form-control-modern" name="fechaInicioCertificadoBP" id="fechaInicioCertificadoBP">
+                                            <input type="date" class="form-control form-control-modern" name="fechaInicioCertificadoBP" id="fechaInicioCertificadoBP" value="<?= $fechaInicioCertificadoBP ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="fechaFinCertificadoBP" class="form-label">Fecha Fin Certificado B.P.
                                                 <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="FECHA DE TERMINO DE LA CERTIFICACIÓN BUENAS PRACTICAS"></i>
                                             </label>
-                                            <input type="date" class="form-control form-control-modern" name="fechaFinCertificadoBP" id="fechaFinCertificadoBP">
+                                            <input type="date" class="form-control form-control-modern" name="fechaFinCertificadoBP" id="fechaFinCertificadoBP" value="<?= $fechaFinCertificadoBP ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="rgrRatificaCierreTemporal" class="form-label">RGR. Ratifica Medida de Cierre Temporal</label>
-                                            <input type="text" class="form-control form-control-modern" name="rgrRatificaCierreTemporal" id="rgrRatificaCierreTemporal" placeholder="Ej. RGR. N° 0300-2018">
+                                            <input type="text" class="form-control form-control-modern" name="rgrRatificaCierreTemporal" id="rgrRatificaCierreTemporal" value="<?= htmlspecialchars($rgrRatificaCierreTemporal ?? '') ?>" placeholder="Ej. RGR. N° 0300-2018">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="fechaNotificacionRGRCierre" class="form-label">Fecha de Notificación de la RGR. de Cierre temporal</label>
-                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionRGRCierre" id="fechaNotificacionRGRCierre">
+                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionRGRCierre" id="fechaNotificacionRGRCierre" value="<?= $fechaNotificacionRGRCierre ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="descargoApelacion" class="form-label">Descargo y/o apelación</label>
-                                            <input type="text" class="form-control form-control-modern" name="descargoApelacion" id="descargoApelacion" placeholder="Descripción o número">
+                                            <input type="text" class="form-control form-control-modern" name="descargoApelacion" id="descargoApelacion" value="<?= htmlspecialchars($descargoApelacion ?? '') ?>" placeholder="Descripción o número">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="nDocResuelveRecurso" class="form-label">N° Doc resuelve recurso</label>
-                                            <input type="text" class="form-control form-control-modern" name="nDocResuelveRecurso" id="nDocResuelveRecurso" placeholder="N° de documento">
+                                            <input type="text" class="form-control form-control-modern" name="nDocResuelveRecurso" id="nDocResuelveRecurso" value="<?= htmlspecialchars($nDocResuelveRecurso ?? '') ?>" placeholder="N° de documento">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="rsgLevantamientoCierre" class="form-label">RSG. de Levantamiento de cierre</label>
-                                            <input type="text" class="form-control form-control-modern" name="rsgLevantamientoCierre" id="rsgLevantamientoCierre" placeholder="Ej. RSG N° 200-2026">
+                                            <input type="text" class="form-control form-control-modern" name="rsgLevantamientoCierre" id="rsgLevantamientoCierre" value="<?= htmlspecialchars($rsgLevantamientoCierre ?? '') ?>" placeholder="Ej. RSG N° 200-2026">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="fechaNotificacionRSGLevantamiento" class="form-label">Fecha de Notificación RSG. Levantamiento de cierre</label>
-                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionRSGLevantamiento" id="fechaNotificacionRSGLevantamiento">
+                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionRSGLevantamiento" id="fechaNotificacionRSGLevantamiento" value="<?= $fechaNotificacionRSGLevantamiento ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="cierreDefinitivo" class="form-label">Cierre definitivo</label>
-                                            <input type="text" class="form-control form-control-modern" name="cierreDefinitivo" id="cierreDefinitivo" placeholder="Ej. RSG N 056-2026">
+                                            <input type="text" class="form-control form-control-modern" name="cierreDefinitivo" id="cierreDefinitivo" value="<?= htmlspecialchars($cierreDefinitivo ?? '') ?>" placeholder="Ej. RSG N 056-2026">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="fechaNotificacionCierreDefinitivo" class="form-label">Fecha de notificación del cierre de envío</label>
-                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionCierreDefinitivo" id="fechaNotificacionCierreDefinitivo">
+                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionCierreDefinitivo" id="fechaNotificacionCierreDefinitivo" value="<?= $fechaNotificacionCierreDefinitivo ?? '' ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -435,7 +452,7 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
 
                     <div class="mt-4 d-flex flex-wrap gap-2">
                         <button type="submit" name="btnGuardar" class="btn btn-primary-custom">
-                            <i class="fas fa-save me-2"></i>Guardar Expediente
+                            <i class="fas fa-save me-2"></i><?= $esEdicion ? 'Actualizar Expediente' : 'Guardar Expediente' ?>
                         </button>
                         <button type="button" class="btn btn-outline-secondary-custom" onclick="cancelar();">
                             <i class="fas fa-times me-2"></i>Limpiar
@@ -490,12 +507,9 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li><a class="dropdown-item" href="formExpedienteFI.php?idExpediente=<?= $exp['idExpediente'] ?>"><i class="fas fa-gavel me-2"></i>Fase Instructora (FI)</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="fas fa-balance-scale me-2"></i>Fase Sancionadora (FS)</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="fas fa-money-bill-wave me-2"></i>Pagos</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>Ver Plazos</a></li>
                                             <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Editar Expediente</a></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash-alt me-2"></i>Eliminar</a></li>
+                                            <li><a class="dropdown-item" href="?editar=<?= $exp['idExpediente'] ?>"><i class="fas fa-edit me-2"></i>Editar Expediente</a></li>
+                                            <li><a class="dropdown-item text-danger" href="eliminarExpediente.php?id=<?= $exp['idExpediente'] ?>&area=UFREMID" onclick="return confirm('¿Está seguro de eliminar este expediente?')"><i class="fas fa-trash-alt me-2"></i>Eliminar</a></li>
                                         </ul>
                                     </div>
                                 </td>
@@ -521,14 +535,11 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
 
     <script>
         $(document).ready(function() {
-            // DataTable
             $('#tablaExpedientes').DataTable({
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
                 responsive: true,
                 order: [[0, 'desc']]
             });
-
-            // Select2
             if ($.fn.select2) {
                 $('.select2-auto').select2({
                     width: '100%',
@@ -536,8 +547,6 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                     allowClear: true
                 });
             }
-
-            // Popovers
             const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
             popoverTriggerList.map(function (popoverTriggerEl) {
                 return new bootstrap.Popover(popoverTriggerEl, {
@@ -545,8 +554,6 @@ $expedientes = listarExpedientesUFREMID($pdo); // Función que crearás en dExpe
                     placement: 'top'
                 });
             });
-
-            // Mostrar/ocultar campo "Otro estado"
             $('#estadoExpediente').change(function() {
                 if ($(this).val() === 'OTRO') {
                     $('#divOtroEstado').show();
