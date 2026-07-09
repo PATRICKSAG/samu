@@ -238,7 +238,11 @@
                             <input type="date" class="form-control form-control-modern" name="fechaNotificacionIFI" id="fechaNotificacionIFI" value="<?php echo $fs['fechaNotificacionIFI'] ?? '' ?>" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="fechaDescargoIFI" class="form-label">Fecha de descargo al IFI (5 días hábiles)</label>
+                            <?php
+                                // Determinamos los días según el área
+                                $dias = ($area == 'UFRESA') ? 10 : 5;
+                            ?>
+                            <label for="fechaDescargoIFI" class="form-label">Fecha de descargo al IFI (<?php echo $dias; ?> días hábiles)</label>
                             <input type="date" class="form-control form-control-modern" name="fechaDescargoIFI" id="fechaDescargoIFI" value="<?php echo $fs['fechaDescargoIFI'] ?? '' ?>">
                         </div>
 
@@ -273,8 +277,8 @@
                             <label for="pagoApela" class="form-label">Pago o Apela</label>
                             <select name="pagoApela" id="pagoApela" class="form-select">
                                 <option value="">Seleccionar</option>
-                                <option value="PAGA" <?php echo ($fs['pagoApela'] ?? '') == 'PAGA' ? 'selected' : '' ?>>PAGA</option>
-                                <option value="APELA" <?php echo ($fs['pagoApela'] ?? '') == 'APELA' ? 'selected' : '' ?>>APELA</option>
+                                <option value="PAGA" <?php echo($fs['pagoApela'] ?? '') == 'PAGA' ? 'selected' : '' ?>>PAGA</option>
+                                <option value="APELA" <?php echo($fs['pagoApela'] ?? '') == 'APELA' ? 'selected' : '' ?>>APELA</option>
                             </select>
                         </div>
 
@@ -289,10 +293,10 @@
                             <label for="resultadoRecurso" class="form-label">Resultado del recurso</label>
                             <select name="resultadoRecurso" id="resultadoRecurso" class="form-select">
                                 <option value="">Seleccionar</option>
-                                <option value="FUNDADO" <?php echo ($fs['resultadoRecurso'] ?? '') == 'FUNDADO' ? 'selected' : '' ?>>FUNDADO</option>
-                                <option value="INFUNDADO" <?php echo ($fs['resultadoRecurso'] ?? '') == 'INFUNDADO' ? 'selected' : '' ?>>INFUNDADO</option>
-                                <option value="CONSENTIDO" <?php echo ($fs['resultadoRecurso'] ?? '') == 'CONSENTIDO' ? 'selected' : '' ?>>CONSENTIDO</option>
-                                <option value="NO HA LUGAR" <?php echo ($fs['resultadoRecurso'] ?? '') == 'NO HA LUGAR' ? 'selected' : '' ?>>NO HA LUGAR</option>
+                                <option value="FUNDADO" <?php echo($fs['resultadoRecurso'] ?? '') == 'FUNDADO' ? 'selected' : '' ?>>FUNDADO</option>
+                                <option value="INFUNDADO" <?php echo($fs['resultadoRecurso'] ?? '') == 'INFUNDADO' ? 'selected' : '' ?>>INFUNDADO</option>
+                                <option value="CONSENTIDO" <?php echo($fs['resultadoRecurso'] ?? '') == 'CONSENTIDO' ? 'selected' : '' ?>>CONSENTIDO</option>
+                                <option value="NO HA LUGAR" <?php echo($fs['resultadoRecurso'] ?? '') == 'NO HA LUGAR' ? 'selected' : '' ?>>NO HA LUGAR</option>
                             </select>
                         </div>
                         <div class="col-md-6">

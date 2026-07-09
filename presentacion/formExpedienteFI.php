@@ -222,7 +222,11 @@
                                 value="<?php echo $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="fechaDescargoPresentado" class="form-label">Fecha de Descargo o impugnación <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="5 días hábiles"></i></label>
+                            <?php
+                                // Determinamos los días según el área
+                                $dias = ($area == 'UFRESA') ? 10 : 5;
+                            ?>
+                            <label for="fechaDescargoPresentado" class="form-label">Fecha de Descargo o impugnación <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="<?php echo $dias; ?> días hábiles"></i></label>
                             <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
                                 value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
                         </div>
@@ -267,7 +271,14 @@
 
                         <?php if ($accion !== 'editar'): ?>
                             <div class="col-md-6">
-                                <label for="fechaDescargoPresentado" class="form-label">Fecha de Descargo o impugnación <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="5 días hábiles"></i></label>
+                                <?php
+                                    // Determinamos los días según el área
+                                    $dias = ($area == 'UFRESA') ? 10 : 5;
+                                ?>
+                                <label for="fechaDescargoPresentado" class="form-label">
+                                    Fecha de Descargo o impugnación
+                                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="<?php echo $dias; ?> días hábiles"></i>
+                                </label>
                                 <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
                                     value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
                             </div>
@@ -305,7 +316,7 @@
 
                     <div class="mt-4 d-flex flex-wrap gap-2">
                         <button type="submit" name="btnGuardarFI" class="btn btn-primary-custom">
-                            <i class="fas fa-save me-2"></i><?php echo ($accion === 'editar') ? 'Actualizar Fecha' : 'Guardar Inicio PAS' ?>
+                            <i class="fas fa-save me-2"></i><?php echo($accion === 'editar') ? 'Actualizar Fecha' : 'Guardar Inicio PAS' ?>
                         </button>
                         <a href="formExpedienteFI.php?idExpediente=<?php echo $idExpediente ?>&area=<?php echo urlencode($area) ?>" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-times me-2"></i>Cancelar
@@ -383,7 +394,7 @@
                                     <a href="?idExpediente=<?php echo $idExpediente ?>&accion=editar&idFI=<?php echo $fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-sm btn-primary accion-boton" title="Editar fecha de notificación">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="formExpedienteFS.php?idFI=<?php echo (int)$fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
+                                    <a href="formExpedienteFS.php?idFI=<?php echo (int) $fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
                                         <i class="fas fa-balance-scale"></i> FS
                                     </a>
                                     <!-- No hay botón eliminar (solo historial) -->

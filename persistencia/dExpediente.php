@@ -46,7 +46,7 @@
             LEFT JOIN establecimiento est ON s.idEstablecimiento = est.idEstablecimiento
             LEFT JOIN distrito d ON s.idDistrito = d.idDistrito
             LEFT JOIN provincia p ON d.idProvincia = p.idProvincia
-            ORDER BY e.idExpediente DESC";
+            ORDER BY e.fechaInspeccion DESC";
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -63,6 +63,7 @@
                     fechaCreacion, fechaModificacion
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
         $stmt = $pdo->prepare($sql);
+        
         $stmt->execute([
             $data['idSede'],
             $data['numeroActa'],
@@ -330,7 +331,7 @@
                 (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
             FROM expediente e
             WHERE e.areaOrigen = 'UFREMID'
-            ORDER BY e.idExpediente DESC";
+            ORDER BY e.fechaInspeccion DESC";
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -917,7 +918,7 @@
                 (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
             FROM expediente e
             WHERE e.areaOrigen = 'UFRESA'
-            ORDER BY e.idExpediente DESC";
+            ORDER BY e.fechaInspeccion DESC";
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -932,7 +933,7 @@ function listarExpedientesUFRESBIT(PDO $pdo)
                 (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
             FROM expediente e
             WHERE e.areaOrigen = 'UFRESBIT'   
-            ORDER BY e.idExpediente DESC";
+            ORDER BY e.fechaInspeccion DESC";
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
