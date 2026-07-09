@@ -1,64 +1,63 @@
 <?php
-include_once(__DIR__ . '/../config.php');
-include_once(__DIR__ . '/../persistencia/conexion.php');
-include_once(__DIR__ . '/../persistencia/dExpediente.php');
+    include_once __DIR__ . '/../config.php';
+    include_once __DIR__ . '/../persistencia/conexion.php';
+    include_once __DIR__ . '/../persistencia/dExpediente.php';
 
-$pdo = Database::getConexion();
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = Database::getConexion();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$area = $_GET['area'] ?? '';
-if ($area === 'UFREMID' OR $area === 'UFRESA' OR $area === 'UFRESBIT'){
+    $area = $_GET['area'] ?? '';
+    if ($area === 'UFREMID' or $area === 'UFRESA' or $area === 'UFRESBIT') {
     $area = $area;
-} else {
+    } else {
     header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Área no válida"));
     exit;
-}
+    }
 
-
-$idExpediente = isset($_GET['idExpediente']) ? intval($_GET['idExpediente']) : 0;
-if (!$idExpediente) {
+    $idExpediente = isset($_GET['idExpediente']) ? intval($_GET['idExpediente']) : 0;
+    if (! $idExpediente) {
     header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de expediente no válido"));
     exit;
-}
+    }
 
-// Obtener datos del expediente
-$expediente = obtenerExpediente($pdo, $idExpediente);
-if (!$expediente) {
+    // Obtener datos del expediente
+    $expediente = obtenerExpediente($pdo, $idExpediente);
+    if (! $expediente) {
     header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("Expediente no encontrado"));
     exit;
-}
+    }
 
-// Procesar acciones
-$mensaje = '';
-$mensajeError = '';
-$accion = $_GET['accion'] ?? '';
-$idFI = isset($_GET['idFI']) ? intval($_GET['idFI']) : 0;
+    // Procesar acciones
+    $mensaje      = '';
+    $mensajeError = '';
+    $accion       = $_GET['accion'] ?? '';
+    $idFI         = isset($_GET['idFI']) ? intval($_GET['idFI']) : 0;
 
-// Si es edición, cargar datos
-$datosEdicion = null;
-if ($accion === 'editar' && $idFI) {
+    // Si es edición, cargar datos
+    $datosEdicion = null;
+    if ($accion === 'editar' && $idFI) {
     $datosEdicion = obtenerExpedienteFI($pdo, $idFI);
-    if (!$datosEdicion) {
+    if (! $datosEdicion) {
         header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode("Registro no encontrado"));
         exit;
     }
-}
+    }
 
-// Procesar guardado de nuevo registro o actualización
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
-    $tipoEvento = $_POST['tipoEvento'] ?? 'INICIO';
-    $oficioIniciaPAS = $_POST['oficioIniciaPAS'] ?? '';
-    $fechaNotificacion = !empty($_POST['fechaNotificacionInicioPAS']) ? $_POST['fechaNotificacionInicioPAS'] : null;
-    $fechaDescargo = !empty($_POST['fechaDescargoPresentado']) ? $_POST['fechaDescargoPresentado'] : null;
-    $informeTecnico = $_POST['informeTecnicoInicioPAS'] ?? '';
-    $fechaInforme = !empty($_POST['fechaInformeTecnico']) ? $_POST['fechaInformeTecnico'] : null;
-    $documentoEleva = $_POST['documentoElevaEscrito'] ?? '';
-    $informeLegal = $_POST['informeLegalCaducidad'] ?? '';
+    // Procesar guardado de nuevo registro o actualización
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
+    $tipoEvento          = $_POST['tipoEvento'] ?? 'INICIO';
+    $oficioIniciaPAS     = $_POST['oficioIniciaPAS'] ?? '';
+    $fechaNotificacion   = ! empty($_POST['fechaNotificacionInicioPAS']) ? $_POST['fechaNotificacionInicioPAS'] : null;
+    $fechaDescargo       = ! empty($_POST['fechaDescargoPresentado']) ? $_POST['fechaDescargoPresentado'] : null;
+    $informeTecnico      = $_POST['informeTecnicoInicioPAS'] ?? '';
+    $fechaInforme        = ! empty($_POST['fechaInformeTecnico']) ? $_POST['fechaInformeTecnico'] : null;
+    $documentoEleva      = $_POST['documentoElevaEscrito'] ?? '';
+    $informeLegal        = $_POST['informeLegalCaducidad'] ?? '';
     $resolucionCaducidad = $_POST['resolucionCaducidad'] ?? '';
-    $recurso = $_POST['recursoInterpuesto'] ?? '';
-    $resolucionRecurso = $_POST['resolucionRecurso'] ?? '';
-    $fechaNotifRecurso = !empty($_POST['fechaNotificacionRecurso']) ? $_POST['fechaNotificacionRecurso'] : null;
-    $informeFinal = $_POST['informeFinalInstruccion'] ?? '';
+    $recurso             = $_POST['recursoInterpuesto'] ?? '';
+    $resolucionRecurso   = $_POST['resolucionRecurso'] ?? '';
+    $fechaNotifRecurso   = ! empty($_POST['fechaNotificacionRecurso']) ? $_POST['fechaNotificacionRecurso'] : null;
+    $informeFinal        = $_POST['informeFinalInstruccion'] ?? '';
 
     // Si estamos editando
     if ($accion === 'editar' && $idFI) {
@@ -70,12 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
         if (empty($errores)) {
             try {
                 // Llamamos a la nueva función que actualiza ambas fechas
-                    actualizarExpedienteFI($pdo, $idFI, $fechaNotificacion, $fechaDescargo, $area);
-                    $mensaje = "Fecha de notificación y descargo actualizadas correctamente.";
-                    header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
-                    exit;
+                actualizarExpedienteFI($pdo, $idFI, $fechaNotificacion, $fechaDescargo, $area);
+                $mensaje = "Fecha de notificación y descargo actualizadas correctamente.";
+                header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
+                exit;
 
-                
             } catch (Exception $e) {
                 $mensajeError = "Error al actualizar: " . $e->getMessage();
             }
@@ -85,32 +83,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
     } else {
         // Nuevo registro (validación completa)
         $errores = [];
-        if (empty($oficioIniciaPAS)) $errores[] = "Oficio de Inicio P.A.S. es requerido.";
-        if (empty($fechaNotificacion)) $errores[] = "Fecha de notificación de Inicio de PAS es requerida.";
+        if (empty($oficioIniciaPAS)) {
+            $errores[] = "Oficio de Inicio P.A.S. es requerido.";
+        }
+
+        if (empty($fechaNotificacion)) {
+            $errores[] = "Fecha de notificación de Inicio de PAS es requerida.";
+        }
 
         if (empty($errores)) {
             try {
                 $data = [
-                    'idExpediente' => $idExpediente,
-                    'tipoEvento' => $tipoEvento,
-                    'informeTecnicoInicioPAS' => $informeTecnico,
-                    'fechaInformeTecnico' => $fechaInforme,
-                    'oficioIniciaPAS' => $oficioIniciaPAS,
+                    'idExpediente'               => $idExpediente,
+                    'tipoEvento'                 => $tipoEvento,
+                    'informeTecnicoInicioPAS'    => $informeTecnico,
+                    'fechaInformeTecnico'        => $fechaInforme,
+                    'oficioIniciaPAS'            => $oficioIniciaPAS,
                     'fechaNotificacionInicioPAS' => $fechaNotificacion,
-                    'fechaDescargoPresentado' => $fechaDescargo,
-                    'documentoElevaEscrito' => $documentoEleva,
-                    'informeLegalCaducidad' => $informeLegal,
-                    'resolucionCaducidad' => $resolucionCaducidad,
-                    'recursoInterpuesto' => $recurso,
-                    'resolucionRecurso' => $resolucionRecurso,
-                    'fechaNotificacionRecurso' => $fechaNotifRecurso,
-                    'informeFinalInstruccion' => $informeFinal
+                    'fechaDescargoPresentado'    => $fechaDescargo,
+                    'documentoElevaEscrito'      => $documentoEleva,
+                    'informeLegalCaducidad'      => $informeLegal,
+                    'resolucionCaducidad'        => $resolucionCaducidad,
+                    'recursoInterpuesto'         => $recurso,
+                    'resolucionRecurso'          => $resolucionRecurso,
+                    'fechaNotificacionRecurso'   => $fechaNotifRecurso,
+                    'informeFinalInstruccion'    => $informeFinal,
                 ];
-                    $idNuevo = insertarExpedienteFI($pdo, $data, $area);
-                    $mensaje = "Registro FI guardado correctamente (ID: $idNuevo).";
-                    header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" .  urlencode($mensaje));
-                    exit;
-                
+                $idNuevo = insertarExpedienteFI($pdo, $data, $area);
+                $mensaje = "Registro FI guardado correctamente (ID: $idNuevo).";
+                header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
+                exit;
+
             } catch (Exception $e) {
                 $mensajeError = "Error al guardar: " . $e->getMessage();
             }
@@ -118,21 +121,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
             $mensajeError = implode("<br>", $errores);
         }
     }
-}
+    }
 
-// Obtener listado de FI
-$registrosFI = listarExpedienteFI($pdo, $idExpediente);
-// Mensaje desde GET
-if (isset($_GET['mensaje'])) {
+    // Obtener listado de FI
+    $registrosFI = listarExpedienteFI($pdo, $idExpediente);
+    // Mensaje desde GET
+    if (isset($_GET['mensaje'])) {
     $mensaje = $_GET['mensaje'];
-}
+    }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fase Instructora - Expediente <?= htmlspecialchars($expediente['numeroActa']) ?></title>
+    <title>Fase Instructora - Expediente <?php echo htmlspecialchars($expediente['numeroActa']) ?></title>
     <?php include 'boostrap-css.php'; ?>
     <?php include 'datatable-css.php'; ?>
     <?php include 'select2-css.php'; ?>
@@ -176,8 +179,8 @@ if (isset($_GET['mensaje'])) {
         <div class="container">
             <h2><i class="fas fa-gavel me-2"></i>Fase Instructora</h2>
             <p>
-                Expediente N° <strong><?= htmlspecialchars($expediente['numeroActa']) ?></strong> - 
-                Sede: <?= htmlspecialchars($expediente['nombreSede']) ?>
+                Expediente N° <strong><?php echo htmlspecialchars($expediente['numeroActa']) ?></strong> -
+                Sede: <?php echo htmlspecialchars($expediente['nombreSede']) ?>
             </p>
         </div>
     </div>
@@ -186,13 +189,13 @@ if (isset($_GET['mensaje'])) {
         <!-- Mensajes -->
         <?php if ($mensaje): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($mensaje) ?>
+                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($mensaje) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
         <?php if ($mensajeError): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i><?= htmlspecialchars($mensajeError) ?>
+                <i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($mensajeError) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -215,13 +218,13 @@ if (isset($_GET['mensaje'])) {
                                 Fecha de notificación de Inicio de PAS <span class="text-danger">*</span>
                                 <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="1° ALARMA principal por 9 meses"></i>
                             </label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS" 
-                                value="<?= $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
+                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS"
+                                value="<?php echo $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label for="fechaDescargoPresentado" class="form-label">Fecha de Descargo o impugnación <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="5 días hábiles"></i></label>
-                            <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado" 
-                                value="<?= $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
+                                value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
                         </div>
                     <?php endif; ?>
 
@@ -256,8 +259,8 @@ if (isset($_GET['mensaje'])) {
                                     Fecha de notificación de Inicio de PAS <span class="text-danger">*</span>
                                     <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="1° ALARMA principal por 9 meses"></i>
                                 </label>
-                                <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS" 
-                                    value="<?= $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
+                                <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS"
+                                    value="<?php echo $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
                             </div>
                         <?php endif; ?>
 
@@ -265,8 +268,8 @@ if (isset($_GET['mensaje'])) {
                         <?php if ($accion !== 'editar'): ?>
                             <div class="col-md-6">
                                 <label for="fechaDescargoPresentado" class="form-label">Fecha de Descargo o impugnación <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="5 días hábiles"></i></label>
-                                <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado" 
-                                    value="<?= $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
+                                <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
+                                    value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
                             </div>
 
                             <!-- Campos de caducidad/recurso (aparecen si pasan 9 meses, pero en el formulario los dejamos visibles) -->
@@ -302,9 +305,9 @@ if (isset($_GET['mensaje'])) {
 
                     <div class="mt-4 d-flex flex-wrap gap-2">
                         <button type="submit" name="btnGuardarFI" class="btn btn-primary-custom">
-                            <i class="fas fa-save me-2"></i><?= ($accion === 'editar') ? 'Actualizar Fecha' : 'Guardar Inicio PAS' ?>
+                            <i class="fas fa-save me-2"></i><?php echo ($accion === 'editar') ? 'Actualizar Fecha' : 'Guardar Inicio PAS' ?>
                         </button>
-                        <a href="formExpedienteFI.php?idExpediente=<?= $idExpediente ?>&area=<?= urlencode($area) ?>" class="btn btn-outline-secondary-custom">
+                        <a href="formExpedienteFI.php?idExpediente=<?php echo $idExpediente ?>&area=<?php echo urlencode($area) ?>" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-times me-2"></i>Cancelar
                         </a>
                         <a href="formExpediente<?php echo urlencode($area); ?>.php" class="btn btn-outline-secondary-custom">
@@ -339,38 +342,48 @@ if (isset($_GET['mensaje'])) {
                         <tbody>
                             <?php foreach ($registrosFI as $fi): ?>
                             <tr>
-                                <td><?= $fi['idExpedienteFI'] ?></td>
-                                <td><?= htmlspecialchars($fi['tipoEvento']) ?></td>
-                                <td><?= htmlspecialchars($fi['oficioIniciaPAS'] ?? '') ?></td>
-                                <td><?= $fi['fechaNotificacionInicioPAS'] ?? '' ?></td>
-                                <td><?= $fi['fechaDescargoPresentado'] ?? '' ?></td>
+                                <td><?php echo $fi['idExpedienteFI'] ?></td>
+                                <td><?php echo htmlspecialchars($fi['tipoEvento']) ?></td>
+                                <td><?php echo htmlspecialchars($fi['oficioIniciaPAS'] ?? '') ?></td>
+                                <td><?php echo $fi['fechaNotificacionInicioPAS'] ?? '' ?></td>
+                                <td><?php echo $fi['fechaDescargoPresentado'] ?? '' ?></td>
                                 <td>
-                                    <?php 
-                                    $estadoDescargo = $fi['estadoDescargo'] ?? 'VIGENTE';
-                                    $badgeClass = 'badge-plazo-vigente';
-                                    if ($estadoDescargo == 'PROXIMO_VENCER') $badgeClass = 'badge-plazo-proximo';
-                                    elseif ($estadoDescargo == 'VENCIDO') $badgeClass = 'badge-plazo-vencido';
-                                    elseif ($estadoDescargo == 'CUMPLIDO') $badgeClass = 'badge-plazo-cumplido';
+                                    <?php
+                                        $estadoDescargo = $fi['estadoDescargo'] ?? 'VIGENTE';
+                                        $badgeClass     = 'badge-plazo-vigente';
+                                        if ($estadoDescargo == 'PROXIMO_VENCER') {
+                                            $badgeClass = 'badge-plazo-proximo';
+                                        } elseif ($estadoDescargo == 'VENCIDO') {
+                                            $badgeClass = 'badge-plazo-vencido';
+                                        } elseif ($estadoDescargo == 'CUMPLIDO') {
+                                            $badgeClass = 'badge-plazo-cumplido';
+                                        }
+
                                     ?>
-                                    <span class="badge <?= $badgeClass ?>"><?= $estadoDescargo ?></span>
-                                    <br><small><?= $fi['fechaVencimientoDescargo'] ?? '' ?></small>
+                                    <span class="badge <?php echo $badgeClass ?>"><?php echo $estadoDescargo ?></span>
+                                    <br><small><?php echo $fi['fechaVencimientoDescargo'] ?? '' ?></small>
                                 </td>
-                                <td><?= $fi['fechaVencimientoCaducidad'] ?? '' ?></td>
+                                <td><?php echo $fi['fechaVencimientoCaducidad'] ?? '' ?></td>
                                 <td>
-                                    <?php 
-                                    $estadoCad = $fi['estadoCaducidad'] ?? 'VIGENTE';
-                                    $badgeClass2 = 'badge-plazo-vigente';
-                                    if ($estadoCad == 'PROXIMO_VENCER') $badgeClass2 = 'badge-plazo-proximo';
-                                    elseif ($estadoCad == 'VENCIDO') $badgeClass2 = 'badge-plazo-vencido';
-                                    elseif ($estadoCad == 'CUMPLIDO') $badgeClass2 = 'badge-plazo-cumplido';
+                                    <?php
+                                        $estadoCad   = $fi['estadoCaducidad'] ?? 'VIGENTE';
+                                        $badgeClass2 = 'badge-plazo-vigente';
+                                        if ($estadoCad == 'PROXIMO_VENCER') {
+                                            $badgeClass2 = 'badge-plazo-proximo';
+                                        } elseif ($estadoCad == 'VENCIDO') {
+                                            $badgeClass2 = 'badge-plazo-vencido';
+                                        } elseif ($estadoCad == 'CUMPLIDO') {
+                                            $badgeClass2 = 'badge-plazo-cumplido';
+                                        }
+
                                     ?>
-                                    <span class="badge <?= $badgeClass2 ?>"><?= $estadoCad ?></span>
+                                    <span class="badge <?php echo $badgeClass2 ?>"><?php echo $estadoCad ?></span>
                                 </td>
                                 <td>
-                                    <a href="?idExpediente=<?= $idExpediente ?>&accion=editar&idFI=<?= $fi['idExpedienteFI'] ?>&area=<?= urlencode($area) ?>" class="btn btn-sm btn-primary accion-boton" title="Editar fecha de notificación">
+                                    <a href="?idExpediente=<?php echo $idExpediente ?>&accion=editar&idFI=<?php echo $fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-sm btn-primary accion-boton" title="Editar fecha de notificación">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="formExpedienteFS.php?idFI=<?= (int)$fi['idExpedienteFI'] ?>&area=<?= urlencode($area) ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
+                                    <a href="formExpedienteFS.php?idFI=<?php echo (int)$fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
                                         <i class="fas fa-balance-scale"></i> FS
                                     </a>
                                     <!-- No hay botón eliminar (solo historial) -->
@@ -386,7 +399,7 @@ if (isset($_GET['mensaje'])) {
 
     <footer class="footer-custom">
         <div class="container">
-            <p class="mb-0">&copy; <?= date('Y') ?> Sub Gerencia de Regulación Sectorial - Todos los derechos reservados.</p>
+            <p class="mb-0">&copy; <?php echo date('Y') ?> Sub Gerencia de Regulación Sectorial - Todos los derechos reservados.</p>
         </div>
     </footer>
 

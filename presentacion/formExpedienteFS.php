@@ -1,83 +1,86 @@
 <?php
-include_once(__DIR__ . '/../config.php');
-include_once(__DIR__ . '/../persistencia/conexion.php');
-include_once(__DIR__ . '/../persistencia/dExpediente.php');
+    include_once __DIR__ . '/../config.php';
+    include_once __DIR__ . '/../persistencia/conexion.php';
+    include_once __DIR__ . '/../persistencia/dExpediente.php';
 
-$pdo = Database::getConexion();
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = Database::getConexion();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-
-$area = $_GET['area'] ?? '';
-if ($area === 'UFREMID' OR $area === 'UFRESA' OR $area === 'UFRESBIT'){
+    $area = $_GET['area'] ?? '';
+    if ($area === 'UFREMID' or $area === 'UFRESA' or $area === 'UFRESBIT') {
     $area = $area;
-} else {
+    } else {
     header("Location: formExpedienteUFREMID.php?mensaje=" . urlencode("Área no válida"));
     exit;
-}
+    }
 
-$idExpedienteFI = isset($_GET['idFI']) ? intval($_GET['idFI']) : 0;
-if (!$idExpedienteFI) {
+    $idExpedienteFI = isset($_GET['idFI']) ? intval($_GET['idFI']) : 0;
+    if (! $idExpedienteFI) {
     header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de FI no válido"));
     exit;
-}
+    }
 
-// Obtener datos del expediente y FI
-$fi = obtenerExpedienteFI($pdo, $idExpedienteFI);
-if (!$fi) {
+    // Obtener datos del expediente y FI
+    $fi = obtenerExpedienteFI($pdo, $idExpedienteFI);
+    if (! $fi) {
     header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de FI no válido"));
     exit;
-}
-$expediente = obtenerExpediente($pdo, $fi['idExpediente']);
-if (!$expediente) {
+    }
+    $expediente = obtenerExpediente($pdo, $fi['idExpediente']);
+    if (! $expediente) {
     header("Location: formExpediente" . urlencode($area) . ".php?mensaje=" . urlencode("ID de FI no válido"));
     exit;
-}
+    }
 
-
-// Obtener o crear FS
-$fs = obtenerOCrearFS($pdo, $idExpedienteFI);
-if (!$fs) {
+    // Obtener o crear FS
+    $fs = obtenerOCrearFS($pdo, $idExpedienteFI);
+    if (! $fs) {
     header("Location: formExpedienteFI.php?idExpediente=" . $fi['idExpediente'] . "&area=" . urlencode($area) . "&mensaje=" . urlencode("Error al crear FS"));
     exit;
-}
+    }
 
-$idExpedienteFS = $fs['idExpedienteFS'];
+    $idExpedienteFS = $fs['idExpedienteFS'];
 
-$mensaje = '';
-$mensajeError = '';
+    $mensaje      = '';
+    $mensajeError = '';
 
-// Procesar guardado de FS
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFS'])) {
+    // Procesar guardado de FS
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFS'])) {
     $data = [
-        'idExpedienteFS' => $idExpedienteFS,
-        'idExpedienteFI' => $idExpedienteFI,
-        'oficioTrasladaIFI' => $_POST['oficioTrasladaIFI'] ?? '',
-        'fechaNotificacionIFI' => !empty($_POST['fechaNotificacionIFI']) ? $_POST['fechaNotificacionIFI'] : null,
-        'fechaDescargoIFI' => !empty($_POST['fechaDescargoIFI']) ? $_POST['fechaDescargoIFI'] : null,
-        'nResolucionSancion' => $_POST['nResolucionSancion'] ?? '',
-        'nInfraccion' => $_POST['nInfraccion'] ?? '',
-        'sancionImpuesta' => $_POST['sancionImpuesta'] ?? '',
-        'fechaNotificacionSancion' => !empty($_POST['fechaNotificacionSancion']) ? $_POST['fechaNotificacionSancion'] : null,
-        'recursoInterpuestoSancion' => $_POST['recursoInterpuestoSancion'] ?? '',
-        'fechaRecursoSancion' => !empty($_POST['fechaRecursoSancion']) ? $_POST['fechaRecursoSancion'] : null,
-        'pagoApela' => $_POST['pagoApela'] ?? '',
-        'resolucionRecursoSancion' => $_POST['resolucionRecursoSancion'] ?? '',
-        'resultadoRecurso' => $_POST['resultadoRecurso'] ?? '',
-        'fechaNotificacionRecursoSancion' => !empty($_POST['fechaNotificacionRecursoSancion']) ? $_POST['fechaNotificacionRecursoSancion'] : null,
-        'resolucionConsentida' => $_POST['resolucionConsentida'] ?? '',
-        'fechaNotificacionConsentida' => !empty($_POST['fechaNotificacionConsentida']) ? $_POST['fechaNotificacionConsentida'] : null,
-        'oficioElevaApelacion' => $_POST['oficioElevaApelacion'] ?? '',
-        'resolucionApelacion' => $_POST['resolucionApelacion'] ?? '',
-        'fechaNotificacionApelacion' => !empty($_POST['fechaNotificacionApelacion']) ? $_POST['fechaNotificacionApelacion'] : null,
-        'pagaDemandaContenciosa' => $_POST['pagaDemandaContenciosa'] ?? '',
-        'oficioSolicitaInfoProcurador' => $_POST['oficioSolicitaInfoProcurador'] ?? '',
-        'estadoContencioso' => $_POST['estadoContencioso'] ?? '',
-        'observacionesContencioso' => $_POST['observacionesContencioso'] ?? ''
+        'idExpedienteFS'                  => $idExpedienteFS,
+        'idExpedienteFI'                  => $idExpedienteFI,
+        'oficioTrasladaIFI'               => $_POST['oficioTrasladaIFI'] ?? '',
+        'fechaNotificacionIFI'            => ! empty($_POST['fechaNotificacionIFI']) ? $_POST['fechaNotificacionIFI'] : null,
+        'fechaDescargoIFI'                => ! empty($_POST['fechaDescargoIFI']) ? $_POST['fechaDescargoIFI'] : null,
+        'nResolucionSancion'              => $_POST['nResolucionSancion'] ?? '',
+        'nInfraccion'                     => $_POST['nInfraccion'] ?? '',
+        'sancionImpuesta'                 => $_POST['sancionImpuesta'] ?? '',
+        'fechaNotificacionSancion'        => ! empty($_POST['fechaNotificacionSancion']) ? $_POST['fechaNotificacionSancion'] : null,
+        'recursoInterpuestoSancion'       => $_POST['recursoInterpuestoSancion'] ?? '',
+        'fechaRecursoSancion'             => ! empty($_POST['fechaRecursoSancion']) ? $_POST['fechaRecursoSancion'] : null,
+        'pagoApela'                       => $_POST['pagoApela'] ?? '',
+        'resolucionRecursoSancion'        => $_POST['resolucionRecursoSancion'] ?? '',
+        'resultadoRecurso'                => $_POST['resultadoRecurso'] ?? '',
+        'fechaNotificacionRecursoSancion' => ! empty($_POST['fechaNotificacionRecursoSancion']) ? $_POST['fechaNotificacionRecursoSancion'] : null,
+        'resolucionConsentida'            => $_POST['resolucionConsentida'] ?? '',
+        'fechaNotificacionConsentida'     => ! empty($_POST['fechaNotificacionConsentida']) ? $_POST['fechaNotificacionConsentida'] : null,
+        'oficioElevaApelacion'            => $_POST['oficioElevaApelacion'] ?? '',
+        'resolucionApelacion'             => $_POST['resolucionApelacion'] ?? '',
+        'fechaNotificacionApelacion'      => ! empty($_POST['fechaNotificacionApelacion']) ? $_POST['fechaNotificacionApelacion'] : null,
+        'pagaDemandaContenciosa'          => $_POST['pagaDemandaContenciosa'] ?? '',
+        'oficioSolicitaInfoProcurador'    => $_POST['oficioSolicitaInfoProcurador'] ?? '',
+        'estadoContencioso'               => $_POST['estadoContencioso'] ?? '',
+        'observacionesContencioso'        => $_POST['observacionesContencioso'] ?? '',
     ];
 
     $errores = [];
-    if (empty($data['oficioTrasladaIFI'])) $errores[] = "Oficio que traslada IFI es requerido.";
-    if (empty($data['fechaNotificacionIFI'])) $errores[] = "Fecha de notificación del IFI es requerida.";
+    if (empty($data['oficioTrasladaIFI'])) {
+        $errores[] = "Oficio que traslada IFI es requerido.";
+    }
+
+    if (empty($data['fechaNotificacionIFI'])) {
+        $errores[] = "Fecha de notificación del IFI es requerida.";
+    }
 
     if (empty($errores)) {
         try {
@@ -91,20 +94,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFS'])) {
     } else {
         $mensajeError = implode("<br>", $errores);
     }
-}
+    }
 
-// Procesar pagos (AJAX o POST)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAgregarPago'])) {
+    // Procesar pagos (AJAX o POST)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAgregarPago'])) {
     $dataPago = [
-        'idExpediente' => $fi['idExpediente'],
-        'idExpedienteFS' => $idExpedienteFS,
-        'tipoPago' => $_POST['tipoPago'] ?? '',
+        'idExpediente'      => $fi['idExpediente'],
+        'idExpedienteFS'    => $idExpedienteFS,
+        'tipoPago'          => $_POST['tipoPago'] ?? '',
         'numeroComprobante' => $_POST['numeroComprobante'] ?? '',
-        'fechaPago' => $_POST['fechaPago'] ?? '',
-        'monto' => $_POST['monto'] ?? 0,
-        'observaciones' => $_POST['observacionesPago'] ?? ''
+        'fechaPago'         => $_POST['fechaPago'] ?? '',
+        'monto'             => $_POST['monto'] ?? 0,
+        'observaciones'     => $_POST['observacionesPago'] ?? '',
     ];
-    if (!empty($dataPago['tipoPago']) && !empty($dataPago['fechaPago'])) {
+    if (! empty($dataPago['tipoPago']) && ! empty($dataPago['fechaPago'])) {
         try {
             insertarPago($pdo, $dataPago);
             $mensaje = "Pago agregado correctamente.";
@@ -117,10 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAgregarPago'])) {
     } else {
         $mensajeError = "Tipo de pago y fecha son requeridos.";
     }
-}
+    }
 
-// Eliminar pago
-if (isset($_GET['eliminarPago'])) {
+    // Eliminar pago
+    if (isset($_GET['eliminarPago'])) {
     $idPago = intval($_GET['eliminarPago']);
     try {
         eliminarPago($pdo, $idPago);
@@ -130,23 +133,23 @@ if (isset($_GET['eliminarPago'])) {
     } catch (Exception $e) {
         $mensajeError = "Error al eliminar pago: " . $e->getMessage();
     }
-}
+    }
 
-// Obtener listado de FS (historial)
-$registrosFS = listarExpedienteFS($pdo, $idExpedienteFI);
-$pagos = listarPagosPorFS($pdo, $idExpedienteFS);
+    // Obtener listado de FS (historial)
+    $registrosFS = listarExpedienteFS($pdo, $idExpedienteFI);
+    $pagos       = listarPagosPorFS($pdo, $idExpedienteFS);
 
-// Mensaje desde GET
-if (isset($_GET['mensaje'])) {
+    // Mensaje desde GET
+    if (isset($_GET['mensaje'])) {
     $mensaje = $_GET['mensaje'];
-}
+    }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fase Sancionadora - Expediente <?= htmlspecialchars($expediente['numeroActa']) ?></title>
+    <title>Fase Sancionadora - Expediente <?php echo htmlspecialchars($expediente['numeroActa']) ?></title>
     <?php include 'boostrap-css.php'; ?>
     <?php include 'datatable-css.php'; ?>
     <?php include 'select2-css.php'; ?>
@@ -191,9 +194,9 @@ if (isset($_GET['mensaje'])) {
         <div class="container">
             <h2><i class="fas fa-balance-scale me-2"></i>Fase Sancionadora</h2>
             <p>
-                Expediente N° <strong><?= htmlspecialchars($expediente['numeroActa']) ?></strong> - 
-                Sede: <?= htmlspecialchars($expediente['nombreSede']) ?><br>
-                <small>Registro FI N° <?= $idExpedienteFI ?></small>
+                Expediente N° <strong><?php echo htmlspecialchars($expediente['numeroActa']) ?></strong> -
+                Sede: <?php echo htmlspecialchars($expediente['nombreSede']) ?><br>
+                <small>Registro FI N° <?php echo $idExpedienteFI ?></small>
             </p>
         </div>
     </div>
@@ -202,13 +205,13 @@ if (isset($_GET['mensaje'])) {
         <!-- Mensajes -->
         <?php if ($mensaje): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($mensaje) ?>
+                <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($mensaje) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
         <?php if ($mensajeError): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i><?= htmlspecialchars($mensajeError) ?>
+                <i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($mensajeError) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -220,23 +223,23 @@ if (isset($_GET['mensaje'])) {
                     <i class="fas fa-edit me-2"></i>Gestión de Fase Sancionadora
                 </h5>
                 <form method="POST" action="">
-                    <input type="hidden" name="area" value="<?= htmlspecialchars($area) ?>">
-                    <input type="hidden" name="idExpedienteFS" value="<?= $idExpedienteFS ?>">
+                    <input type="hidden" name="area" value="<?php echo htmlspecialchars($area) ?>">
+                    <input type="hidden" name="idExpedienteFS" value="<?php echo $idExpedienteFS ?>">
                     <div class="row g-3">
                         <!-- Traslado IFI -->
                         <div class="col-md-6">
                             <label for="oficioTrasladaIFI" class="form-label">Oficio que traslada IFI <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-modern" name="oficioTrasladaIFI" id="oficioTrasladaIFI" value="<?= htmlspecialchars($fs['oficioTrasladaIFI'] ?? '') ?>" placeholder="N° de oficio" required>
+                            <input type="text" class="form-control form-control-modern" name="oficioTrasladaIFI" id="oficioTrasladaIFI" value="<?php echo htmlspecialchars($fs['oficioTrasladaIFI'] ?? '') ?>" placeholder="N° de oficio" required>
                         </div>
                         <div class="col-md-6">
                             <label for="fechaNotificacionIFI" class="form-label">Fecha de notificación del IFI <span class="text-danger">*</span>
                                 <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="3° ALARMA"></i>
                             </label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionIFI" id="fechaNotificacionIFI" value="<?= $fs['fechaNotificacionIFI'] ?? '' ?>" required>
+                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionIFI" id="fechaNotificacionIFI" value="<?php echo $fs['fechaNotificacionIFI'] ?? '' ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label for="fechaDescargoIFI" class="form-label">Fecha de descargo al IFI (5 días hábiles)</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaDescargoIFI" id="fechaDescargoIFI" value="<?= $fs['fechaDescargoIFI'] ?? '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaDescargoIFI" id="fechaDescargoIFI" value="<?php echo $fs['fechaDescargoIFI'] ?? '' ?>">
                         </div>
 
                         <div class="col-12"><hr></div>
@@ -244,34 +247,34 @@ if (isset($_GET['mensaje'])) {
                         <!-- Resolución Sancionadora -->
                         <div class="col-md-6">
                             <label for="nResolucionSancion" class="form-label">N° Resolución de Sanción</label>
-                            <input type="text" class="form-control form-control-modern" name="nResolucionSancion" id="nResolucionSancion" value="<?= htmlspecialchars($fs['nResolucionSancion'] ?? '') ?>" placeholder="N° de resolución">
+                            <input type="text" class="form-control form-control-modern" name="nResolucionSancion" id="nResolucionSancion" value="<?php echo htmlspecialchars($fs['nResolucionSancion'] ?? '') ?>" placeholder="N° de resolución">
                         </div>
                         <div class="col-md-6">
                             <label for="nInfraccion" class="form-label">N° de infracción</label>
-                            <input type="text" class="form-control form-control-modern" name="nInfraccion" id="nInfraccion" value="<?= htmlspecialchars($fs['nInfraccion'] ?? '') ?>" placeholder="N° de infracción">
+                            <input type="text" class="form-control form-control-modern" name="nInfraccion" id="nInfraccion" value="<?php echo htmlspecialchars($fs['nInfraccion'] ?? '') ?>" placeholder="N° de infracción">
                         </div>
                         <div class="col-md-6">
                             <label for="sancionImpuesta" class="form-label">Sanción impuesta</label>
-                            <input type="text" class="form-control form-control-modern" name="sancionImpuesta" id="sancionImpuesta" value="<?= htmlspecialchars($fs['sancionImpuesta'] ?? '') ?>" placeholder="Tipo de sanción">
+                            <input type="text" class="form-control form-control-modern" name="sancionImpuesta" id="sancionImpuesta" value="<?php echo htmlspecialchars($fs['sancionImpuesta'] ?? '') ?>" placeholder="Tipo de sanción">
                         </div>
                         <div class="col-md-6">
                             <label for="fechaNotificacionSancion" class="form-label">Fecha de notificación de la Resolución de Sanción</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionSancion" id="fechaNotificacionSancion" value="<?= $fs['fechaNotificacionSancion'] ?? '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionSancion" id="fechaNotificacionSancion" value="<?php echo $fs['fechaNotificacionSancion'] ?? '' ?>">
                         </div>
                         <div class="col-md-6">
                             <label for="recursoInterpuestoSancion" class="form-label">Recurso interpuesto</label>
-                            <input type="text" class="form-control form-control-modern" name="recursoInterpuestoSancion" id="recursoInterpuestoSancion" value="<?= htmlspecialchars($fs['recursoInterpuestoSancion'] ?? '') ?>" placeholder="Descripción o número">
+                            <input type="text" class="form-control form-control-modern" name="recursoInterpuestoSancion" id="recursoInterpuestoSancion" value="<?php echo htmlspecialchars($fs['recursoInterpuestoSancion'] ?? '') ?>" placeholder="Descripción o número">
                         </div>
                         <div class="col-md-6">
                             <label for="fechaRecursoSancion" class="form-label">Fecha del recurso</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaRecursoSancion" id="fechaRecursoSancion" value="<?= $fs['fechaRecursoSancion'] ?? '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaRecursoSancion" id="fechaRecursoSancion" value="<?php echo $fs['fechaRecursoSancion'] ?? '' ?>">
                         </div>
                         <div class="col-md-6">
                             <label for="pagoApela" class="form-label">Pago o Apela</label>
                             <select name="pagoApela" id="pagoApela" class="form-select">
                                 <option value="">Seleccionar</option>
-                                <option value="PAGA" <?= ($fs['pagoApela'] ?? '') == 'PAGA' ? 'selected' : '' ?>>PAGA</option>
-                                <option value="APELA" <?= ($fs['pagoApela'] ?? '') == 'APELA' ? 'selected' : '' ?>>APELA</option>
+                                <option value="PAGA" <?php echo ($fs['pagoApela'] ?? '') == 'PAGA' ? 'selected' : '' ?>>PAGA</option>
+                                <option value="APELA" <?php echo ($fs['pagoApela'] ?? '') == 'APELA' ? 'selected' : '' ?>>APELA</option>
                             </select>
                         </div>
 
@@ -280,21 +283,21 @@ if (isset($_GET['mensaje'])) {
                         <!-- Resolución del recurso -->
                         <div class="col-md-6">
                             <label for="resolucionRecursoSancion" class="form-label">Resolución que resuelve el recurso</label>
-                            <input type="text" class="form-control form-control-modern" name="resolucionRecursoSancion" id="resolucionRecursoSancion" value="<?= htmlspecialchars($fs['resolucionRecursoSancion'] ?? '') ?>" placeholder="N° de resolución">
+                            <input type="text" class="form-control form-control-modern" name="resolucionRecursoSancion" id="resolucionRecursoSancion" value="<?php echo htmlspecialchars($fs['resolucionRecursoSancion'] ?? '') ?>" placeholder="N° de resolución">
                         </div>
                         <div class="col-md-6">
                             <label for="resultadoRecurso" class="form-label">Resultado del recurso</label>
                             <select name="resultadoRecurso" id="resultadoRecurso" class="form-select">
                                 <option value="">Seleccionar</option>
-                                <option value="FUNDADO" <?= ($fs['resultadoRecurso'] ?? '') == 'FUNDADO' ? 'selected' : '' ?>>FUNDADO</option>
-                                <option value="INFUNDADO" <?= ($fs['resultadoRecurso'] ?? '') == 'INFUNDADO' ? 'selected' : '' ?>>INFUNDADO</option>
-                                <option value="CONSENTIDO" <?= ($fs['resultadoRecurso'] ?? '') == 'CONSENTIDO' ? 'selected' : '' ?>>CONSENTIDO</option>
-                                <option value="NO HA LUGAR" <?= ($fs['resultadoRecurso'] ?? '') == 'NO HA LUGAR' ? 'selected' : '' ?>>NO HA LUGAR</option>
+                                <option value="FUNDADO" <?php echo ($fs['resultadoRecurso'] ?? '') == 'FUNDADO' ? 'selected' : '' ?>>FUNDADO</option>
+                                <option value="INFUNDADO" <?php echo ($fs['resultadoRecurso'] ?? '') == 'INFUNDADO' ? 'selected' : '' ?>>INFUNDADO</option>
+                                <option value="CONSENTIDO" <?php echo ($fs['resultadoRecurso'] ?? '') == 'CONSENTIDO' ? 'selected' : '' ?>>CONSENTIDO</option>
+                                <option value="NO HA LUGAR" <?php echo ($fs['resultadoRecurso'] ?? '') == 'NO HA LUGAR' ? 'selected' : '' ?>>NO HA LUGAR</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="fechaNotificacionRecursoSancion" class="form-label">Fecha de notificación</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionRecursoSancion" id="fechaNotificacionRecursoSancion" value="<?= $fs['fechaNotificacionRecursoSancion'] ?? '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionRecursoSancion" id="fechaNotificacionRecursoSancion" value="<?php echo $fs['fechaNotificacionRecursoSancion'] ?? '' ?>">
                         </div>
 
                         <div class="col-12"><hr></div>
@@ -302,11 +305,11 @@ if (isset($_GET['mensaje'])) {
                         <!-- Consentimiento -->
                         <div class="col-md-6">
                             <label for="resolucionConsentida" class="form-label">Resolución consentida</label>
-                            <input type="text" class="form-control form-control-modern" name="resolucionConsentida" id="resolucionConsentida" value="<?= htmlspecialchars($fs['resolucionConsentida'] ?? '') ?>" placeholder="N° de resolución">
+                            <input type="text" class="form-control form-control-modern" name="resolucionConsentida" id="resolucionConsentida" value="<?php echo htmlspecialchars($fs['resolucionConsentida'] ?? '') ?>" placeholder="N° de resolución">
                         </div>
                         <div class="col-md-6">
                             <label for="fechaNotificacionConsentida" class="form-label">Fecha de notificación</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionConsentida" id="fechaNotificacionConsentida" value="<?= $fs['fechaNotificacionConsentida'] ?? '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionConsentida" id="fechaNotificacionConsentida" value="<?php echo $fs['fechaNotificacionConsentida'] ?? '' ?>">
                         </div>
 
                         <div class="col-12"><hr></div>
@@ -314,19 +317,19 @@ if (isset($_GET['mensaje'])) {
                         <!-- Apelación -->
                         <div class="col-md-6">
                             <label for="oficioElevaApelacion" class="form-label">Oficio que eleva la apelación</label>
-                            <input type="text" class="form-control form-control-modern" name="oficioElevaApelacion" id="oficioElevaApelacion" value="<?= htmlspecialchars($fs['oficioElevaApelacion'] ?? '') ?>" placeholder="N° de oficio">
+                            <input type="text" class="form-control form-control-modern" name="oficioElevaApelacion" id="oficioElevaApelacion" value="<?php echo htmlspecialchars($fs['oficioElevaApelacion'] ?? '') ?>" placeholder="N° de oficio">
                         </div>
                         <div class="col-md-6">
                             <label for="resolucionApelacion" class="form-label">Resolución que resuelve la apelación</label>
-                            <input type="text" class="form-control form-control-modern" name="resolucionApelacion" id="resolucionApelacion" value="<?= htmlspecialchars($fs['resolucionApelacion'] ?? '') ?>" placeholder="N° de resolución">
+                            <input type="text" class="form-control form-control-modern" name="resolucionApelacion" id="resolucionApelacion" value="<?php echo htmlspecialchars($fs['resolucionApelacion'] ?? '') ?>" placeholder="N° de resolución">
                         </div>
                         <div class="col-md-6">
                             <label for="fechaNotificacionApelacion" class="form-label">Fecha de notificación de la apelación</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionApelacion" id="fechaNotificacionApelacion" value="<?= $fs['fechaNotificacionApelacion'] ?? '' ?>">
+                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionApelacion" id="fechaNotificacionApelacion" value="<?php echo $fs['fechaNotificacionApelacion'] ?? '' ?>">
                         </div>
                         <div class="col-md-6">
                             <label for="pagaDemandaContenciosa" class="form-label">Paga / Demanda Contencioso Administrativo</label>
-                            <input type="text" class="form-control form-control-modern" name="pagaDemandaContenciosa" id="pagaDemandaContenciosa" value="<?= htmlspecialchars($fs['pagaDemandaContenciosa'] ?? '') ?>" placeholder="Descripción">
+                            <input type="text" class="form-control form-control-modern" name="pagaDemandaContenciosa" id="pagaDemandaContenciosa" value="<?php echo htmlspecialchars($fs['pagaDemandaContenciosa'] ?? '') ?>" placeholder="Descripción">
                         </div>
 
                         <div class="col-12"><hr></div>
@@ -334,15 +337,15 @@ if (isset($_GET['mensaje'])) {
                         <!-- Contencioso Administrativo -->
                         <div class="col-md-6">
                             <label for="oficioSolicitaInfoProcurador" class="form-label">Oficio que solicita información al Procurador</label>
-                            <input type="text" class="form-control form-control-modern" name="oficioSolicitaInfoProcurador" id="oficioSolicitaInfoProcurador" value="<?= htmlspecialchars($fs['oficioSolicitaInfoProcurador'] ?? '') ?>" placeholder="N° de oficio">
+                            <input type="text" class="form-control form-control-modern" name="oficioSolicitaInfoProcurador" id="oficioSolicitaInfoProcurador" value="<?php echo htmlspecialchars($fs['oficioSolicitaInfoProcurador'] ?? '') ?>" placeholder="N° de oficio">
                         </div>
                         <div class="col-md-6">
                             <label for="estadoContencioso" class="form-label">Estado del proceso contencioso</label>
-                            <input type="text" class="form-control form-control-modern" name="estadoContencioso" id="estadoContencioso" value="<?= htmlspecialchars($fs['estadoContencioso'] ?? '') ?>" placeholder="Estado actual">
+                            <input type="text" class="form-control form-control-modern" name="estadoContencioso" id="estadoContencioso" value="<?php echo htmlspecialchars($fs['estadoContencioso'] ?? '') ?>" placeholder="Estado actual">
                         </div>
                         <div class="col-12">
                             <label for="observacionesContencioso" class="form-label">Observaciones</label>
-                            <textarea class="form-control form-control-modern" name="observacionesContencioso" id="observacionesContencioso" rows="2" placeholder="Observaciones adicionales"><?= htmlspecialchars($fs['observacionesContencioso'] ?? '') ?></textarea>
+                            <textarea class="form-control form-control-modern" name="observacionesContencioso" id="observacionesContencioso" rows="2" placeholder="Observaciones adicionales"><?php echo htmlspecialchars($fs['observacionesContencioso'] ?? '') ?></textarea>
                         </div>
                     </div>
 
@@ -350,10 +353,10 @@ if (isset($_GET['mensaje'])) {
                         <button type="submit" name="btnGuardarFS" class="btn btn-primary-custom">
                             <i class="fas fa-save me-2"></i>Guardar Fase Sancionadora
                         </button>
-                        <a href="formExpedienteFI.php?idExpediente=<?= $fi['idExpediente'] ?>&area=<?= urlencode($area) ?>" class="btn btn-outline-secondary-custom">
+                        <a href="formExpedienteFI.php?idExpediente=<?php echo $fi['idExpediente'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-arrow-left me-2"></i>Volver a FI
                         </a>
-                        <a href="formExpediente<?= urlencode($area) ?>.php" class="btn btn-outline-secondary-custom">
+                        <a href="formExpediente<?php echo urlencode($area) ?>.php" class="btn btn-outline-secondary-custom">
                             <i class="fas fa-home me-2"></i>Inicio
                         </a>
                     </div>
@@ -385,44 +388,59 @@ if (isset($_GET['mensaje'])) {
                         <tbody>
                             <?php foreach ($registrosFS as $fsReg): ?>
                             <tr>
-                                <td><?= $fsReg['idExpedienteFS'] ?></td>
-                                <td><?= htmlspecialchars($fsReg['oficioTrasladaIFI'] ?? '') ?></td>
-                                <td><?= $fsReg['fechaNotificacionIFI'] ?? '' ?></td>
-                                <td><?= $fsReg['fechaDescargoIFI'] ?? '' ?></td>
+                                <td><?php echo $fsReg['idExpedienteFS'] ?></td>
+                                <td><?php echo htmlspecialchars($fsReg['oficioTrasladaIFI'] ?? '') ?></td>
+                                <td><?php echo $fsReg['fechaNotificacionIFI'] ?? '' ?></td>
+                                <td><?php echo $fsReg['fechaDescargoIFI'] ?? '' ?></td>
                                 <td>
-                                    <?php 
-                                    $estadoDescargo = $fsReg['estadoDescargoIFI'] ?? 'VIGENTE';
-                                    $badgeClass = 'badge-plazo-vigente';
-                                    if ($estadoDescargo == 'PROXIMO_VENCER') $badgeClass = 'badge-plazo-proximo';
-                                    elseif ($estadoDescargo == 'VENCIDO') $badgeClass = 'badge-plazo-vencido';
-                                    elseif ($estadoDescargo == 'CUMPLIDO') $badgeClass = 'badge-plazo-cumplido';
+                                    <?php
+                                        $estadoDescargo = $fsReg['estadoDescargoIFI'] ?? 'VIGENTE';
+                                        $badgeClass     = 'badge-plazo-vigente';
+                                        if ($estadoDescargo == 'PROXIMO_VENCER') {
+                                            $badgeClass = 'badge-plazo-proximo';
+                                        } elseif ($estadoDescargo == 'VENCIDO') {
+                                            $badgeClass = 'badge-plazo-vencido';
+                                        } elseif ($estadoDescargo == 'CUMPLIDO') {
+                                            $badgeClass = 'badge-plazo-cumplido';
+                                        }
+
                                     ?>
-                                    <span class="badge <?= $badgeClass ?>"><?= $estadoDescargo ?></span>
-                                    <br><small><?= $fsReg['fechaVencimientoDescargoIFI'] ?? '' ?></small>
+                                    <span class="badge <?php echo $badgeClass ?>"><?php echo $estadoDescargo ?></span>
+                                    <br><small><?php echo $fsReg['fechaVencimientoDescargoIFI'] ?? '' ?></small>
                                 </td>
-                                <td><?= $fsReg['fechaNotificacionSancion'] ?? '' ?></td>
+                                <td><?php echo $fsReg['fechaNotificacionSancion'] ?? '' ?></td>
                                 <td>
-                                    <?php 
-                                    $estadoRecurso = $fsReg['estadoRecursoSancion'] ?? 'VIGENTE';
-                                    $badgeClass2 = 'badge-plazo-vigente';
-                                    if ($estadoRecurso == 'PROXIMO_VENCER') $badgeClass2 = 'badge-plazo-proximo';
-                                    elseif ($estadoRecurso == 'VENCIDO') $badgeClass2 = 'badge-plazo-vencido';
-                                    elseif ($estadoRecurso == 'CUMPLIDO') $badgeClass2 = 'badge-plazo-cumplido';
+                                    <?php
+                                        $estadoRecurso = $fsReg['estadoRecursoSancion'] ?? 'VIGENTE';
+                                        $badgeClass2   = 'badge-plazo-vigente';
+                                        if ($estadoRecurso == 'PROXIMO_VENCER') {
+                                            $badgeClass2 = 'badge-plazo-proximo';
+                                        } elseif ($estadoRecurso == 'VENCIDO') {
+                                            $badgeClass2 = 'badge-plazo-vencido';
+                                        } elseif ($estadoRecurso == 'CUMPLIDO') {
+                                            $badgeClass2 = 'badge-plazo-cumplido';
+                                        }
+
                                     ?>
-                                    <span class="badge <?= $badgeClass2 ?>"><?= $estadoRecurso ?></span>
-                                    <br><small><?= $fsReg['fechaVencimientoRecursoSancion'] ?? '' ?></small>
+                                    <span class="badge <?php echo $badgeClass2 ?>"><?php echo $estadoRecurso ?></span>
+                                    <br><small><?php echo $fsReg['fechaVencimientoRecursoSancion'] ?? '' ?></small>
                                 </td>
-                                <td><?= $fsReg['fechaNotificacionConsentida'] ?? '' ?></td>
+                                <td><?php echo $fsReg['fechaNotificacionConsentida'] ?? '' ?></td>
                                 <td>
-                                    <?php 
-                                    $estadoCump = $fsReg['estadoCumplimientoConsentida'] ?? 'VIGENTE';
-                                    $badgeClass3 = 'badge-plazo-vigente';
-                                    if ($estadoCump == 'PROXIMO_VENCER') $badgeClass3 = 'badge-plazo-proximo';
-                                    elseif ($estadoCump == 'VENCIDO') $badgeClass3 = 'badge-plazo-vencido';
-                                    elseif ($estadoCump == 'CUMPLIDO') $badgeClass3 = 'badge-plazo-cumplido';
+                                    <?php
+                                        $estadoCump  = $fsReg['estadoCumplimientoConsentida'] ?? 'VIGENTE';
+                                        $badgeClass3 = 'badge-plazo-vigente';
+                                        if ($estadoCump == 'PROXIMO_VENCER') {
+                                            $badgeClass3 = 'badge-plazo-proximo';
+                                        } elseif ($estadoCump == 'VENCIDO') {
+                                            $badgeClass3 = 'badge-plazo-vencido';
+                                        } elseif ($estadoCump == 'CUMPLIDO') {
+                                            $badgeClass3 = 'badge-plazo-cumplido';
+                                        }
+
                                     ?>
-                                    <span class="badge <?= $badgeClass3 ?>"><?= $estadoCump ?></span>
-                                    <br><small><?= $fsReg['fechaVencimientoCumplimientoConsentida'] ?? '' ?></small>
+                                    <span class="badge <?php echo $badgeClass3 ?>"><?php echo $estadoCump ?></span>
+                                    <br><small><?php echo $fsReg['fechaVencimientoCumplimientoConsentida'] ?? '' ?></small>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -459,15 +477,15 @@ if (isset($_GET['mensaje'])) {
                         <tbody>
                             <?php foreach ($pagos as $pago): ?>
                             <tr>
-                                <td><?= $pago['idExpedientePago'] ?></td>
-                                <td><?= htmlspecialchars($pago['tipoPago'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($pago['numeroComprobante'] ?? '') ?></td>
-                                <td><?= $pago['fechaPago'] ?? '' ?></td>
-                                <td><?= number_format($pago['monto'] ?? 0, 2) ?></td>
-                                <td><?= htmlspecialchars($pago['observaciones'] ?? '') ?></td>
+                                <td><?php echo $pago['idExpedientePago'] ?></td>
+                                <td><?php echo htmlspecialchars($pago['tipoPago'] ?? '') ?></td>
+                                <td><?php echo htmlspecialchars($pago['numeroComprobante'] ?? '') ?></td>
+                                <td><?php echo $pago['fechaPago'] ?? '' ?></td>
+                                <td><?php echo number_format($pago['monto'] ?? 0, 2) ?></td>
+                                <td><?php echo htmlspecialchars($pago['observaciones'] ?? '') ?></td>
                                 <td>
-                                    <a href="?idFI=<?= $idExpedienteFI ?>&area=<?= urlencode($area) ?>&eliminarPago=<?= $pago['idExpedientePago'] ?>" 
-                                    class="btn btn-sm btn-danger" 
+                                    <a href="?idFI=<?php echo $idExpedienteFI ?>&area=<?php echo urlencode($area) ?>&eliminarPago=<?php echo $pago['idExpedientePago'] ?>"
+                                    class="btn btn-sm btn-danger"
                                     onclick="return confirm('¿Eliminar este pago?')">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
@@ -491,8 +509,8 @@ if (isset($_GET['mensaje'])) {
                 </div>
                 <form method="POST" action="">
                     <div class="modal-body">
-                        <input type="hidden" name="area" value="<?= htmlspecialchars($area) ?>">
-                        <input type="hidden" name="idExpedienteFS" value="<?= $idExpedienteFS ?>">
+                        <input type="hidden" name="area" value="<?php echo htmlspecialchars($area) ?>">
+                        <input type="hidden" name="idExpedienteFS" value="<?php echo $idExpedienteFS ?>">
                         <div class="mb-3">
                             <label for="tipoPago" class="form-label">Tipo de Pago</label>
                             <select name="tipoPago" id="tipoPago" class="form-select" required>
@@ -532,7 +550,7 @@ if (isset($_GET['mensaje'])) {
 
     <footer class="footer-custom">
         <div class="container">
-            <p class="mb-0">&copy; <?= date('Y') ?> Sub Gerencia de Regulación Sectorial - Todos los derechos reservados.</p>
+            <p class="mb-0">&copy; <?php echo date('Y') ?> Sub Gerencia de Regulación Sectorial - Todos los derechos reservados.</p>
         </div>
     </footer>
 
