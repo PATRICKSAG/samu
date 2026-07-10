@@ -481,6 +481,7 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item" href="?editar=<?= $exp['idExpediente'] ?>"><i class="fas fa-edit me-2"></i>Editar Expediente</a></li>
                                             <li><a class="dropdown-item text-danger" href="eliminarExpediente.php?id=<?= $exp['idExpediente'] ?>&area=UFRESBIT" onclick="return confirm('¿Está seguro de eliminar este expediente?')"><i class="fas fa-trash-alt me-2"></i>Eliminar</a></li>
+                                            <li><a class="dropdown-item" href="seguimiento.php?id=<?= $exp['idExpediente'] ?>"><i class="fas fa-chart-line me-2"></i>Seguimiento</a></li>
                                         </ul>
                                     </div>
                                 </td>
