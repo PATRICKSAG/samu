@@ -358,7 +358,7 @@ function getEstadoTexto(string $estado) {
                         <hr>
                         <h6 class="fw-bold mt-4" style="color: #0b2a4a;"><i class="fas fa-list me-2"></i>Resumen de Plazos</h6>
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped">
+                            <table class="table table-sm table-striped">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Evento</th>
