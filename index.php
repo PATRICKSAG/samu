@@ -1,4 +1,10 @@
-<?php require_once __DIR__ . '/config.php'; ?>
+<?php require_once __DIR__ . '/config.php';
+include_once(__DIR__ . '/persistencia/conexion.php');
+include_once(__DIR__ . '/persistencia/dExpediente.php');
+
+$pdo = Database::getConexion();
+$alertas = obtenerPlazosCriticos($pdo);
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,47 +12,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestión - Sub Gerencia de Regulación Sectorial</title>
     <?php include 'presentacion/boostrap-css.php'; ?>
-    <!-- Font Awesome para iconos -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* ... (todos los estilos anteriores de index.php) ... */
         body {
             background-color: #f0f4fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .hero-section {
+            position: relative;
             background: linear-gradient(135deg, #0b2a4a 0%, #1b4f8b 100%);
             color: white;
             padding: 90px 0 70px;
             margin-bottom: 50px;
             border-radius: 0 0 60px 60px;
             box-shadow: 0 12px 35px rgba(0,0,0,0.15);
-            position: relative;
             overflow: hidden;
         }
-        /* Decoración de fondo (círculos) */
-        .hero-section::before {
-            content: '';
+        #particle-canvas {
             position: absolute;
-            top: -60px;
-            right: -60px;
-            width: 300px;
-            height: 300px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            opacity: 0.8;
         }
-        .hero-section::after {
-            content: '';
-            position: absolute;
-            bottom: -80px;
-            left: -80px;
-            width: 400px;
-            height: 400px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 50%;
+        #particle-canvas canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+        }
+        #particle-canvas > div {
+            background: transparent !important;
         }
         .hero-content {
             position: relative;
             z-index: 2;
+            text-align: center;
         }
         .hero-title {
             font-weight: 700;
@@ -73,12 +80,68 @@
             font-weight: 600;
             transition: all 0.3s;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            display: inline-block;
+            text-decoration: none;
         }
         .btn-hero:hover {
             background: #e8f0fe;
             transform: scale(1.05);
             box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+            color: #1b4f8b;
         }
+        /* Panel de alertas */
+        .alertas-panel {
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 20px 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            margin-bottom: 40px;
+            border-left: 6px solid #1b4f8b;
+        }
+        .alertas-panel .alertas-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0b2a4a;
+            line-height: 1;
+        }
+        .alertas-panel .alertas-label {
+            color: #6f85a3;
+            font-weight: 500;
+        }
+        .alertas-panel .alerta-item {
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            margin-bottom: 6px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .alertas-panel .alerta-item:hover {
+            background: #e9f0fc;
+        }
+        .alertas-panel .alerta-item .badge-estado {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 30px;
+            margin-right: 10px;
+        }
+        .badge-vencido { background: #dc3545; color: white; }
+        .badge-proximo { background: #ffc107; color: #212529; }
+        .alertas-panel .alerta-item .acta-link {
+            font-weight: 600;
+            color: #0b2a4a;
+            text-decoration: none;
+        }
+        .alertas-panel .alerta-item .acta-link:hover {
+            text-decoration: underline;
+        }
+        .alertas-panel .alerta-item .text-muted {
+            font-size: 0.85rem;
+        }
+        /* Tarjetas de módulos */
         .card-modern {
             border: none;
             border-radius: 24px;
@@ -125,6 +188,8 @@
             padding: 8px 28px;
             font-weight: 500;
             transition: 0.25s;
+            text-decoration: none;
+            display: inline-block;
         }
         .btn-outline-primary-custom:hover {
             background: #1b4f8b;
@@ -138,6 +203,8 @@
             font-weight: 500;
             color: white;
             transition: 0.25s;
+            text-decoration: none;
+            display: inline-block;
         }
         .btn-primary-custom:hover {
             background: #0f3b6b;
@@ -191,31 +258,95 @@
             .hero-section {
                 padding: 50px 0 40px;
             }
+            .alertas-panel .alerta-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .alertas-panel .alerta-item .badge-estado {
+                margin-bottom: 4px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header con navbar -->
     <?php include 'presentacion/header.php'; ?>
 
-    <!-- Sección Hero -->
+    <!-- Hero con partículas -->
     <section class="hero-section">
-        <div class="container hero-content text-center">
+        <div id="particle-canvas"></div>
+        <div class="container hero-content">
             <h1 class="hero-title">Sistema de Gestión</h1>
             <p class="hero-sub">Sub Gerencia de Regulación Sectorial</p>
             <p class="hero-desc">
                 Administración integral de establecimientos, sedes, expedientes y reportes de inspección.
             </p>
-            <a href="#modulos" class="btn btn-hero">
+            <a href="#modulos" class="btn-hero">
                 <i class="fas fa-arrow-down me-2"></i>Explorar Módulos
             </a>
         </div>
     </section>
 
-    <!-- Módulos -->
-    <div class="container" id="modulos">
-        <div class="text-center mb-5">
+    <div class="container">
+
+        <!-- Panel de Alertas -->
+        <div class="alertas-panel">
+            <div class="row align-items-center">
+                <div class="col-md-3 col-sm-12 mb-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-bell text-primary me-3" style="font-size: 2.2rem;"></i>
+                        <div>
+                            <div class="alertas-count"><?= $alertas['total'] ?></div>
+                            <div class="alertas-label">Alertas Pendientes</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9 col-sm-12">
+                    <?php if ($alertas['total'] == 0): ?>
+                        <div class="text-success fw-bold">
+                            <i class="fas fa-check-circle me-2"></i>¡Todo en orden! No hay plazos críticos.
+                        </div>
+                    <?php else: ?>
+                        <?php
+                        // Mostrar solo las primeras 5 alertas (para no saturar)
+                        $mostrar = array_slice($alertas['lista'], 0, 5);
+                        ?>
+                        <?php foreach ($mostrar as $alerta): ?>
+                            <div class="alerta-item">
+                                <span class="badge-estado <?= $alerta['estado'] == 'VENCIDO' ? 'badge-vencido' : 'badge-proximo' ?>">
+                                    <?= $alerta['estado'] == 'VENCIDO' ? 'VENCIDO' : 'PRÓXIMO' ?>
+                                </span>
+                                <a href="presentacion/seguimiento.php?id=<?= $alerta['idExpediente'] ?>" class="acta-link">
+                                    Acta <?= htmlspecialchars($alerta['numeroActa']) ?>
+                                </a>
+                                <span class="text-muted ms-2">
+                                    <i class="fas fa-tag me-1"></i><?= htmlspecialchars($alerta['areaOrigen']) ?>
+                                </span>
+                                <span class="text-muted ms-2">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <?php if ($alerta['estado'] == 'VENCIDO'): ?>
+                                        Vence: <?= date('d/m/Y', strtotime($alerta['fechaVencimiento'])) ?> (hace <?= $alerta['dias'] ?> días)
+                                    <?php else: ?>
+                                        Vence: <?= date('d/m/Y', strtotime($alerta['fechaVencimiento'])) ?> (en <?= $alerta['dias'] ?> días)
+                                    <?php endif; ?>
+                                </span>
+                                <span class="ms-2">
+                                    <span class="badge bg-secondary"><?= htmlspecialchars($alerta['evento']) ?></span>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if ($alertas['total'] > 5): ?>
+                            <div class="text-muted mt-2">
+                                <i class="fas fa-ellipsis-h me-1"></i> y <?= $alertas['total'] - 5 ?> más...
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulos -->
+        <div class="text-center mb-5" id="modulos">
             <span class="badge-area"><i class="fas fa-cubes me-1"></i> Módulos disponibles</span>
             <h2 class="fw-bold mt-2" style="color: #0b2a4a;">Accede a las funcionalidades</h2>
             <p class="text-muted">Selecciona el área que deseas gestionar</p>
@@ -226,10 +357,8 @@
             <div class="col-md-4">
                 <div class="card card-modern text-center">
                     <div class="card-body">
-                        <div class="card-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <h5 class="card-title-modern">Dueños</h5>
+                        <div class="card-icon"><i class="fas fa-store"></i></div>
+                        <h5 class="card-title-modern">Establecimiento</h5>
                         <p class="card-text-modern">Registro y mantenimiento de establecimientos, RUC, razón social y responsables.</p>
                         <a href="<?= BASE_URL . '/presentacion/formEstablecimiento.php' ?>" class="btn btn-outline-primary-custom mt-2">
                             <i class="fas fa-arrow-right me-2"></i>Gestionar
@@ -237,15 +366,12 @@
                     </div>
                 </div>
             </div>
-
             <!-- Sede -->
             <div class="col-md-4">
                 <div class="card card-modern text-center">
                     <div class="card-body">
-                        <div class="card-icon">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <h5 class="card-title-modern">Locales</h5>
+                        <div class="card-icon"><i class="fas fa-building"></i></div>
+                        <h5 class="card-title-modern">Sede</h5>
                         <p class="card-text-modern">Administración de sedes, direcciones, categorías y situación DIGEMID.</p>
                         <a href="<?= BASE_URL . '/presentacion/formSede.php' ?>" class="btn btn-outline-primary-custom mt-2">
                             <i class="fas fa-arrow-right me-2"></i>Gestionar
@@ -253,14 +379,11 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Expedientes (con botones para cada área) -->
+            <!-- Expedientes -->
             <div class="col-md-4">
                 <div class="card card-modern text-center">
                     <div class="card-body">
-                        <div class="card-icon">
-                            <i class="fas fa-folder-open"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-folder-open"></i></div>
                         <h5 class="card-title-modern">Expedientes</h5>
                         <p class="card-text-modern">Expedientes según área de origen: UFREMID, UFRESA y UFRESBIT.</p>
                         <div class="d-grid gap-2 mt-2">
@@ -277,14 +400,11 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Reporte (se coloca en otra fila para que quede centrado o en una columna extra) -->
+            <!-- Reportes -->
             <div class="col-md-4 offset-md-4">
                 <div class="card card-modern text-center">
                     <div class="card-body">
-                        <div class="card-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
                         <h5 class="card-title-modern">Reportes</h5>
                         <p class="card-text-modern">Visualiza reportes de inspecciones, estadísticas y datos agregados.</p>
                         <a href="<?= BASE_URL . '/presentacion/reporte1.php' ?>" class="btn btn-outline-primary-custom mt-2">
@@ -295,8 +415,8 @@
             </div>
         </div>
 
-        <!-- Estadísticas rápidas  -->
-        <!-- <div class="stats-section">
+        <!-- Estadísticas rápidas (puedes reemplazar con datos reales)
+        <div class="stats-section">
             <div class="row text-center g-3">
                 <div class="col-6 col-md-3">
                     <div class="stat-number">45</div>
@@ -327,5 +447,22 @@
     </footer>
 
     <?php include 'presentacion/boostrap-js.php'; ?>
+    <!-- Script de partículas -->
+    <script src="<?= BASE_URL . 'js/particle.min.js' ?>"></script>
+    <script>
+        var canvasDiv = document.getElementById('particle-canvas');
+        var options = {
+            particleColor: '#ffffff',
+            interactive: true,
+            speed: 'medium',
+            density: 'high'
+        };
+        var particleCanvas = new ParticleNetwork(canvasDiv, options);
+        // Eliminar el fondo del div que crea la librería
+        var bgDiv = canvasDiv.querySelector('div');
+        if (bgDiv) {
+            bgDiv.style.background = 'transparent';
+        }
+    </script>
 </body>
 </html>

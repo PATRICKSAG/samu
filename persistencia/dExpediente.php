@@ -937,3 +937,75 @@ function listarExpedientesUFRESBIT(PDO $pdo)
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+/**
+ * Obtiene plazos críticos (próximos a vencer o vencidos) para el panel de alertas
+ * Retorna un array con los plazos y el conteo total
+ */
+function obtenerPlazosCriticos(PDO $pdo)
+{
+    $hoy = new DateTime();
+    $hoyStr = $hoy->format('Y-m-d');
+
+    // Consulta para obtener todos los plazos con su expediente y área
+    $sql = "SELECT 
+                p.idPlazo,
+                p.idExpediente,
+                p.evento,
+                p.fechaOrigen,
+                p.fechaVencimiento,
+                p.fechaCumplimiento,
+                p.estado AS estadoGuardado,
+                e.numeroActa,
+                e.areaOrigen,
+                e.estadoExpediente,
+                e.responsable
+            FROM expediente_plazos p
+            INNER JOIN expediente e ON p.idExpediente = e.idExpediente
+            WHERE p.fechaVencimiento IS NOT NULL
+            ORDER BY p.fechaVencimiento ASC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $plazos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $criticos = [];
+    $contador = 0;
+
+    foreach ($plazos as $p) {
+        // Si ya tiene fecha de cumplimiento, no es crítico
+        if (!empty($p['fechaCumplimiento'])) {
+            continue;
+        }
+
+        $fechaVenc = new DateTime($p['fechaVencimiento']);
+        $diferencia = $hoy->diff($fechaVenc)->days;
+
+        // Determinar estado real
+        if ($hoy > $fechaVenc) {
+            $estado = 'VENCIDO';
+        } elseif ($diferencia <= 3) {
+            $estado = 'PROXIMO_VENCER';
+        } else {
+            continue; // No es crítico
+        }
+
+        // Agregar a la lista
+        $criticos[] = [
+            'idExpediente' => $p['idExpediente'],
+            'numeroActa' => $p['numeroActa'],
+            'areaOrigen' => $p['areaOrigen'],
+            'evento' => $p['evento'],
+            'fechaVencimiento' => $p['fechaVencimiento'],
+            'dias' => $diferencia,
+            'estado' => $estado,
+            'responsable' => $p['responsable'] ?? 'Sin responsable'
+        ];
+        $contador++;
+    }
+
+    return [
+        'total' => $contador,
+        'lista' => $criticos
+    ];
+}
