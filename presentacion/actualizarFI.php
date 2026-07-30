@@ -3,7 +3,8 @@ include_once(__DIR__ . '/../config.php');
 include_once(__DIR__ . '/../persistencia/conexion.php');
 include_once(__DIR__ . '/../persistencia/dExpediente.php');
 include_once(__DIR__ . '/../persistencia/dPlazos.php');
-
+// VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+include_once(__DIR__ . '/auth_check.php');
 $pdo = Database::getConexion();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -37,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'fechaNotificacionRecurso' => $fechaNotificacionRecurso,
                 'informeFinalInstruccion' => $informeFinalInstruccion
             ];
-            actualizarExpedienteFI($pdo, $data);
+            // La función requiere tres argumentos: conexión, datos y el id del expediente FI
+            actualizarExpedienteFI($pdo, $data, $idExpedienteFI);
 
             // Eliminar plazos antiguos y recalcular
             $sqlDelete = "DELETE FROM expediente_plazos WHERE idExpediente = ? AND evento IN ('DESCARGO_PAS', 'CADUCIDAD_PAS')";

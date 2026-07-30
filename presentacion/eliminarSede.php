@@ -2,6 +2,9 @@
 include_once(__DIR__ . '/../config.php');
 include_once(__DIR__ . '/../persistencia/conexion.php');
 include_once(__DIR__ . '/../persistencia/dSede.php');
+// VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+include_once(__DIR__ . '/auth_check.php');
+
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header("Location: formSede.php?mensaje=" . urlencode("ID de sede no proporcionado."));

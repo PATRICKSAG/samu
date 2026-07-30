@@ -2,6 +2,9 @@
 
     include_once __DIR__ . '/../config.php';
     include_once __DIR__ . '/../persistencia/conexion.php';
+    // VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+    include_once(__DIR__ . '/auth_check.php');
+
 
     $pdo = Database::getConexion();
 

@@ -5,6 +5,8 @@
     include_once __DIR__ . '/../persistencia/dEstablecimiento.php';
     include_once __DIR__ . '/../persistencia/dSituacionDigemid.php';
     include_once __DIR__ . '/../persistencia/dExpediente.php';
+    // VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+    include_once(__DIR__ . '/auth_check.php');
 
     $pdo = Database::getConexion();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -300,8 +302,8 @@
                             <input type="text" class="form-control form-control-modern" name="otroEstado" id="otroEstado" value="<?php echo htmlspecialchars($_POST['otroEstado'] ?? '') ?>" placeholder="Ingrese el estado">
                         </div>
                         <div class="col-md-6">
-                            <label for="responsable" class="form-label"><i class="fas fa-user me-1"></i>Responsable</label>
-                            <input type="text" class="form-control form-control-modern" name="responsable" id="responsable" value="<?php echo htmlspecialchars($responsable ?? '') ?>" placeholder="Nombre del responsable">
+                            <label for="responsable" class="form-label"><i class="fas fa-user me-1"></i>Inspector</label>
+                            <input type="text" class="form-control form-control-modern" name="responsable" id="responsable" value="<?php echo htmlspecialchars($responsable ?? '') ?>" placeholder="Nombre del inspector">
                         </div>
                         <div class="col-md-6">
                             <label for="numeroFolios" class="form-label"><i class="fas fa-file-alt me-1"></i>Número de Folios</label>
@@ -511,9 +513,9 @@
         </div>
     </footer>
 
-    <?php include 'boostrap-js.php'; ?>
-    <?php include 'datatable-js.php'; ?>
-    <?php include 'select2-js.php'; ?>
+<?php include 'boostrap-js.php'; ?>
+<?php include 'datatable-js.php'; ?>
+<?php include 'select2-js.php'; ?>
 
     <script>
         $(document).ready(function() {

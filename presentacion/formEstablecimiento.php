@@ -5,6 +5,9 @@ include_once(__DIR__ . '/../persistencia/dEstablecimiento.php');
 
 extract($_POST);
 
+// VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+include_once(__DIR__ . '/auth_check.php');
+
 $pdo = Database::getConexion();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -406,8 +409,8 @@ if (isset($_GET['editar'])) {
             <p class="mb-0">&copy; <?= date('Y') ?> Sub Gerencia de Regulación Sectorial - Todos los derechos reservados.</p>
         </div>
     </footer>
-
     <?php include 'boostrap-js.php'; ?>
+
     <?php include 'datatable-js.php'; ?>
 
     <script>

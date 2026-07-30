@@ -3,6 +3,9 @@
     include_once __DIR__ . '/../persistencia/conexion.php';
     include_once __DIR__ . '/../persistencia/dExpediente.php';
 
+    // VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+    include_once(__DIR__ . '/auth_check.php');
+
     $pdo = Database::getConexion();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

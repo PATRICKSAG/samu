@@ -929,7 +929,7 @@ function listarExpedientesUFRESBIT(PDO $pdo)
                 e.numeroActa,
                 e.fechaInspeccion,
                 e.estadoExpediente,
-                e.responsable,
+                e.responsable, 
                 (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
             FROM expediente e
             WHERE e.areaOrigen = 'UFRESBIT'   

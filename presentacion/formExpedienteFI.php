@@ -3,6 +3,9 @@
     include_once __DIR__ . '/../persistencia/conexion.php';
     include_once __DIR__ . '/../persistencia/dExpediente.php';
 
+    // VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+    include_once(__DIR__ . '/auth_check.php');
+
     $pdo = Database::getConexion();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -141,6 +144,28 @@
     <?php include 'select2-css.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* para navegadores modernos */
+        }
+
+        /* El contenedor principal de contenido debe expandirse para empujar el footer hacia abajo */
+        .container {
+            flex: 1 0 auto; /* crece, no se encoge, base automática */
+        }
+
+        /* El footer se mantiene al final, sin encogerse */
+        .footer-custom {
+            flex-shrink: 0;
+            margin-top: 0;   /* elimina el margen superior que empujaba el footer hacia abajo */
+            /* si deseas conservar algo de separación, usa padding en su lugar */
+        }
         /* ... mismos estilos que formExpedienteUFREMID ... */
         body { background-color: #f0f4fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .page-header { background: linear-gradient(135deg, #0b2a4a 0%, #1b4f8b 100%); color: white; padding: 30px 0 25px; border-radius: 0 0 40px 40px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }

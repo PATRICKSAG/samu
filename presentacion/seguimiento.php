@@ -2,7 +2,7 @@
 include_once(__DIR__ . '/../config.php');
 include_once(__DIR__ . '/../persistencia/conexion.php');
 include_once(__DIR__ . '/../persistencia/dExpediente.php');
-
+include_once(__DIR__ . '/auth_check.php');
 $pdo = Database::getConexion();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -394,6 +394,6 @@ function getEstadoTexto(string $estado) {
         </div>
     </footer>
 
-    <?php include 'boostrap-js.php'; ?>
+      <?php include 'boostrap-js.php'; ?>
 </body>
 </html>

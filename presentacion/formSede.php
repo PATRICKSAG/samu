@@ -11,6 +11,9 @@
     include_once __DIR__ . '/../persistencia/dSituacionDigemid.php';
     include_once __DIR__ . '/../persistencia/dRenipress.php'; // NUEVO
 
+    // VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+    include_once(__DIR__ . '/auth_check.php');
+
     $pdo = Database::getConexion();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
