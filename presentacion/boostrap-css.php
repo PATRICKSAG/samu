@@ -1,1 +1,1 @@
-<link href="<?= BASE_URL . '/lib/bootstrap/bootstrap.min.css' ?>" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css">

@@ -457,7 +457,7 @@
                                 <th>Sede</th>
                                 <th>Fecha Inspección</th>
                                 <th>Estado</th>
-                                <th>Responsable</th>
+                                <th>Inspector</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
