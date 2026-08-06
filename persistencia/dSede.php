@@ -22,6 +22,9 @@ function insertarSede(PDO $pdo, array $data)
     $idInstitucionRenipress = $data['idInstitucionRenipress'] ?? null;
     $idTipoRenipress = $data['idTipoRenipress'] ?? null;
     $idClasificacionRenipress = $data['idClasificacionRenipress'] ?? null;
+    // NUEVOS CAMPOS UFRESBIT
+    $categorizacion = $data['categorizacion'] ?? null;
+    $inicioActividad = $data['inicioActividad'] ?? null;
 
     $sql = "INSERT INTO sede (
                 idEstablecimiento, nombre, numeroEstacion, fechaRegistroSi, 
@@ -29,8 +32,9 @@ function insertarSede(PDO $pdo, array $data)
                 tieneQuimicoFarmaceutico, idSituacionDigemid, 
                 idDepartamento, idProvincia, idDistrito, horarioFuncionamiento,
                 areaOrigen, idEstadoRenipress, idInstitucionRenipress, 
-                idTipoRenipress, idClasificacionRenipress
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                idTipoRenipress, idClasificacionRenipress,
+                categorizacion, inicioActividad
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $idEstablecimiento, $nombreComercial, $numeroEstacion, $fechaRegistroSi,
@@ -38,7 +42,8 @@ function insertarSede(PDO $pdo, array $data)
         $tieneQuimicoFarmaceutico, $idSituacionDigemid,
         $idDepartamento, $idProvincia, $idDistrito, $horarioFuncionamiento,
         $areaOrigen, $idEstadoRenipress, $idInstitucionRenipress,
-        $idTipoRenipress, $idClasificacionRenipress
+        $idTipoRenipress, $idClasificacionRenipress,
+        $categorizacion, $inicioActividad
     ]);
     return $pdo->lastInsertId();
 }
@@ -66,6 +71,9 @@ function actualizarSede(PDO $pdo, array $data)
     $idInstitucionRenipress = $data['idInstitucionRenipress'] ?? null;
     $idTipoRenipress = $data['idTipoRenipress'] ?? null;
     $idClasificacionRenipress = $data['idClasificacionRenipress'] ?? null;
+    // NUEVOS CAMPOS UFRESBIT
+    $categorizacion = $data['categorizacion'] ?? null;
+    $inicioActividad = $data['inicioActividad'] ?? null;
 
     $sql = "UPDATE sede SET 
                 idEstablecimiento = ?,
@@ -86,7 +94,9 @@ function actualizarSede(PDO $pdo, array $data)
                 idEstadoRenipress = ?,
                 idInstitucionRenipress = ?,
                 idTipoRenipress = ?,
-                idClasificacionRenipress = ?
+                idClasificacionRenipress = ?,
+                categorizacion = ?,
+                inicioActividad = ?
             WHERE idSede = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -96,6 +106,7 @@ function actualizarSede(PDO $pdo, array $data)
         $idDepartamento, $idProvincia, $idDistrito, $horarioFuncionamiento,
         $areaOrigen, $idEstadoRenipress, $idInstitucionRenipress,
         $idTipoRenipress, $idClasificacionRenipress,
+        $categorizacion, $inicioActividad,
         $idSede
     ]);
     return $stmt->rowCount();
@@ -125,6 +136,8 @@ function listarSedes(PDO $pdo)
                 s.idInstitucionRenipress,
                 s.idTipoRenipress,
                 s.idClasificacionRenipress,
+                s.categorizacion,
+                s.inicioActividad,
                 (SELECT c.nombre FROM categoria c WHERE c.idCategoria = s.idCategoria) AS categoria,
                 (SELECT e.ruc FROM establecimiento e WHERE e.idEstablecimiento = s.idEstablecimiento) AS ruc,
                 (SELECT e.razonSocial FROM establecimiento e WHERE e.idEstablecimiento = s.idEstablecimiento) AS razonSocial,
@@ -141,6 +154,7 @@ function listarSedes(PDO $pdo)
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
 function eliminarSede(PDO $pdo, $idSede)
 {
     // Borrado lógico (actualizar activo = 0)

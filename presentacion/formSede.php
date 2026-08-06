@@ -38,6 +38,8 @@
     $txtInstitucionRenipress     = '';
     $txtTipoRenipress            = '';
     $txtClasificacionRenipress   = '';
+    $txtCategorizacion = '';
+    $txtInicioActividad = '';
 
     $mensaje      = '';
     $mensajeError = '';
@@ -65,7 +67,8 @@
     $txtInstitucionRenipress     = $_POST['txtInstitucionRenipress'] ?? '';
     $txtTipoRenipress            = $_POST['txtTipoRenipress'] ?? '';
     $txtClasificacionRenipress   = $_POST['txtClasificacionRenipress'] ?? '';
-
+    $txtCategorizacion           = $_POST['txtCategorizacion'] ?? '';
+    $txtInicioActividad          = $_POST['txtInicioActividad'] ?? '';
     $errores = [];
     if (empty($txtnombreComercial)) {
         $errores[] = "El nombre comercial es requerido.";
@@ -99,16 +102,16 @@
         }
     } elseif ($txtAreaOrigen == 'UFRESBIT') {
         if (empty($txtEstadoRenipress)) {
-            $errores[] = "El estado RENIPRESS es requerido.";
+            $errores[] = "El estado IPRESS es requerido.";
         }
         if (empty($txtInstitucionRenipress)) {
-            $errores[] = "La institución RENIPRESS es requerida.";
+            $errores[] = "La institución IPRESS es requerida.";
         }
         if (empty($txtTipoRenipress)) {
-            $errores[] = "El tipo RENIPRESS es requerido.";
+            $errores[] = "El tipo IPRESS es requerido.";
         }
         if (empty($txtClasificacionRenipress)) {
-            $errores[] = "La clasificación RENIPRESS es requerida.";
+            $errores[] = "La clasificación IPRESS es requerida.";
         }
     }
 
@@ -134,6 +137,8 @@
                 'idInstitucionRenipress'     => ($txtAreaOrigen == 'UFRESBIT') ? $txtInstitucionRenipress : null,
                 'idTipoRenipress'            => ($txtAreaOrigen == 'UFRESBIT') ? $txtTipoRenipress : null,
                 'idClasificacionRenipress'   => ($txtAreaOrigen == 'UFRESBIT') ? $txtClasificacionRenipress : null,
+                'categorizacion'             => ($txtAreaOrigen == 'UFRESBIT') ? $txtCategorizacion : null,
+                'inicioActividad'            => ($txtAreaOrigen == 'UFRESBIT') ? $txtInicioActividad : null,
             ];
 
             if (! empty($txtIdSede)) {
@@ -187,6 +192,8 @@
             $txtInstitucionRenipress     = $s['idInstitucionRenipress'];
             $txtTipoRenipress            = $s['idTipoRenipress'];
             $txtClasificacionRenipress   = $s['idClasificacionRenipress'];
+            $txtCategorizacion           = $s['categorizacion'] ?? '';
+            $txtInicioActividad          = $s['inicioActividad'] ?? '';
             break;
         }
     }
@@ -238,6 +245,8 @@ foreach ($sedes as $sede) {
         $sede['institucionRenipress'] ?? '',
         $sede['tipoRenipress'] ?? '',
         $sede['clasificacionRenipress'] ?? '',
+        $sede['categorizacion'] ?? '',
+        $sede['inicioActividad'] ?? '',
         $acciones
     ];
 }
@@ -489,7 +498,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                         <div class="col-12 renipress-fields" id="camposUFRESBIT">
                             <div class="row g-3">
                                 <div class="col-md-3">
-                                    <label for="txtEstadoRenipress" class="form-label"><i class="fas fa-circle me-1"></i>Estado RENIPRESS <span class="text-danger">*</span></label>
+                                    <label for="txtEstadoRenipress" class="form-label"><i class="fas fa-circle me-1"></i>Estado IPRESS <span class="text-danger">*</span></label>
                                     <select name="txtEstadoRenipress" id="txtEstadoRenipress" class="form-select" required>
                                         <option value="">Seleccionar</option>
                                         <?php foreach ($estadosRenipress as $est): ?>
@@ -526,6 +535,24 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                                     <select name="txtClasificacionRenipress" id="txtClasificacionRenipress" class="form-select select2-auto" required>
                                         <option value="">Seleccionar</option>
                                         <!-- Las opciones se cargarán vía AJAX al cambiar tipo -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="txtCategorizacion" class="form-label"><i class="fas fa-tags me-1"></i>Categorización <span class="text-danger">*</span></label>
+                                    <select name="txtCategorizacion" id="txtCategorizacion" class="form-select" required>
+                                        <option value="">Seleccionar</option>
+                                        <option value="SI" <?= ($txtCategorizacion == 'SI') ? 'selected' : '' ?>>SI</option>
+                                        <option value="NO" <?= ($txtCategorizacion == 'NO') ? 'selected' : '' ?>>NO</option>
+                                        <option value="NO APLICA" <?= ($txtCategorizacion == 'NO APLICA') ? 'selected' : '' ?>>NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="txtInicioActividad" class="form-label"><i class="fas fa-play me-1"></i>Inicio Actividad <span class="text-danger">*</span></label>
+                                    <select name="txtInicioActividad" id="txtInicioActividad" class="form-select" required>
+                                        <option value="">Seleccionar</option>
+                                        <option value="SI" <?= ($txtInicioActividad == 'SI') ? 'selected' : '' ?>>SI</option>
+                                        <option value="NO" <?= ($txtInicioActividad == 'NO') ? 'selected' : '' ?>>NO</option>
+                                        <option value="NO APLICA" <?= ($txtInicioActividad == 'NO APLICA') ? 'selected' : '' ?>>NO APLICA</option>
                                     </select>
                                 </div>
                             </div>
@@ -651,10 +678,12 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                                 <th>Dirección</th>
                                 <th>Q.F.</th>
                                 <th>Situación</th>
-                                <th>Estado RENIPRESS</th>
+                                <th>Estado IPRESS</th>
                                 <th>Institución</th>
                                 <th>Tipo</th>
                                 <th>Clasificación</th>
+                                <th>Categorización</th>
+                                <th>Inicio Actividad</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -698,56 +727,56 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                     { data: 9 },  // Dirección
                     { data: 10 }, // Q.F.
                     { data: 11 }, // S. DIGEMID
-                    { data: 12 }, // Estado RENIPRESS
+                    { data: 12 }, // Estado IPRESS
                     { data: 13 }, // Institución
                     { data: 14 }, // Tipo
                     { data: 15 }, // Clasificación
-                    { data: 16 }  // Acciones
+                    { data: 16 }, // Categorización
+                    { data: 17 }, // Inicio Actividad
+                    { data: 18 }  // Acciones
                 ]
             });
 
             // Función para mostrar/ocultar columnas según el área seleccionada
             function toggleTableColumns(area) {
-                // Definimos los índices de las columnas (0-based)
-                // 0=ID, 1=Área, 2=Nº EST, 3=N. Comercial, 4=CAT, 5=RUC, 6=Razón Social,
-                // 7=Provincia, 8=Distrito, 9=Dirección, 10=Q.F., 11=S. DIGEMID,
-                // 12=Estado RENIPRESS, 13=Institución, 14=Tipo, 15=Clasificación, 16=Acciones
+            // Mostrar todas las columnas primero
+            table.column(10).visible(true);  // Q.F.
+            table.column(11).visible(true);  // S. DIGEMID
+            table.column(12).visible(true);  // Estado IPRESS
+            table.column(13).visible(true);  // Institución
+            table.column(14).visible(true);  // Tipo
+            table.column(15).visible(true);  // Clasificación
+            table.column(16).visible(true);  // Categorización
+            table.column(17).visible(true);  // Inicio Actividad
 
-                // Primero, mostrar todas las columnas (por si viene de otro estado)
-                table.column(10).visible(true);  // Q.F.
-                table.column(11).visible(true);  // S. DIGEMID
-                table.column(12).visible(true);  // Estado RENIPRESS
-                table.column(13).visible(true);  // Institución
-                table.column(14).visible(true);  // Tipo
-                table.column(15).visible(true);  // Clasificación
-
-                // Luego, ocultar según el área
-                if (area === 'UFREMID' ) {
-                    // Para UFREMID : mostrar Q.F. y S.DIGEMID, ocultar RENIPRESS
-                    table.column(10).visible(true);   // Q.F.
-                    table.column(11).visible(true);   // S. DIGEMID
-                    table.column(12).visible(false);  // Estado RENIPRESS
-                    table.column(13).visible(false);  // Institución
-                    table.column(14).visible(false);  // Tipo
-                    table.column(15).visible(false);  // Clasificación
-                } else if (area === 'UFRESA') {
-                    // Para UFRESA:  S.DIGEMID, ocultar RENIPRESS
-                    table.column(10).visible(false);   // Q.F.
-                    table.column(11).visible(true);   // S. DIGEMID
-                    table.column(12).visible(false);  // Estado RENIPRESS
-                    table.column(13).visible(false);  // Institución
-                    table.column(14).visible(false);  // Tipo
-                    table.column(15).visible(false);  // Clasificación
-                }
-                else if (area === 'UFRESBIT') {
-                    // Para UFRESBIT: ocultar Q.F. y S.DIGEMID, mostrar RENIPRESS
-                    table.column(10).visible(false);  // Q.F.
-                    table.column(11).visible(false);  // S. DIGEMID
-                    table.column(12).visible(true);   // Estado RENIPRESS
-                    table.column(13).visible(true);   // Institución
-                    table.column(14).visible(true);   // Tipo
-                    table.column(15).visible(true);   // Clasificación
-                } else {
+            if (area === 'UFREMID') {
+                table.column(10).visible(true);   // Q.F.
+                table.column(11).visible(true);   // S. DIGEMID
+                table.column(12).visible(false);
+                table.column(13).visible(false);
+                table.column(14).visible(false);
+                table.column(15).visible(false);
+                table.column(16).visible(false);
+                table.column(17).visible(false);
+            } else if (area === 'UFRESA') {
+                table.column(10).visible(false);   // Q.F.
+                table.column(11).visible(true);    // S. DIGEMID
+                table.column(12).visible(false);
+                table.column(13).visible(false);
+                table.column(14).visible(false);
+                table.column(15).visible(false);
+                table.column(16).visible(false);
+                table.column(17).visible(false);
+            } else if (area === 'UFRESBIT') {
+                table.column(10).visible(false);   // Q.F.
+                table.column(11).visible(false);   // S. DIGEMID
+                table.column(12).visible(true);
+                table.column(13).visible(true);
+                table.column(14).visible(true);
+                table.column(15).visible(true);
+                table.column(16).visible(true);    // Categorización
+                table.column(17).visible(true);    // Inicio Actividad
+            } else {
                     // 'Todas': mostrar todas (ya están visibles)
                 }
 
@@ -802,7 +831,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                     // });
                     // Hacer required los campos de UFREMID/UFRESA
                     $('#txtCategoria, #txtSituacionDigemid').prop('required', true);
-                    // Quitar required de campos Renipress
+                    // Quitar required de campos ipress
                     $('#txtEstadoRenipress, #txtInstitucionRenipress, #txtTipoRenipress, #txtClasificacionRenipress').prop('required', false);
 
                     // *** NUEVO: Controlar el checkbox Q.F. ***
@@ -820,7 +849,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                     $('#txtCategoria option').hide();
                     // Quitar required de UFREMID/UFRESA
                     $('#txtCategoria, #txtSituacionDigemid, #txtTieneQuimicoFarmaceutico').prop('required', false);
-                    // Hacer required campos Renipress
+                    // Hacer required campos ipress
                     $('#txtEstadoRenipress, #txtInstitucionRenipress, #txtTipoRenipress, #txtClasificacionRenipress').prop('required', true);
                     // Ocultar Q.F. si está visible
                     $('#campoQF').hide();

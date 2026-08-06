@@ -6,18 +6,18 @@ class Database
 
     private function __construct()
     {
-        // Datos extraídos de tu captura y tu mensaje
-        $serverName = "DESKTOP-NPDHDAT"; 
+        // Nombre del servidor (localhost o . o (local) o tu IP)
+        $serverName = "localhost";
+        
+        // Nombre de tu base de datos (cámbialo por el que tengas)
         $database = "BDDatos";
         
-        /* IMPORTANTE: Como usas "Autenticación de Windows", 
-           en PHP debes dejar usuario y contraseña como null o usar un usuario de SQL Server (sa).
-        */
-        $user = null; 
+        // Autenticación de Windows → usuario y contraseña en null
+        $user = null;
         $password = null;
 
-        // DSN específico para SQL Server (sqlsrv)
-        $dsn = "sqlsrv:Server=$serverName;Database=$database;TrustServerCertificate=true";
+        // DSN para SQL Server con las mismas opciones que usaste en SSMS
+        $dsn = "sqlsrv:Server=$serverName;Database=$database;TrustServerCertificate=true;Encrypt=false";
 
         try {
             $this->pdo = new PDO($dsn, $user, $password, [
