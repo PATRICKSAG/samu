@@ -1,58 +1,80 @@
 <?php
-    include_once __DIR__ . '/../config.php';
-    include_once __DIR__ . '/../persistencia/conexion.php';
-    include_once __DIR__ . '/../persistencia/dSede.php';
-    include_once __DIR__ . '/../persistencia/dEstablecimiento.php';
-    include_once __DIR__ . '/../persistencia/dSituacionDigemid.php';
-    include_once __DIR__ . '/../persistencia/dTipoExpediente.php';
-    include_once __DIR__ . '/../persistencia/dExpediente.php';
+include_once __DIR__ . '/../config.php';
+include_once __DIR__ . '/../persistencia/conexion.php';
+include_once __DIR__ . '/../persistencia/dSede.php';
+include_once __DIR__ . '/../persistencia/dEstablecimiento.php';
+include_once __DIR__ . '/../persistencia/dSituacionDigemid.php';
+include_once __DIR__ . '/../persistencia/dTipoExpediente.php';
+include_once __DIR__ . '/../persistencia/dExpediente.php';
 
-    // VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
-    include_once(__DIR__ . '/auth_check.php');
+// VERIFICACIÓN DE SESIÓN
+include_once(__DIR__ . '/auth_check.php');
 
-    $pdo = Database::getConexion(); 
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo = Database::getConexion();
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Inicializar variables
-    $idExpediente     = 0;
-    $idSede           = '';
-    $numeroActa       = '';
-    $fechaInspeccion  = '';
-    $estadoExpediente = '';
-    $idTipoExpediente = '';
-    $codigoUFREMID    = '';
-    $responsable      = '';
-    $numeroFolios     = '';
-    $observacion      = '';
-    $judicializado    = '';
-    $falsificado      = 0;
+// Inicializar variables
+$idExpediente     = 0;
+$idSede           = '';
+$numeroActa       = '';
+$fechaInspeccion  = '';
+$estadoExpediente = '';
+$idTipoExpediente = '';
+$codigoUFREMID    = '';
+$responsable      = '';
+$numeroFolios     = '';
+$observacion      = '';
+$judicializado    = '';
+$falsificado      = 0;
 
-    // MS
-    $fechaDescargoActa                 = '';
-    $oficioOtorgaDeniegaPlazo          = '';
-    $idSituacionDigemidSeleccionada    = '';
-    $docElevaNulidad                   = '';
-    $resuelveNulidad                   = '';
-    $informeTecnicoInspeccion          = '';
-    $nCertificadoBuenasPracticas       = '';
-    $fechaInicioCertificadoBP          = '';
-    $fechaFinCertificadoBP             = '';
-    $rgrRatificaCierreTemporal         = '';
-    $fechaNotificacionRGRCierre        = '';
-    $descargoApelacion                 = '';
-    $nDocResuelveRecurso               = '';
-    $rsgLevantamientoCierre            = '';
-    $fechaNotificacionRSGLevantamiento = '';
-    $cierreDefinitivo                  = '';
-    $fechaNotificacionCierreDefinitivo = '';
+// NUEVOS CAMPOS (sección principal)
+$idEquipoDCVS         = '';
+$idActividadAbrev     = '';
+$idTipoActividad      = '';
+$condicionEjecucion   = '';
 
-    $mensaje      = '';
-    $mensajeError = '';
-    $esEdicion    = false;
+// MS
+$fechaDescargoActa                 = '';
+$oficioOtorgaDeniegaPlazo          = '';
+$idSituacionDigemidSeleccionada    = '';
+$docElevaNulidad                   = '';
+$resuelveNulidad                   = '';
+$informeTecnicoInspeccion          = '';
+$nCertificadoBuenasPracticas       = '';
+$fechaInicioCertificadoBP          = '';
+$fechaFinCertificadoBP             = '';
+$rgrRatificaCierreTemporal         = '';
+$fechaNotificacionRGRCierre        = '';
+$descargoApelacion                 = '';
+$nDocResuelveRecurso               = '';
+$rsgLevantamientoCierre            = '';
+$fechaNotificacionRSGLevantamiento = '';
+$cierreDefinitivo                  = '';
+$fechaNotificacionCierreDefinitivo = '';
 
-    // Detectar edición por GET para cargar datos
-    $idEditar = isset($_GET['editar']) ? intval($_GET['editar']) : 0;
-    if ($idEditar > 0) {
+// NUEVOS CAMPOS DIGEMID (acordeón)
+$atendidoPor               = '';
+$horarioAtencionQF         = '';
+$permanenciaQF             = '';
+$cumplimientoBPOF          = '';
+$cumplimientoBPA           = '';
+$cumplimientoBPDyT         = '';
+$cumplimientoBPF           = '';
+$productosIncautados       = '';
+$bpd                       = '';
+$bpa                       = '';
+$bpf                       = '';
+$bpsf                      = '';
+$bpdt                      = '';
+$medidaSeguridad           = '';
+
+$mensaje      = '';
+$mensajeError = '';
+$esEdicion    = false;
+
+// Detectar edición
+$idEditar = isset($_GET['editar']) ? intval($_GET['editar']) : 0;
+if ($idEditar > 0) {
     $expData = obtenerExpedienteCompleto($pdo, $idEditar);
     if ($expData) {
         $esEdicion        = true;
@@ -68,6 +90,11 @@
         $observacion      = $expData['observacion'] ?? '';
         $judicializado    = $expData['judicializado'] ?? '';
         $falsificado      = $expData['falsificado'] ?? 0;
+        // NUEVOS CAMPOS
+        $idEquipoDCVS       = $expData['idEquipoDCVS'] ?? '';
+        $idActividadAbrev   = $expData['idActividadAbrev'] ?? '';
+        $idTipoActividad    = $expData['idTipoActividad'] ?? '';
+        $condicionEjecucion = $expData['condicionEjecucion'] ?? '';
         // MS
         $fechaDescargoActa                 = $expData['fechaDescargoActa'] ?? '';
         $oficioOtorgaDeniegaPlazo          = $expData['oficioOtorgaDeniegaPlazo'] ?? '';
@@ -86,26 +113,46 @@
         $fechaNotificacionRSGLevantamiento = $expData['fechaNotificacionRSGLevantamiento'] ?? '';
         $cierreDefinitivo                  = $expData['cierreDefinitivo'] ?? '';
         $fechaNotificacionCierreDefinitivo = $expData['fechaNotificacionCierreDefinitivo'] ?? '';
+        // DIGEMID
+        $atendidoPor         = $expData['atendidoPor'] ?? '';
+        $horarioAtencionQF   = $expData['horarioAtencionQF'] ?? '';
+        $permanenciaQF       = $expData['permanenciaQF'] ?? '';
+        $cumplimientoBPOF    = $expData['cumplimientoBPOF'] ?? '';
+        $cumplimientoBPA     = $expData['cumplimientoBPA'] ?? '';
+        $cumplimientoBPDyT   = $expData['cumplimientoBPDyT'] ?? '';
+        $cumplimientoBPF     = $expData['cumplimientoBPF'] ?? '';
+        $productosIncautados = $expData['productosIncautados'] ?? '';
+        $bpd                 = $expData['bpd'] ?? '';
+        $bpa                 = $expData['bpa'] ?? '';
+        $bpf                 = $expData['bpf'] ?? '';
+        $bpsf                = $expData['bpsf'] ?? '';
+        $bpdt                = $expData['bpdt'] ?? '';
+        $medidaSeguridad     = $expData['medidaSeguridad'] ?? '';
     }
-    }
+}
 
-    // Procesar formulario
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
-    // Obtener ID de GET (editar) o de POST (campo oculto) como respaldo
+// Procesar POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $idPost = isset($_GET['editar']) ? intval($_GET['editar']) : (isset($_POST['idExpediente']) ? intval($_POST['idExpediente']) : 0);
 
-    // Recoger datos
-    $idSede                            = $_POST['idSede'] ?? '';
-    $numeroActa                        = trim($_POST['numeroActa'] ?? '');
-    $fechaInspeccion                   = $_POST['fechaInspeccion'] ?? '';
-    $estadoExpediente                  = $_POST['estadoExpediente'] ?? '';
-    $idTipoExpediente                  = $_POST['idTipoExpediente'] ?? '';
-    $codigoUFREMID                     = $_POST['codigoUFREMID'] ?? '';
-    $responsable                       = $_POST['responsable'] ?? '';
-    $numeroFolios                      = $_POST['numeroFolios'] ?? '';
-    $observacion                       = $_POST['observacion'] ?? '';
-    $judicializado                     = $_POST['judicializado'] ?? '';
-    $falsificado                       = isset($_POST['falsificado']) ? 1 : 0;
+    // Recoger datos generales
+    $idSede          = $_POST['idSede'] ?? '';
+    $numeroActa      = trim($_POST['numeroActa'] ?? '');
+    $fechaInspeccion = $_POST['fechaInspeccion'] ?? '';
+    $estadoExpediente = $_POST['estadoExpediente'] ?? '';
+    $idTipoExpediente = $_POST['idTipoExpediente'] ?? '';
+    $codigoUFREMID   = $_POST['codigoUFREMID'] ?? '';
+    $responsable     = $_POST['responsable'] ?? '';
+    $numeroFolios    = $_POST['numeroFolios'] ?? '';
+    $observacion     = $_POST['observacion'] ?? '';
+    $judicializado   = $_POST['judicializado'] ?? '';
+    $falsificado     = isset($_POST['falsificado']) ? 1 : 0;
+    // Nuevos campos principales
+    $idEquipoDCVS       = $_POST['idEquipoDCVS'] ?? '';
+    $idActividadAbrev   = $_POST['idActividadAbrev'] ?? '';
+    $idTipoActividad    = $_POST['idTipoActividad'] ?? '';
+    $condicionEjecucion = $_POST['condicionEjecucion'] ?? '';
+    // MS
     $fechaDescargoActa                 = $_POST['fechaDescargoActa'] ?? '';
     $oficioOtorgaDeniegaPlazo          = $_POST['oficioOtorgaDeniegaPlazo'] ?? '';
     $idSituacionDigemidSeleccionada    = $_POST['idSituacionDigemidSeleccionada'] ?? '';
@@ -123,34 +170,71 @@
     $fechaNotificacionRSGLevantamiento = $_POST['fechaNotificacionRSGLevantamiento'] ?? '';
     $cierreDefinitivo                  = $_POST['cierreDefinitivo'] ?? '';
     $fechaNotificacionCierreDefinitivo = $_POST['fechaNotificacionCierreDefinitivo'] ?? '';
+    // Digemid
+    $atendidoPor         = $_POST['atendidoPor'] ?? '';
+    $horarioAtencionQF   = $_POST['horarioAtencionQF'] ?? '';
+    $permanenciaQF       = $_POST['permanenciaQF'] ?? '';
+    $cumplimientoBPOF    = $_POST['cumplimientoBPOF'] ?? '';
+    $cumplimientoBPA     = $_POST['cumplimientoBPA'] ?? '';
+    $cumplimientoBPDyT   = $_POST['cumplimientoBPDyT'] ?? '';
+    $cumplimientoBPF     = $_POST['cumplimientoBPF'] ?? '';
+    $productosIncautados = $_POST['productosIncautados'] ?? '';
+    $bpd                 = $_POST['bpd'] ?? '';
+    $bpa                 = $_POST['bpa'] ?? '';
+    $bpf                 = $_POST['bpf'] ?? '';
+    $bpsf                = $_POST['bpsf'] ?? '';
+    $bpdt                = $_POST['bpdt'] ?? '';
+    $medidaSeguridad     = $_POST['medidaSeguridad'] ?? '';
 
-    // Validaciones
+    // ============================================================
+    // CONVERTIR CAMPOS VACÍOS A NULL (para evitar conflictos de FK)
+    // ============================================================
+    // Campos numéricos (IDs)
+    $idTipoExpediente = ($idTipoExpediente === '' || $idTipoExpediente === null) ? null : (int)$idTipoExpediente;
+    $idEquipoDCVS = ($idEquipoDCVS === '' || $idEquipoDCVS === null) ? null : (int)$idEquipoDCVS;
+    $idActividadAbrev = ($idActividadAbrev === '' || $idActividadAbrev === null) ? null : (int)$idActividadAbrev;
+    $idTipoActividad = ($idTipoActividad === '' || $idTipoActividad === null) ? null : (int)$idTipoActividad;
+    $idSituacionDigemidSeleccionada = ($idSituacionDigemidSeleccionada === '' || $idSituacionDigemidSeleccionada === null) ? null : (int)$idSituacionDigemidSeleccionada;
+
+    // Fechas vacías a NULL
+    $fechaInspeccion = empty($fechaInspeccion) ? null : $fechaInspeccion;
+    $fechaDescargoActa = empty($fechaDescargoActa) ? null : $fechaDescargoActa;
+    $fechaInicioCertificadoBP = empty($fechaInicioCertificadoBP) ? null : $fechaInicioCertificadoBP;
+    $fechaFinCertificadoBP = empty($fechaFinCertificadoBP) ? null : $fechaFinCertificadoBP;
+    $fechaNotificacionRGRCierre = empty($fechaNotificacionRGRCierre) ? null : $fechaNotificacionRGRCierre;
+    $fechaNotificacionRSGLevantamiento = empty($fechaNotificacionRSGLevantamiento) ? null : $fechaNotificacionRSGLevantamiento;
+    $fechaNotificacionCierreDefinitivo = empty($fechaNotificacionCierreDefinitivo) ? null : $fechaNotificacionCierreDefinitivo;
+
+
     $errores = [];
-    if (empty($idSede)) {
-        $errores[] = "La sede es requerida.";
-    }
-
-    if (empty($numeroActa)) {
-        $errores[] = "El número de acta es requerido.";
-    }
-
-    if (empty($estadoExpediente)) {
-        $errores[] = "El estado del expediente es requerido.";
-    }
+    if (empty($idSede)) $errores[] = "La sede es requerida.";
+    if (empty($numeroActa)) $errores[] = "El número de acta es requerido.";
+    if (empty($estadoExpediente)) $errores[] = "El estado del expediente es requerido.";
+    // Nuevos campos obligatorios
+    if (empty($idEquipoDCVS)) $errores[] = "El equipo DCVS es requerido.";
+    if (empty($idActividadAbrev)) $errores[] = "La actividad abreviada es requerida.";
+    if (empty($idTipoActividad)) $errores[] = "El tipo de actividad es requerido.";
+    if (empty($condicionEjecucion)) $errores[] = "La condición de ejecución es requerida.";
 
     if (empty($errores)) {
         $data = [
-            'idSede'                            => $idSede,
-            'numeroActa'                        => $numeroActa,
-            'fechaInspeccion'                   => $fechaInspeccion,
-            'estadoExpediente'                  => $estadoExpediente,
-            'idTipoExpediente'                  => $idTipoExpediente,
-            'codigoUFREMID'                     => $codigoUFREMID,
-            'responsable'                       => $responsable,
-            'numeroFolios'                      => $numeroFolios,
-            'observacion'                       => $observacion,
-            'judicializado'                     => $judicializado,
-            'falsificado'                       => $falsificado,
+            'idSede'             => $idSede,
+            'numeroActa'         => $numeroActa,
+            'fechaInspeccion'    => $fechaInspeccion,
+            'estadoExpediente'   => $estadoExpediente,
+            'idTipoExpediente'   => $idTipoExpediente,
+            'codigoUFREMID'      => $codigoUFREMID,
+            'responsable'        => $responsable,
+            'numeroFolios'       => $numeroFolios,
+            'observacion'        => $observacion,
+            'judicializado'      => $judicializado,
+            'falsificado'        => $falsificado,
+            // Nuevos
+            'idEquipoDCVS'       => $idEquipoDCVS,
+            'idActividadAbrev'   => $idActividadAbrev,
+            'idTipoActividad'    => $idTipoActividad,
+            'condicionEjecucion' => $condicionEjecucion,
+            // MS
             'fechaDescargoActa'                 => $fechaDescargoActa,
             'oficioOtorgaDeniegaPlazo'          => $oficioOtorgaDeniegaPlazo,
             'idSituacionDigemidSeleccionada'    => $idSituacionDigemidSeleccionada,
@@ -168,6 +252,21 @@
             'fechaNotificacionRSGLevantamiento' => $fechaNotificacionRSGLevantamiento,
             'cierreDefinitivo'                  => $cierreDefinitivo,
             'fechaNotificacionCierreDefinitivo' => $fechaNotificacionCierreDefinitivo,
+            // Digemid
+            'atendidoPor'         => $atendidoPor,
+            'horarioAtencionQF'   => $horarioAtencionQF,
+            'permanenciaQF'       => $permanenciaQF,
+            'cumplimientoBPOF'    => $cumplimientoBPOF,
+            'cumplimientoBPA'     => $cumplimientoBPA,
+            'cumplimientoBPDyT'   => $cumplimientoBPDyT,
+            'cumplimientoBPF'     => $cumplimientoBPF,
+            'productosIncautados' => $productosIncautados,
+            'bpd'                 => $bpd,
+            'bpa'                 => $bpa,
+            'bpf'                 => $bpf,
+            'bpsf'                => $bpsf,
+            'bpdt'                => $bpdt,
+            'medidaSeguridad'     => $medidaSeguridad
         ];
 
         try {
@@ -187,18 +286,21 @@
     } else {
         $mensajeError = implode("<br>", $errores);
     }
-    }
+}
 
-    // Mensaje GET
-    if (isset($_GET['mensaje'])) {
+// Mensaje GET
+if (isset($_GET['mensaje'])) {
     $mensaje = $_GET['mensaje'];
-    }
+}
 
-    // Obtener listas
-    $sedes              = listarSedes($pdo);
-    $tiposExpediente    = listarTiposExpediente($pdo);
-    $situacionesDigemid = listarSituacionesDigemid($pdo);
-    $expedientes        = listarExpedientesUFREMID($pdo);
+// Obtener listas
+$sedes              = listarSedes($pdo);
+$tiposExpediente    = listarTiposExpediente($pdo);
+$situacionesDigemid = listarSituacionesDigemid($pdo);
+$expedientes        = listarExpedientesUFREMID($pdo);
+$equiposDCVS        = listarEquiposDCVS($pdo);
+$actividades        = []; // se cargarán vía AJAX
+$tiposActividad     = []; // se cargarán vía AJAX
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -242,7 +344,53 @@
         .badge-proceso { background: #ffc107; color: #212529; }
         .badge-cerrado { background: #28a745; color: white; }
         .badge-archivado { background: #6c757d; color: white; }
-        .accordion-button:not(.collapsed) { background-color: #e7f1ff; color: #0b2a4a; }
+
+        /* MEJORA VISUAL DE ACORDEONES */
+        .accordion-item {
+            border: 2px solid #1b4f8b !important;
+            border-radius: 12px !important;
+            margin-bottom: 12px !important;
+            overflow: hidden;
+        }
+        .accordion-item:has(.accordion-button:not(.collapsed)) {
+            border-color: #0b2a4a !important;
+            box-shadow: 0 0 0 4px rgba(27, 79, 139, 0.15);
+        }
+        .accordion-button {
+            background: #eaf3ff !important;
+            font-weight: 600 !important;
+            color: #0b2a4a !important;
+            padding: 14px 20px !important;
+        }
+        .accordion-button:not(.collapsed) {
+            background: #1b4f8b !important;
+            color: white !important;
+        }
+        .accordion-button:not(.collapsed) i {
+            color: white !important;
+        }
+        .accordion-button:not(.collapsed)::after {
+            filter: brightness(0) invert(1);
+        }
+        .accordion-button:focus {
+            box-shadow: none !important;
+            border-color: #1b4f8b !important;
+        }
+        .accordion-body {
+            background: #f8faff !important;
+            border-top: 1px solid #dce3ed;
+            padding: 20px !important;
+        }
+        /* Subcampos BPOF */
+        .subcampos-bpof {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #1b4f8b;
+            margin-top: 10px;
+            display: none;
+        }
+
         @media (max-width: 768px) { .page-header { padding: 20px 0; } .btn-primary-custom, .btn-outline-secondary-custom { width: 100%; margin-bottom: 5px; } }
     </style>
 </head>
@@ -280,7 +428,6 @@
                     <i class="fas fa-pen-alt me-2"></i><?php echo $esEdicion ? 'Editar Expediente UFREMID' : 'Nuevo Expediente UFREMID' ?>
                 </h5>
                 <form method="POST" action="">
-                    <!-- Campo oculto con el ID (0 para nuevo) -->
                     <input type="hidden" name="idExpediente" value="<?php echo $idExpediente ?>">
 
                     <!-- Sección 1: Datos Generales -->
@@ -301,8 +448,8 @@
                             <input type="text" class="form-control form-control-modern" name="numeroActa" id="numeroActa" value="<?php echo htmlspecialchars($numeroActa ?? '') ?>" placeholder="Ingrese el número de acta" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="fechaInspeccion" class="form-label"><i class="fas fa-calendar-alt me-1"></i>Fecha de Inspección</label>
-                            <input type="date" class="form-control form-control-modern" name="fechaInspeccion" id="fechaInspeccion" value="<?php echo $fechaInspeccion ?? '' ?>">
+                            <label for="fechaInspeccion" class="form-label"><i class="fas fa-calendar-alt me-1"></i>Fecha de Inspección <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-modern" name="fechaInspeccion" id="fechaInspeccion" value="<?php echo $fechaInspeccion ?? '' ?>" required>
                         </div>
                         <div class="col-md-4">
                             <label for="estadoExpediente" class="form-label"><i class="fas fa-info-circle me-1"></i>Estado del Expediente <span class="text-danger">*</span></label>
@@ -320,8 +467,8 @@
                             <input type="text" class="form-control form-control-modern" name="otroEstado" id="otroEstado" value="<?php echo htmlspecialchars($_POST['otroEstado'] ?? '') ?>" placeholder="Ingrese el estado">
                         </div>
                         <div class="col-md-6">
-                            <label for="idTipoExpediente" class="form-label"><i class="fas fa-tag me-1"></i>Tipo Expediente UFREMID</label>
-                            <select name="idTipoExpediente" id="idTipoExpediente" class="form-select select2-auto">
+                            <label for="idTipoExpediente" class="form-label"><i class="fas fa-tag me-1"></i>Tipo Expediente UFREMID <span class="text-danger">*</span></label>
+                            <select name="idTipoExpediente" id="idTipoExpediente" class="form-select select2-auto" required>
                                 <option value="">Seleccionar</option>
                                 <?php foreach ($tiposExpediente as $tipo): ?>
                                     <option value="<?php echo $tipo['idTipoExpediente'] ?>" <?php echo ($idTipoExpediente == $tipo['idTipoExpediente']) ? 'selected' : '' ?>>
@@ -358,11 +505,203 @@
                                 </label>
                             </div>
                         </div>
+
+                        <!-- NUEVOS CAMPOS OBLIGATORIOS (Equipo DCVS, Actividad, Tipo, Condición) -->
+                        <div class="col-md-3">
+                            <label for="idEquipoDCVS" class="form-label"><i class="fas fa-users me-1"></i>Equipo DCVS <span class="text-danger">*</span></label>
+                            <select name="idEquipoDCVS" id="idEquipoDCVS" class="form-select select2-auto" required>
+                                <option value="">Seleccionar</option>
+                                <?php foreach ($equiposDCVS as $eq): ?>
+                                    <option value="<?php echo $eq['idEquipo'] ?>" <?php echo ($idEquipoDCVS == $eq['idEquipo']) ? 'selected' : '' ?>>
+                                        <?php echo htmlspecialchars($eq['nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="idActividadAbrev" class="form-label"><i class="fas fa-tasks me-1"></i>Actividad Abrev. <span class="text-danger">*</span></label>
+                            <select name="idActividadAbrev" id="idActividadAbrev" class="form-select select2-auto" required>
+                                <option value="">Primero seleccione Equipo DCVS</option>
+                                <!-- Se llenará vía AJAX -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="idTipoActividad" class="form-label"><i class="fas fa-tag me-1"></i>Tipo de Actividad <span class="text-danger">*</span></label>
+                            <select name="idTipoActividad" id="idTipoActividad" class="form-select select2-auto" required>
+                                <option value="">Primero seleccione Actividad</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="condicionEjecucion" class="form-label"><i class="fas fa-check-circle me-1"></i>Condición Ejecución <span class="text-danger">*</span></label>
+                            <select name="condicionEjecucion" id="condicionEjecucion" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                <option value="Efectiva" <?php echo ($condicionEjecucion == 'Efectiva') ? 'selected' : '' ?>>Efectiva</option>
+                                <option value="No Efectiva" <?php echo ($condicionEjecucion == 'No Efectiva') ? 'selected' : '' ?>>No Efectiva</option>
+                            </select>
+                        </div>
                     </div>
 
                     <hr class="my-4">
 
-                    <!-- Sección 2: Medidas de Seguridad (MS) -->
+                    <!-- NUEVO ACORDEÓN: Datos de Digemid (antes de MS) -->
+                    <div class="accordion" id="accordionDigemid">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDigemid">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDigemid" aria-expanded="false" aria-controls="collapseDigemid">
+                                    <i class="fas fa-hospital me-2"></i> Datos de DIGEMID
+                                </button>
+                            </h2>
+                            <div id="collapseDigemid" class="accordion-collapse collapse" aria-labelledby="headingDigemid" data-bs-parent="#accordionDigemid">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="atendidoPor" class="form-label">Atendido por</label>
+                                            <select name="atendidoPor" id="atendidoPor" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="Director Técnico" <?php echo ($atendidoPor == 'Director Técnico') ? 'selected' : '' ?>>Director Técnico</option>
+                                                <option value="Q.F. Asistente registrado" <?php echo ($atendidoPor == 'Q.F. Asistente registrado') ? 'selected' : '' ?>>Q.F. Asistente registrado</option>
+                                                <option value="Otros" <?php echo ($atendidoPor == 'Otros') ? 'selected' : '' ?>>Otros</option>
+                                                <option value="N.A." <?php echo ($atendidoPor == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="horarioAtencionQF" class="form-label">Horario Atención Cubierto Por Q.F.</label>
+                                            <select name="horarioAtencionQF" id="horarioAtencionQF" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($horarioAtencionQF == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($horarioAtencionQF == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($horarioAtencionQF == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="permanenciaQF" class="form-label">Permanencia Q.F. (Durante Inspec.)</label>
+                                            <select name="permanenciaQF" id="permanenciaQF" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($permanenciaQF == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($permanenciaQF == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($permanenciaQF == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="cumplimientoBPOF" class="form-label">Cumplimiento BPOF</label>
+                                            <select name="cumplimientoBPOF" id="cumplimientoBPOF" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($cumplimientoBPOF == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($cumplimientoBPOF == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($cumplimientoBPOF == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="cumplimientoBPA" class="form-label">Cumplimiento BPA</label>
+                                            <select name="cumplimientoBPA" id="cumplimientoBPA" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($cumplimientoBPA == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($cumplimientoBPA == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($cumplimientoBPA == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="cumplimientoBPDyT" class="form-label">Cumplimiento BPDyT</label>
+                                            <select name="cumplimientoBPDyT" id="cumplimientoBPDyT" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($cumplimientoBPDyT == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($cumplimientoBPDyT == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($cumplimientoBPDyT == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="cumplimientoBPF" class="form-label">Cumplimiento BPF</label>
+                                            <select name="cumplimientoBPF" id="cumplimientoBPF" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($cumplimientoBPF == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($cumplimientoBPF == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($cumplimientoBPF == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="productosIncautados" class="form-label">Productos Incautados</label>
+                                            <select name="productosIncautados" id="productosIncautados" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="SI" <?php echo ($productosIncautados == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                <option value="NO" <?php echo ($productosIncautados == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                <option value="N.A." <?php echo ($productosIncautados == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="medidaSeguridad" class="form-label">Medidas de Seguridad</label>
+                                            <select name="medidaSeguridad" id="medidaSeguridad" class="form-select">
+                                                <option value="">Seleccionar</option>
+                                                <option value="INMOVILIZACIÓN" <?php echo ($medidaSeguridad == 'INMOVILIZACIÓN') ? 'selected' : '' ?>>INMOVILIZACIÓN</option>
+                                                <option value="INCAUTACIÓN" <?php echo ($medidaSeguridad == 'INCAUTACIÓN') ? 'selected' : '' ?>>INCAUTACIÓN</option>
+                                                <option value="AISLAMIENTO DE PRODUCTOS E INSUMOS" <?php echo ($medidaSeguridad == 'AISLAMIENTO DE PRODUCTOS E INSUMOS') ? 'selected' : '' ?>>AISLAMIENTO DE PRODUCTOS E INSUMOS</option>
+                                                <option value="RETIRO DE PRODUCTOS DEL MERCADO" <?php echo ($medidaSeguridad == 'RETIRO DE PRODUCTOS DEL MERCADO') ? 'selected' : '' ?>>RETIRO DE PRODUCTOS DEL MERCADO</option>
+                                                <option value="DESTRUCCIÓN DE PRODUCTOS E INSUMOS" <?php echo ($medidaSeguridad == 'DESTRUCCIÓN DE PRODUCTOS E INSUMOS') ? 'selected' : '' ?>>DESTRUCCIÓN DE PRODUCTOS E INSUMOS</option>
+                                                <option value="CIERRE TEMPORAL" <?php echo ($medidaSeguridad == 'CIERRE TEMPORAL') ? 'selected' : '' ?>>CIERRE TEMPORAL</option>
+                                                <option value="EMISIÓN DE MENSAJES PUBLICITARIOS O ALERTAS" <?php echo ($medidaSeguridad == 'EMISIÓN DE MENSAJES PUBLICITARIOS O ALERTAS') ? 'selected' : '' ?>>EMISIÓN DE MENSAJES PUBLICITARIOS O ALERTAS</option>
+                                                <option value="N.A." <?php echo ($medidaSeguridad == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subcampos BPOF (se muestran si BPOF = SI o NO) -->
+                                    <div class="subcampos-bpof" id="subcamposBPOF">
+                                        <h6 class="fw-bold mb-3" style="color: #0b2a4a;"><i class="fas fa-layer-group me-2"></i>Detalle BPOF</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-3">
+                                                <label for="bpd" class="form-label">BPD</label>
+                                                <select name="bpd" id="bpd" class="form-select">
+                                                    <option value="">Seleccionar</option>
+                                                    <option value="SI" <?php echo ($bpd == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                    <option value="NO" <?php echo ($bpd == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                    <option value="N.A." <?php echo ($bpd == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="bpa" class="form-label">BPA</label>
+                                                <select name="bpa" id="bpa" class="form-select">
+                                                    <option value="">Seleccionar</option>
+                                                    <option value="SI" <?php echo ($bpa == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                    <option value="NO" <?php echo ($bpa == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                    <option value="N.A." <?php echo ($bpa == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="bpf" class="form-label">BPF</label>
+                                                <select name="bpf" id="bpf" class="form-select">
+                                                    <option value="">Seleccionar</option>
+                                                    <option value="SI" <?php echo ($bpf == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                    <option value="NO" <?php echo ($bpf == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                    <option value="N.A." <?php echo ($bpf == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="bpsf" class="form-label">BPSF</label>
+                                                <select name="bpsf" id="bpsf" class="form-select">
+                                                    <option value="">Seleccionar</option>
+                                                    <option value="SI" <?php echo ($bpsf == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                    <option value="NO" <?php echo ($bpsf == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                    <option value="N.A." <?php echo ($bpsf == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="bpdt" class="form-label">BPDT</label>
+                                                <select name="bpdt" id="bpdt" class="form-select">
+                                                    <option value="">Seleccionar</option>
+                                                    <option value="SI" <?php echo ($bpdt == 'SI') ? 'selected' : '' ?>>SI</option>
+                                                    <option value="NO" <?php echo ($bpdt == 'NO') ? 'selected' : '' ?>>NO</option>
+                                                    <option value="N.A." <?php echo ($bpdt == 'N.A.') ? 'selected' : '' ?>>N.A.</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Sección 3: Medidas de Seguridad (MS) -->
                     <div class="accordion" id="accordionMS">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingMS">
@@ -510,7 +849,6 @@
                                         } elseif ($estado == 'ARCHIVADO') {
                                             $badgeClass = 'badge-archivado';
                                         }
-
                                     ?>
                                     <span class="badge-estado <?php echo $badgeClass ?>"><?php echo htmlspecialchars($estado) ?></span>
                                 </td>
@@ -546,17 +884,20 @@
         </div>
     </footer>
 
-<?php include 'boostrap-js.php'; ?>
-<?php include 'datatable-js.php'; ?>
-<?php include 'select2-js.php'; ?>
+    <?php include 'boostrap-js.php'; ?>
+    <?php include 'datatable-js.php'; ?>
+    <?php include 'select2-js.php'; ?>
 
     <script>
         $(document).ready(function() {
+            // DataTable
             $('#tablaExpedientes').DataTable({
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
                 responsive: true,
                 order: [[0, 'desc']]
             });
+
+            // Select2
             if ($.fn.select2) {
                 $('.select2-auto').select2({
                     width: '100%',
@@ -564,6 +905,8 @@
                     allowClear: true
                 });
             }
+
+            // Popovers
             const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
             popoverTriggerList.map(function (popoverTriggerEl) {
                 return new bootstrap.Popover(popoverTriggerEl, {
@@ -571,6 +914,8 @@
                     placement: 'top'
                 });
             });
+
+            // Mostrar/ocultar campo "Otro estado"
             $('#estadoExpediente').change(function() {
                 if ($(this).val() === 'OTRO') {
                     $('#divOtroEstado').show();
@@ -578,7 +923,115 @@
                     $('#divOtroEstado').hide();
                 }
             });
+
+            // ============================================
+            // DEPENDENCIAS: Equipo DCVS → Actividad → Tipo
+            // ============================================
+            $('#idEquipoDCVS').change(function() {
+                const idEquipo = $(this).val();
+                const $actividad = $('#idActividadAbrev');
+                const $tipo = $('#idTipoActividad');
+
+                $actividad.html('<option value="">Cargando...</option>');
+                $tipo.html('<option value="">Primero seleccione Actividad</option>');
+
+                if (idEquipo) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '../persistencia/dExpediente.php',
+                        data: { action: 'listarActividades', idEquipo: idEquipo },
+                        dataType: 'json',
+                        success: function(data) {
+                            let options = '<option value="">Seleccionar</option>';
+                            $.each(data, function(index, item) {
+                                options += '<option value="' + item.idActividad + '">' + item.nombre + '</option>';
+                            });
+                            $actividad.html(options);
+                            // Si hay un valor guardado, seleccionarlo
+                            <?php if ($esEdicion && !empty($idActividadAbrev)): ?>
+                                $actividad.val('<?php echo $idActividadAbrev ?>').trigger('change');
+                            <?php endif; ?>
+                        },
+                        error: function() {
+                            alert('Error al cargar actividades');
+                            $actividad.html('<option value="">Error al cargar</option>');
+                        }
+                    });
+                } else {
+                    $actividad.html('<option value="">Primero seleccione Equipo DCVS</option>');
+                }
+            });
+
+            $('#idActividadAbrev').change(function() {
+                const idActividad = $(this).val();
+                const $tipo = $('#idTipoActividad');
+                $tipo.html('<option value="">Cargando...</option>');
+
+                if (idActividad) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '../persistencia/dExpediente.php',
+                        data: { action: 'listarTiposActividad', idActividad: idActividad },
+                        dataType: 'json',
+                        success: function(data) {
+                            let options = '<option value="">Seleccionar</option>';
+                            $.each(data, function(index, item) {
+                                options += '<option value="' + item.idTipoActividad + '">' + item.nombre + '</option>';
+                            });
+                            $tipo.html(options);
+                            <?php if ($esEdicion && !empty($idTipoActividad)): ?>
+                                $tipo.val('<?php echo $idTipoActividad ?>');
+                            <?php endif; ?>
+                        },
+                        error: function() {
+                            alert('Error al cargar tipos de actividad');
+                            $tipo.html('<option value="">Error al cargar</option>');
+                        }
+                    });
+                } else {
+                    $tipo.html('<option value="">Primero seleccione Actividad</option>');
+                }
+            });
+
+            // ============================================
+            // Mostrar/ocultar subcampos BPOF
+            // ============================================
+            function toggleSubcamposBPOF() {
+                const valor = $('#cumplimientoBPOF').val();
+                if (valor === 'SI' || valor === 'NO') {
+                    $('#subcamposBPOF').slideDown();
+                } else {
+                    $('#subcamposBPOF').slideUp();
+                    // Limpiar valores
+                    $('#bpd, #bpa, #bpf, #bpsf, #bpdt').val('');
+                }
+            }
+
+            $('#cumplimientoBPOF').change(function() {
+                toggleSubcamposBPOF();
+            });
+
+            // Estado inicial
+            toggleSubcamposBPOF();
+
+            // Si estamos editando, disparar eventos para cargar selects dependientes
+            <?php if ($esEdicion && !empty($idEquipoDCVS)): ?>
+                // Forzar carga de actividades después de cargar la página
+                setTimeout(function() {
+                    $('#idEquipoDCVS').trigger('change');
+                }, 300);
+            <?php endif; ?>
+
+            // ============================================
+            // FUNCIÓN PARA ELIMINAR (desde la tabla)
+            // ============================================
+            window.eliminarExpediente = function(id) {
+                if (confirm('¿Está seguro de eliminar este expediente?')) {
+                    window.location.href = 'eliminarExpediente.php?id=' + id + '&area=UFREMID';
+                }
+            };
         });
+
         function cancelar() {
             window.location.href = '<?php echo $_SERVER['PHP_SELF'] ?>';
         }
