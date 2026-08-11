@@ -221,7 +221,42 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
         .badge-proceso { background: #ffc107; color: #212529; }
         .badge-cerrado { background: #28a745; color: white; }
         .badge-archivado { background: #6c757d; color: white; }
-        .accordion-button:not(.collapsed) { background-color: #e7f1ff; color: #0b2a4a; }
+                /* MEJORA VISUAL DE ACORDEONES */
+        .accordion-item {
+            border: 2px solid #1b4f8b !important;
+            border-radius: 12px !important;
+            margin-bottom: 12px !important;
+            overflow: hidden;
+        }
+        .accordion-item:has(.accordion-button:not(.collapsed)) {
+            border-color: #0b2a4a !important;
+            box-shadow: 0 0 0 4px rgba(27, 79, 139, 0.15);
+        }
+        .accordion-button {
+            background: #eaf3ff !important;
+            font-weight: 600 !important;
+            color: #0b2a4a !important;
+            padding: 14px 20px !important;
+        }
+        .accordion-button:not(.collapsed) {
+            background: #1b4f8b !important;
+            color: white !important;
+        }
+        .accordion-button:not(.collapsed) i {
+            color: white !important;
+        }
+        .accordion-button:not(.collapsed)::after {
+            filter: brightness(0) invert(1);
+        }
+        .accordion-button:focus {
+            box-shadow: none !important;
+            border-color: #1b4f8b !important;
+        }
+        .accordion-body {
+            background: #f8faff !important;
+            border-top: 1px solid #dce3ed;
+            padding: 20px !important;
+        }
         @media (max-width: 768px) { .page-header { padding: 20px 0; } .btn-primary-custom, .btn-outline-secondary-custom { width: 100%; margin-bottom: 5px; } }
     </style>
 </head>
