@@ -60,10 +60,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
                 $data = reporteSedes($pdo, $filtros);
                 $titulo = 'Reporte_Sedes_Ubicacion';
                 break;
+            // ======= NUEVOS CASOS =======
+            case 'medidas':
+                $data = reporteMedidasSeguridad($pdo, $filtros);
+                $titulo = 'Reporte_Medidas_Seguridad';
+                break;
+            case 'fi':
+                $data = reporteFaseInstructora($pdo, $filtros);
+                $titulo = 'Reporte_Fase_Instructora';
+                break;
+            case 'fs':
+                $data = reporteFaseSancionadora($pdo, $filtros);
+                $titulo = 'Reporte_Fase_Sancionadora';
+                break;
+            case 'judicializados':
+                $data = reporteJudicializados($pdo, $filtros);
+                $titulo = 'Reporte_Judicializados';
+                break;
             default:
                 throw new Exception('Reporte no válido');
         }
-
         if (empty($data)) {
             throw new Exception('No hay datos para exportar con los filtros seleccionados.');
         }
@@ -322,6 +338,7 @@ $mensajeError = $_GET['error'] ?? '';
                 <div class="card-body">
                     <!-- Pestañas -->
                     <ul class="nav nav-tabs" id="reporteTabs" role="tablist">
+                        <!-- Reportes existentes -->
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="tab-general" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">General</button>
                         </li>
@@ -334,11 +351,25 @@ $mensajeError = $_GET['error'] ?? '';
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="tab-sedes" data-bs-toggle="tab" data-bs-target="#sedes" type="button" role="tab">Sedes</button>
                         </li>
+                        <!-- NUEVOS REPORTES -->
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-medidas" data-bs-toggle="tab" data-bs-target="#medidas" type="button" role="tab">Medidas Seguridad</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-fi" data-bs-toggle="tab" data-bs-target="#fi" type="button" role="tab">Fase Instructora</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-fs" data-bs-toggle="tab" data-bs-target="#fs" type="button" role="tab">Fase Sancionadora</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-judicializados" data-bs-toggle="tab" data-bs-target="#judicializados" type="button" role="tab">Judicializados</button>
+                        </li>
                     </ul>
 
                     <div class="tab-content mt-3">
                         <!-- REPORTE GENERAL -->
                         <div class="tab-pane fade show active" id="general" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Listado completo de expedientes con datos de la sede, establecimiento y ubicación geográfica.</p>
                             <form method="POST" action="">
                                 <input type="hidden" name="reporte" value="general">
                                 <div class="filtro-row">
@@ -379,6 +410,7 @@ $mensajeError = $_GET['error'] ?? '';
 
                         <!-- REPORTE PLAZOS CRÍTICOS -->
                         <div class="tab-pane fade" id="plazos" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Reporte para ver plazos de expedientes que están vencidos o vencerán con respecto a los procesos legales.</p>
                             <form method="POST" action="">
                                 <input type="hidden" name="reporte" value="plazos">
                                 <div class="filtro-row">
@@ -411,6 +443,7 @@ $mensajeError = $_GET['error'] ?? '';
 
                         <!-- REPORTE DIGEMID -->
                         <div class="tab-pane fade" id="digemid" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Reporte para observar datos relacionados con DIGEMID previamente registrados.</p>
                             <form method="POST" action="">
                                 <input type="hidden" name="reporte" value="digemid">
                                 <div class="filtro-row">
@@ -451,6 +484,7 @@ $mensajeError = $_GET['error'] ?? '';
 
                         <!-- REPORTE SEDES -->
                         <div class="tab-pane fade" id="sedes" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Reporte para observar todos los establecimientos en la ubicación que se ingrese.</p>
                             <form method="POST" action="">
                                 <input type="hidden" name="reporte" value="sedes">
                                 <div class="filtro-row">
@@ -484,6 +518,160 @@ $mensajeError = $_GET['error'] ?? '';
                                                     <option value="<?= $area ?>"><?= $area ?></option>
                                                 <?php endforeach; ?>
                                             </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" name="exportar" class="btn btn-primary-custom">
+                                    <i class="fas fa-file-excel me-2"></i> Exportar a Excel
+                                </button>
+                            </form>
+                        </div>
+                        <!-- MEDIDAS DE SEGURIDAD -->
+                        <div class="tab-pane fade" id="medidas" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Medidas de seguridad aplicadas a los expedientes (descargos, cierres, inmovilizaciones, etc.). Incluye MS y DIGEMID.</p>
+                            <form method="POST" action="">
+                                <input type="hidden" name="reporte" value="medidas">
+                                <div class="filtro-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Área</label>
+                                            <select name="filtros[area]" class="form-select form-control-modern">
+                                                <option value="">Todas</option>
+                                                <?php foreach ($areas as $area): ?>
+                                                    <option value="<?= $area ?>"><?= $area ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Tipo de Medida</label>
+                                            <select name="filtros[tipo_medida]" class="form-select form-control-modern">
+                                                <option value="">Todos</option>
+                                                <option value="descargo">Descargo Acta</option>
+                                                <option value="cierre">Cierre Temporal</option>
+                                                <option value="definitivo">Cierre Definitivo</option>
+                                                <option value="digemid">DIGEMID</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha desde</label>
+                                            <input type="date" name="filtros[fecha_desde]" class="form-control form-control-modern">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha hasta</label>
+                                            <input type="date" name="filtros[fecha_hasta]" class="form-control form-control-modern">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" name="exportar" class="btn btn-primary-custom">
+                                    <i class="fas fa-file-excel me-2"></i> Exportar a Excel
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- FASE INSTRUCTORA -->
+                        <div class="tab-pane fade" id="fi" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Eventos de la fase instructora con fechas clave y plazos asociados (inicio PAS, descargos, caducidad, IFI).</p>
+                            <form method="POST" action="">
+                                <input type="hidden" name="reporte" value="fi">
+                                <div class="filtro-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Área</label>
+                                            <select name="filtros[area]" class="form-select form-control-modern">
+                                                <option value="">Todas</option>
+                                                <?php foreach ($areas as $area): ?>
+                                                    <option value="<?= $area ?>"><?= $area ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Tipo de Evento</label>
+                                            <select name="filtros[tipo_evento]" class="form-select form-control-modern">
+                                                <option value="">Todos</option>
+                                                <option value="INICIO">Inicio PAS</option>
+                                                <option value="REINICIO">Reinicio PAS</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha desde</label>
+                                            <input type="date" name="filtros[fecha_desde]" class="form-control form-control-modern">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha hasta</label>
+                                            <input type="date" name="filtros[fecha_hasta]" class="form-control form-control-modern">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" name="exportar" class="btn btn-primary-custom">
+                                    <i class="fas fa-file-excel me-2"></i> Exportar a Excel
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- FASE SANCIONADORA -->
+                        <div class="tab-pane fade" id="fs" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Resumen de la fase sancionadora incluyendo pagos realizados (sanciones, recursos, consentidas, apelaciones).</p>
+                            <form method="POST" action="">
+                                <input type="hidden" name="reporte" value="fs">
+                                <div class="filtro-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Área</label>
+                                            <select name="filtros[area]" class="form-select form-control-modern">
+                                                <option value="">Todas</option>
+                                                <?php foreach ($areas as $area): ?>
+                                                    <option value="<?= $area ?>"><?= $area ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Tipo de Sanción</label>
+                                            <select name="filtros[tipo_sancion]" class="form-select form-control-modern">
+                                                <option value="">Todas</option>
+                                                <option value="MULTA">Multa</option>
+                                                <option value="CIERRE">Cierre</option>
+                                                <option value="OTRO">Otro</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha desde</label>
+                                            <input type="date" name="filtros[fecha_desde]" class="form-control form-control-modern">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha hasta</label>
+                                            <input type="date" name="filtros[fecha_hasta]" class="form-control form-control-modern">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" name="exportar" class="btn btn-primary-custom">
+                                    <i class="fas fa-file-excel me-2"></i> Exportar a Excel
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- JUDICIALIZADOS -->
+                        <div class="tab-pane fade" id="judicializados" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Expedientes marcados como judicializados (con el campo judicializado no vacío).</p>
+                            <form method="POST" action="">
+                                <input type="hidden" name="reporte" value="judicializados">
+                                <div class="filtro-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Área</label>
+                                            <select name="filtros[area]" class="form-select form-control-modern">
+                                                <option value="">Todas</option>
+                                                <?php foreach ($areas as $area): ?>
+                                                    <option value="<?= $area ?>"><?= $area ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Fecha desde</label>
+                                            <input type="date" name="filtros[fecha_desde]" class="form-control form-control-modern">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Fecha hasta</label>
+                                            <input type="date" name="filtros[fecha_hasta]" class="form-control form-control-modern">
                                         </div>
                                     </div>
                                 </div>
