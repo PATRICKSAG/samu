@@ -1,1 +1,1 @@
-<link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
