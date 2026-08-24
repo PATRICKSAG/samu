@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
         $col = 'A';
         foreach ($cleanHeaders as $header) {
             $sheet->setCellValue($col . '1', $header);
-            $col++;
+            $col = str_increment($col);
         }
         $lastCol = chr(ord('A') + count($cleanHeaders) - 1);
 
@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
                     $value = '';
                 }
                 $sheet->setCellValue($col . $row, $value);
-                $col++;
+                $col = str_increment($col);
             }
             $row++;
         }
