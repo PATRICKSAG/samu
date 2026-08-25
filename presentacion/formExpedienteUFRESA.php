@@ -491,6 +491,7 @@
                                 <th>Acta</th>
                                 <th>Sede</th>
                                 <th>Fecha Inspección</th>
+                                <th>Categoría</th>
                                 <th>Estado</th>
                                 <th>Inspector</th>
                                 <th>Acciones</th>
@@ -503,6 +504,7 @@
                                 <td><?php echo htmlspecialchars($exp['numeroActa'] ?? '') ?></td>
                                 <td><?php echo htmlspecialchars($exp['nombreSede'] ?? '') ?></td>
                                 <td><?php echo $exp['fechaInspeccion'] ?? '' ?></td>
+                                <td><?php echo htmlspecialchars($exp['categoria'] ?? '') ?></td>
                                 <td>
                                     <?php
                                         $estado     = $exp['estadoExpediente'] ?? '';

@@ -11,6 +11,10 @@ function reporteExpedientesGeneral(PDO $pdo, $filtros = [])
                 e.numeroActa,
                 e.areaOrigen,
                 e.fechaInspeccion,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESA', 'UFREMID') THEN CAT.NOMBRE 
+                    ELSE NULL 
+                END AS Categoria,
                 e.estadoExpediente,
                 e.responsable,
                 e.falsificado,
@@ -29,6 +33,7 @@ function reporteExpedientesGeneral(PDO $pdo, $filtros = [])
             LEFT JOIN distrito d ON s.idDistrito = d.idDistrito
             LEFT JOIN provincia p ON d.idProvincia = p.idProvincia
             LEFT JOIN departamento dep ON p.idDepartamento = dep.idDepartamento
+            LEFT JOIN categoria CAT ON s.idCategoria = CAT.idCategoria
             WHERE 1=1";
 
     $params = [];

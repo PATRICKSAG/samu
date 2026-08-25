@@ -539,7 +539,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                                 </div>
                                 <div class="col-md-6">
                                     <label for="txtCategorizacion" class="form-label"><i class="fas fa-tags me-1"></i>Categorización <span class="text-danger">*</span></label>
-                                    <select name="txtCategorizacion" id="txtCategorizacion" class="form-select" required>
+                                    <select name="txtCategorizacion" id="txtCategorizacion" class="form-select" >
                                         <option value="">Seleccionar</option>
                                         <option value="SI" <?= ($txtCategorizacion == 'SI') ? 'selected' : '' ?>>SI</option>
                                         <option value="NO" <?= ($txtCategorizacion == 'NO') ? 'selected' : '' ?>>NO</option>
@@ -548,7 +548,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                                 </div>
                                 <div class="col-md-6">
                                     <label for="txtInicioActividad" class="form-label"><i class="fas fa-play me-1"></i>Inicio Actividad <span class="text-danger">*</span></label>
-                                    <select name="txtInicioActividad" id="txtInicioActividad" class="form-select" required>
+                                    <select name="txtInicioActividad" id="txtInicioActividad" class="form-select">
                                         <option value="">Seleccionar</option>
                                         <option value="SI" <?= ($txtInicioActividad == 'SI') ? 'selected' : '' ?>>SI</option>
                                         <option value="NO" <?= ($txtInicioActividad == 'NO') ? 'selected' : '' ?>>NO</option>
@@ -811,47 +811,31 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
 
             // Función para mostrar/ocultar campos según área
             function toggleCampos(area) {
-                // Ocultar todos los bloques
                 $('#camposUFREMIDUFRESA').hide();
                 $('#camposUFRESBIT').hide();
 
-                // Mostrar el correspondiente
                 if (area === 'UFREMID' || area === 'UFRESA') {
                     $('#camposUFREMIDUFRESA').show();
-                    // // Filtrar categorías según área
-                    // $('#txtCategoria option').each(function() {
-                    //     var id = parseInt($(this).val());
-                    //     if (area === 'UFREMID' && id <= 8) {
-                    //         $(this).show();
-                    //     } else if (area === 'UFRESA' && id >= 9) {
-                    //         $(this).show();
-                    //     } else {
-                    //         $(this).hide();
-                    //     }
-                    // });
-                    // Hacer required los campos de UFREMID/UFRESA
+                    // Required para UFREMID/UFRESA
                     $('#txtCategoria, #txtSituacionDigemid').prop('required', true);
-                    // Quitar required de campos ipress
-                    $('#txtEstadoRenipress, #txtInstitucionRenipress, #txtTipoRenipress, #txtClasificacionRenipress').prop('required', false);
+                    // Quitar required de todos los campos UFRESBIT
+                    $('#txtEstadoRenipress, #txtInstitucionRenipress, #txtTipoRenipress, #txtClasificacionRenipress, #txtCategorizacion, #txtInicioActividad').prop('required', false);
 
-                    // *** NUEVO: Controlar el checkbox Q.F. ***
                     if (area === 'UFREMID') {
                         $('#campoQF').show();
-                        $('#txtTieneQuimicoFarmaceutico').prop('required', false); // no es obligatorio, solo se muestra
-                    } else if (area === 'UFRESA') {
+                        $('#txtTieneQuimicoFarmaceutico').prop('required', false);
+                    } else { // UFRESA
                         $('#campoQF').hide();
-                        $('#txtTieneQuimicoFarmaceutico').prop('checked', false); // desmarcar si estaba
+                        $('#txtTieneQuimicoFarmaceutico').prop('checked', false);
                         $('#txtTieneQuimicoFarmaceutico').prop('required', false);
                     }
                 } else if (area === 'UFRESBIT') {
                     $('#camposUFRESBIT').show();
-                    // Ocultar todas las categorías (no se usa)
-                    $('#txtCategoria option').hide();
                     // Quitar required de UFREMID/UFRESA
                     $('#txtCategoria, #txtSituacionDigemid, #txtTieneQuimicoFarmaceutico').prop('required', false);
-                    // Hacer required campos ipress
-                    $('#txtEstadoRenipress, #txtInstitucionRenipress, #txtTipoRenipress, #txtClasificacionRenipress').prop('required', true);
-                    // Ocultar Q.F. si está visible
+                    // Poner required en todos los campos UFRESBIT
+                    $('#txtEstadoRenipress, #txtInstitucionRenipress, #txtTipoRenipress, #txtClasificacionRenipress, #txtCategorizacion, #txtInicioActividad').prop('required', true);
+                    // Ocultar Q.F.
                     $('#campoQF').hide();
                     $('#txtTieneQuimicoFarmaceutico').prop('checked', false);
                 }

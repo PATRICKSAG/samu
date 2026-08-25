@@ -1,5 +1,5 @@
 <?php
-
+//dSede.php
 function insertarSede(PDO $pdo, array $data)
 {
     $idEstablecimiento = $data['idEstablecimiento'];
@@ -164,3 +164,94 @@ function eliminarSede(PDO $pdo, $idSede)
     return $stmt->rowCount();
 }
 
+/**
+ * Obtiene los datos completos de una sede incluyendo nombres de FK
+ */
+function obtenerSedeCompleta(PDO $pdo, $idSede)
+{
+    $sql = "SELECT 
+                s.*,
+                dep.nombre AS departamento_nombre,
+                prov.nombre AS provincia_nombre,
+                dist.nombre AS distrito_nombre,
+                se.nombre AS situacion_establecimiento_nombre,
+                er.descripcion AS estado_renipress_nombre,
+                ir.nombre AS institucion_renipress_nombre,
+                tr.nombre AS tipo_renipress_nombre,
+                cr.nombre AS clasificacion_renipress_nombre
+            FROM sede s
+            LEFT JOIN departamento dep ON s.idDepartamento = dep.idDepartamento
+            LEFT JOIN provincia prov ON s.idProvincia = prov.idProvincia
+            LEFT JOIN distrito dist ON s.idDistrito = dist.idDistrito
+            LEFT JOIN situacion_establecimiento se ON s.idSituacionEstablecimiento = se.idSituacionEstablecimiento
+            LEFT JOIN estadoRenipress er ON s.idEstadoRenipress = er.id_estado
+            LEFT JOIN InsticionesRenipress ir ON s.idInstitucionRenipress = ir.idInsticionRenipress
+            LEFT JOIN tipoRenipress tr ON s.idTipoRenipress = tr.idTipoRenipress
+            LEFT JOIN clasificacionRenipress cr ON s.idClasificacionRenipress = cr.idClasificacionRenipress
+            WHERE s.idSede = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$idSede]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// ============================================
+// ENDPOINT AJAX PARA OBTENER DATOS DE SEDE
+// ============================================
+if (isset($_POST['action']) && $_POST['action'] === 'obtenerSedeCompleta' && isset($_POST['idSede'])) {
+    include_once(__DIR__ . '/conexion.php');
+    $pdo = Database::getConexion();
+    $idSede = intval($_POST['idSede']);
+    $data = obtenerSedeCompleta($pdo, $idSede);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
+
+// ============================================
+// ENDPOINT AJAX PARA ACTUALIZAR SEDE DESDE EXPEDIENTE
+// ============================================
+if (isset($_POST['action']) && $_POST['action'] === 'actualizarSedeDesdeExpediente') {
+    include_once(__DIR__ . '/conexion.php');
+    $pdo = Database::getConexion();
+    $data = $_POST;
+
+    // Verificar que venga idSede
+    if (empty($data['idSede'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID de sede no proporcionado']);
+        exit;
+    }
+
+    // Preparar datos para actualizar
+    $updateData = [
+        'idSede' => $data['idSede'],
+        'idDepartamento' => $data['idDepartamento'] ?? null,
+        'idProvincia' => $data['idProvincia'] ?? null,
+        'idDistrito' => $data['idDistrito'] ?? null,
+        'idSituacionEstablecimiento' => $data['idSituacionEstablecimiento'] ?? null,
+        'direccion' => $data['direccion'] ?? null,
+        // Campos UFRESBIT
+        'idEstadoRenipress' => $data['idEstadoRenipress'] ?? null,
+        'idInstitucionRenipress' => $data['idInstitucionRenipress'] ?? null,
+        'idTipoRenipress' => $data['idTipoRenipress'] ?? null,
+        'idClasificacionRenipress' => $data['idClasificacionRenipress'] ?? null,
+        'categorizacion' => $data['categorizacion'] ?? null,
+        'inicioActividad' => $data['inicioActividad'] ?? null,
+        // UFREMID (para futura implementación)
+        'tieneQuimicoFarmaceutico' => isset($data['tieneQuimicoFarmaceutico']) ? $data['tieneQuimicoFarmaceutico'] : null,
+    ];
+
+    try {
+        // Usar la función existente actualizarSede
+        $result = actualizarSede($pdo, $updateData);
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Sede actualizada correctamente']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No se realizaron cambios']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+    exit;
+}

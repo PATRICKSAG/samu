@@ -1,12 +1,15 @@
 <?php
+//formExpedienteUFRESBIT.php
 include_once(__DIR__ . '/../config.php');
 include_once(__DIR__ . '/../persistencia/conexion.php');
 include_once(__DIR__ . '/../persistencia/dSede.php');
 include_once(__DIR__ . '/../persistencia/dEstablecimiento.php');
-include_once(__DIR__ . '/../persistencia/dRenipress.php'); // <-- Importante!
+include_once(__DIR__ . '/../persistencia/dRenipress.php');
 include_once(__DIR__ . '/../persistencia/dExpediente.php');
-
-// VERIFICACIÓN DE SESIÓN (AGREGAR ESTO)
+include_once(__DIR__ . '/../persistencia/dDepartamento.php');
+include_once(__DIR__ . '/../persistencia/dProvincia.php');
+include_once(__DIR__ . '/../persistencia/dDistrito.php');
+include_once(__DIR__ . '/../persistencia/dSituacionEstablecimiento.php');
 include_once(__DIR__ . '/auth_check.php');
 
 $pdo = Database::getConexion();
@@ -23,10 +26,9 @@ $observacion = '';
 $judicializado = '';
 $falsificado = 0;
 
-// Variables de MS (sin idSituacionDigemid, con idEstadoRenipress)
 $fechaDescargoActa = '';
 $oficioOtorgaDeniegaPlazo = '';
-$idEstadoRenipressSeleccionado = ''; // <-- Cambio: estado Renipress
+$idEstadoRenipressSeleccionado = '';
 $docElevaNulidad = '';
 $resuelveNulidad = '';
 $informeTecnicoInspeccion = '';
@@ -46,7 +48,6 @@ $mensaje = '';
 $mensajeError = '';
 $esEdicion = false;
 
-// Cargar datos si hay editar
 $idEditar = isset($_GET['editar']) ? intval($_GET['editar']) : 0;
 if ($idEditar > 0) {
     $expData = obtenerExpedienteCompleto($pdo, $idEditar);
@@ -64,7 +65,6 @@ if ($idEditar > 0) {
         $falsificado = $expData['falsificado'] ?? 0;
         $fechaDescargoActa = $expData['fechaDescargoActa'] ?? '';
         $oficioOtorgaDeniegaPlazo = $expData['oficioOtorgaDeniegaPlazo'] ?? '';
-        // Cambio: cargar idEstadoRenipress en lugar de idSituacionDigemid
         $idEstadoRenipressSeleccionado = $expData['idEstadoRenipressSeleccionado'] ?? '';
         $docElevaNulidad = $expData['docElevaNulidad'] ?? '';
         $resuelveNulidad = $expData['resuelveNulidad'] ?? '';
@@ -83,7 +83,6 @@ if ($idEditar > 0) {
     }
 }
 
-// Procesar POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $idPost = isset($_GET['editar']) ? intval($_GET['editar']) : (isset($_POST['idExpediente']) ? intval($_POST['idExpediente']) : 0);
 
@@ -98,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $falsificado = isset($_POST['falsificado']) ? 1 : 0;
     $fechaDescargoActa = $_POST['fechaDescargoActa'] ?? '';
     $oficioOtorgaDeniegaPlazo = $_POST['oficioOtorgaDeniegaPlazo'] ?? '';
-    // Cambio: recoger idEstadoRenipressSeleccionado
+    $idTipoExpediente = $_POST['idTipoExpediente'] ?? null;
     $idEstadoRenipressSeleccionado = $_POST['idEstadoRenipressSeleccionado'] ?? '';
     $docElevaNulidad = $_POST['docElevaNulidad'] ?? '';
     $resuelveNulidad = $_POST['resuelveNulidad'] ?? '';
@@ -133,7 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
             'falsificado' => $falsificado,
             'fechaDescargoActa' => $fechaDescargoActa,
             'oficioOtorgaDeniegaPlazo' => $oficioOtorgaDeniegaPlazo,
-            'idEstadoRenipressSeleccionado' => $idEstadoRenipressSeleccionado, // Cambio
+            'idTipoExpediente' => $idTipoExpediente,
+            'idEstadoRenipressSeleccionado' => $idEstadoRenipressSeleccionado,
             'docElevaNulidad' => $docElevaNulidad,
             'resuelveNulidad' => $resuelveNulidad,
             'informeTecnicoInspeccion' => $informeTecnicoInspeccion,
@@ -153,10 +153,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
         try {
             if ($idPost > 0) {
                 $data['idExpediente'] = $idPost;
-                actualizarExpediente($pdo, $data, 'UFRESBIT'); // <-- Área UFRESBIT
+                actualizarExpediente($pdo, $data, 'UFRESBIT');
                 $mensaje = "Expediente actualizado correctamente.";
             } else {
-                $idNuevo = insertarExpediente($pdo, $data, 'UFRESBIT'); // <-- Área UFRESBIT
+                $idNuevo = insertarExpediente($pdo, $data, 'UFRESBIT');
                 $mensaje = "Expediente creado correctamente con ID: $idNuevo";
             }
             header("Location: " . $_SERVER['PHP_SELF'] . "?mensaje=" . urlencode($mensaje));
@@ -174,9 +174,24 @@ if (isset($_GET['mensaje'])) {
 }
 
 $sedes = listarSedes($pdo);
-// Cambio: obtener estados Renipress en lugar de Digemid
 $estadosRenipress = listarEstadosRenipress($pdo);
-$expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
+$expedientes = listarExpedientesUFRESBIT($pdo);
+
+$sedeData = null;
+if ($idSede > 0) {
+    include_once(__DIR__ . '/../persistencia/dSede.php');
+    $sedeData = obtenerSedeCompleta($pdo, $idSede);
+}
+
+$departamentos = listarDepartamentos($pdo);
+$provincias = listarProvincias($pdo);
+$distritos = listarDistritos($pdo);
+$situaciones = listarSituacionesEstablecimientos($pdo);
+$institucionesRenipress = listarInstitucionesRenipress($pdo);
+$tiposRenipress = listarTiposRenipress($pdo);
+$clasificacionesRenipress = listarClasificacionesRenipress($pdo);
+$opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -189,7 +204,7 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
     <?php include 'select2-css.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ... mismos estilos que UFRESA ... */
+        /* ... mismos estilos ... */
         body { background-color: #f0f4fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .page-header { background: linear-gradient(135deg, #0b2a4a 0%, #1b4f8b 100%); color: white; padding: 30px 0 25px; border-radius: 0 0 40px 40px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         .page-header h2 { font-weight: 700; margin: 0; }
@@ -221,7 +236,6 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
         .badge-proceso { background: #ffc107; color: #212529; }
         .badge-cerrado { background: #28a745; color: white; }
         .badge-archivado { background: #6c757d; color: white; }
-                /* MEJORA VISUAL DE ACORDEONES */
         .accordion-item {
             border: 2px solid #1b4f8b !important;
             border-radius: 12px !important;
@@ -264,7 +278,6 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
 
     <?php include 'header.php'; ?>
 
-    <!-- Cabecera -->
     <div class="page-header">
         <div class="container">
             <h2><i class="fas fa-file-alt me-2"></i>Expedientes UFRESBIT</h2>
@@ -273,7 +286,6 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
     </div>
 
     <div class="container">
-        <!-- Mensajes -->
         <?php if ($mensaje): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($mensaje) ?>
@@ -287,7 +299,7 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
             </div>
         <?php endif; ?>
 
-        <!-- Formulario -->
+        <!-- ===== FORMULARIO PRINCIPAL (EXPEDIENTE) ===== -->
         <div class="card card-modern mb-4">
             <div class="card-body">
                 <h5 class="card-title fw-bold mb-3" style="color: #0b2a4a;">
@@ -296,7 +308,7 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
                 <form method="POST" action="">
                     <input type="hidden" name="idExpediente" value="<?= $idExpediente ?>">
 
-                    <!-- Sección 1: Datos Generales (sin tipo expediente ni código UFREMID) -->
+                    <!-- Datos Generales -->
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="idSede" class="form-label"><i class="fas fa-store me-1"></i>Sede <span class="text-danger">*</span></label>
@@ -360,7 +372,7 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
 
                     <hr class="my-4">
 
-                    <!-- Sección 2: Medidas de Seguridad (MS) -->
+                    <!-- Medidas de Seguridad (MS) -->
                     <div class="accordion" id="accordionMS">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingMS">
@@ -471,7 +483,150 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
             </div>
         </div>
 
-        <!-- Listado de expedientes -->
+        <!-- ===== ACORDEÓN DE LA SEDE (FUERA DEL FORMULARIO PRINCIPAL) ===== -->
+        <div class="card card-modern mb-4">
+            <div class="card-body">
+                <div class="accordion" id="accordionSede">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingSede">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSede" aria-expanded="false" aria-controls="collapseSede">
+                                <i class="fas fa-building me-2"></i> Datos de la Sede
+                            </button>
+                        </h2>
+                        <div id="collapseSede" class="accordion-collapse collapse" aria-labelledby="headingSede" data-bs-parent="#accordionSede">
+                            <div class="accordion-body">
+                                <div id="sedeInfoContainer">
+                                    <?php if ($sedeData): ?>
+                                        <!-- Contenedor de la sede (no es un formulario) -->
+                                        <div id="formSedeEdit">
+                                            <input type="hidden" name="idSede" value="<?= $idSede ?>">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Departamento</label>
+                                                    <select name="idDepartamento" id="editDepartamento" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($departamentos as $dep): ?>
+                                                            <option value="<?= $dep['idDepartamento'] ?>" <?= ($dep['idDepartamento'] == ($sedeData['idDepartamento'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($dep['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Provincia</label>
+                                                    <select name="idProvincia" id="editProvincia" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($provincias as $prov): ?>
+                                                            <option value="<?= $prov['idProvincia'] ?>" <?= ($prov['idProvincia'] == ($sedeData['idProvincia'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($prov['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Distrito</label>
+                                                    <select name="idDistrito" id="editDistrito" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($distritos as $dist): ?>
+                                                            <option value="<?= $dist['idDistrito'] ?>" <?= ($dist['idDistrito'] == ($sedeData['idDistrito'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($dist['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Situación Establecimiento</label>
+                                                    <select name="idSituacionEstablecimiento" id="editSituacionEstablecimiento" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($situaciones as $sit): ?>
+                                                            <option value="<?= $sit['idSituacionEstablecimiento'] ?>" <?= ($sit['idSituacionEstablecimiento'] == ($sedeData['idSituacionEstablecimiento'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($sit['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Dirección</label>
+                                                    <input type="text" class="form-control" name="direccion" id="editDireccion" value="<?= htmlspecialchars($sedeData['direccion'] ?? '') ?>" placeholder="Dirección">
+                                                </div>
+                                                <div class="col-12"><hr></div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Estado IPRESS</label>
+                                                    <select name="idEstadoRenipress" id="editEstadoRenipress" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($estadosRenipress as $est): ?>
+                                                            <option value="<?= $est['id_estado'] ?>" <?= ($est['id_estado'] == ($sedeData['idEstadoRenipress'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($est['descripcion']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Institución</label>
+                                                    <select name="idInstitucionRenipress" id="editInstitucionRenipress" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($institucionesRenipress as $inst): ?>
+                                                            <option value="<?= $inst['idInsticionRenipress'] ?>" <?= ($inst['idInsticionRenipress'] == ($sedeData['idInstitucionRenipress'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($inst['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Tipo</label>
+                                                    <select name="idTipoRenipress" id="editTipoRenipress" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($tiposRenipress as $tipo): ?>
+                                                            <option value="<?= $tipo['idTipoRenipress'] ?>" <?= ($tipo['idTipoRenipress'] == ($sedeData['idTipoRenipress'] ?? '')) ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($tipo['nombre']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Clasificación</label>
+                                                    <select name="idClasificacionRenipress" id="editClasificacionRenipress" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Categorización</label>
+                                                    <select name="categorizacion" id="editCategorizacion" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($opcionesSiNoNa as $op): ?>
+                                                            <option value="<?= $op ?>" <?= ($op == ($sedeData['categorizacion'] ?? '')) ? 'selected' : '' ?>><?= $op ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Inicio Actividad</label>
+                                                    <select name="inicioActividad" id="editInicioActividad" class="form-select select2-sede">
+                                                        <option value="">Seleccionar</option>
+                                                        <?php foreach ($opcionesSiNoNa as $op): ?>
+                                                            <option value="<?= $op ?>" <?= ($op == ($sedeData['inicioActividad'] ?? '')) ? 'selected' : '' ?>><?= $op ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button type="button" id="btnActualizarSede" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-save me-1"></i> Guardar cambios de sede
+                                                </button>
+                                                <span id="sedeUpdateStatus" class="ms-2"></span>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="text-muted">Seleccione una sede para ver y editar sus datos.</p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LISTADO DE EXPEDIENTES ===== -->
         <div class="card card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
@@ -533,7 +688,6 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="footer-custom">
         <div class="container">
             <p class="mb-0">&copy; <?= date('Y') ?> Sub Gerencia de Regulación Sectorial - Todos los derechos reservados.</p>
@@ -544,38 +698,440 @@ $expedientes = listarExpedientesUFRESBIT($pdo); // <-- Nueva función
 <?php include 'datatable-js.php'; ?>
 <?php include 'select2-js.php'; ?>
 
-    <script>
-        $(document).ready(function() {
-            $('#tablaExpedientes').DataTable({
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
-                responsive: true,
-                order: [[0, 'desc']]
+<script>
+    $(document).ready(function() {
+        $('#tablaExpedientes').DataTable({
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+            responsive: true,
+            order: [[0, 'desc']]
+        });
+
+        if ($.fn.select2) {
+            $('.select2-auto').select2({
+                width: '100%',
+                placeholder: 'Buscar...',
+                allowClear: true
             });
-            if ($.fn.select2) {
-                $('.select2-auto').select2({
-                    width: '100%',
-                    placeholder: 'Buscar...',
-                    allowClear: true
-                });
+        }
+
+        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        popoverTriggerList.map(function(popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, { trigger: 'hover', placement: 'top' });
+        });
+
+        $('#estadoExpediente').change(function() {
+            if ($(this).val() === 'OTRO') {
+                $('#divOtroEstado').show();
+            } else {
+                $('#divOtroEstado').hide();
             }
-            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-            popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl, {
-                    trigger: 'hover',
-                    placement: 'top'
-                });
-            });
-            $('#estadoExpediente').change(function() {
-                if ($(this).val() === 'OTRO') {
-                    $('#divOtroEstado').show();
-                } else {
-                    $('#divOtroEstado').hide();
+        });
+
+        let actualizandoTipo = false;
+        let actualizandoClasificacion = false;
+
+        function cargarClasificaciones(idTipo, selectedId = null) {
+            const $clasificacion = $('#editClasificacionRenipress');
+            if (!idTipo) {
+                $clasificacion.html('<option value="">Seleccionar</option>');
+                $clasificacion.val('').trigger('change');
+                if ($clasificacion.hasClass('select2-hidden-accessible')) {
+                    $clasificacion.select2('val', '');
+                    $clasificacion.trigger('change.select2');
+                }
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '../persistencia/dRenipress.php',
+                data: { idTipo: idTipo },
+                dataType: 'json',
+                success: function(data) {
+                    let options = '<option value="">Seleccionar</option>';
+                    data.forEach(function(item) {
+                        const sel = (item.idClasificacionRenipress == selectedId) ? 'selected' : '';
+                        options += `<option value="${item.idClasificacionRenipress}" ${sel}>${item.nombre}</option>`;
+                    });
+
+                    let newVal = '';
+                    if (selectedId !== null && selectedId !== '') {
+                        newVal = selectedId;
+                    } else {
+                        const currentVal = $clasificacion.val();
+                        if (currentVal && data.some(item => item.idClasificacionRenipress == currentVal)) {
+                            newVal = currentVal;
+                        }
+                    }
+
+                    $clasificacion.html(options);
+                    $clasificacion.val(newVal);
+
+                    if ($clasificacion.hasClass('select2-hidden-accessible')) {
+                        $clasificacion.select2('val', newVal);
+                        $clasificacion.trigger('change.select2');
+                    } else {
+                        $clasificacion.select2({
+                            width: '100%',
+                            placeholder: 'Seleccionar...',
+                            allowClear: true
+                        });
+                        $clasificacion.select2('val', newVal);
+                    }
+                },
+                error: function() {
+                    alert('Error al cargar clasificaciones');
                 }
             });
-        });
-        function cancelar() {
-            window.location.href = '<?php echo $_SERVER['PHP_SELF'] ?>';
         }
-    </script>
+
+        $('#sedeInfoContainer').on('change', '#editTipoRenipress', function() {
+            if (actualizandoTipo) return;
+            actualizandoTipo = true;
+            const idTipo = $(this).val();
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('val', idTipo);
+                $(this).trigger('change.select2');
+            }
+            cargarClasificaciones(idTipo);
+            setTimeout(function() {
+                actualizandoTipo = false;
+            }, 200);
+        });
+
+        function cargarSedeEnAcordeon(idSede) {
+            if (!idSede) {
+                $('#sedeInfoContainer').html('<p class="text-muted">Seleccione una sede para ver sus datos.</p>');
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '../persistencia/dSede.php',
+                data: {
+                    action: 'obtenerSedeCompleta',
+                    idSede: idSede
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (data && data.idSede) {
+                        let html = `
+                            <div id="formSedeEdit">
+                                <input type="hidden" name="idSede" value="${data.idSede}">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Departamento</label>
+                                        <select name="idDepartamento" id="editDepartamento" class="form-select select2-sede">
+                                            ${generarOpcionesDepartamentos(data.idDepartamento)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Provincia</label>
+                                        <select name="idProvincia" id="editProvincia" class="form-select select2-sede">
+                                            ${generarOpcionesProvincias(data.idProvincia)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Distrito</label>
+                                        <select name="idDistrito" id="editDistrito" class="form-select select2-sede">
+                                            ${generarOpcionesDistritos(data.idDistrito)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Situación Establecimiento</label>
+                                        <select name="idSituacionEstablecimiento" id="editSituacionEstablecimiento" class="form-select select2-sede">
+                                            ${generarOpcionesSituaciones(data.idSituacionEstablecimiento)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Dirección</label>
+                                        <input type="text" class="form-control" name="direccion" id="editDireccion" value="${data.direccion || ''}" placeholder="Dirección">
+                                    </div>
+                                    <div class="col-12"><hr></div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Estado IPRESS</label>
+                                        <select name="idEstadoRenipress" id="editEstadoRenipress" class="form-select select2-sede">
+                                            ${generarOpcionesEstadosRenipress(data.idEstadoRenipress)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Institución</label>
+                                        <select name="idInstitucionRenipress" id="editInstitucionRenipress" class="form-select select2-sede">
+                                            ${generarOpcionesInstituciones(data.idInstitucionRenipress)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tipo</label>
+                                        <select name="idTipoRenipress" id="editTipoRenipress" class="form-select select2-sede">
+                                            ${generarOpcionesTiposRenipress(data.idTipoRenipress)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Clasificación</label>
+                                        <select name="idClasificacionRenipress" id="editClasificacionRenipress" class="form-select select2-sede">
+                                            <option value="">Seleccionar</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Categorización</label>
+                                        <select name="categorizacion" id="editCategorizacion" class="form-select select2-sede">
+                                            ${generarOpcionesSiNoNa(data.categorizacion)}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Inicio Actividad</label>
+                                        <select name="inicioActividad" id="editInicioActividad" class="form-select select2-sede">
+                                            ${generarOpcionesSiNoNa(data.inicioActividad)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="button" id="btnActualizarSede" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-save me-1"></i> Guardar cambios de sede
+                                    </button>
+                                    <span id="sedeUpdateStatus" class="ms-2"></span>
+                                </div>
+                            </div>
+                        `;
+                        $('#sedeInfoContainer').html(html);
+
+                        $('.select2-sede:not(.select2-hidden-accessible)').select2({
+                            width: '100%',
+                            placeholder: 'Seleccionar...',
+                            allowClear: true
+                        });
+
+                        const tipoSeleccionado = data.idTipoRenipress || null;
+                        const clasificacionSeleccionada = data.idClasificacionRenipress || null;
+
+                        if (tipoSeleccionado) {
+                            $('#editTipoRenipress').val(tipoSeleccionado);
+                            if ($('#editTipoRenipress').hasClass('select2-hidden-accessible')) {
+                                $('#editTipoRenipress').select2('val', tipoSeleccionado);
+                                $('#editTipoRenipress').trigger('change.select2');
+                            }
+                            if (clasificacionSeleccionada) {
+                                cargarClasificaciones(tipoSeleccionado, clasificacionSeleccionada);
+                            } else {
+                                cargarClasificaciones(tipoSeleccionado);
+                            }
+                        }
+
+                        var initialDep = data.idDepartamento || '';
+                        $('#editDepartamento').data('initial', initialDep);
+                        $('#editDepartamento').off('change').on('change', function() {
+                            var selected = $(this).val();
+                            var initial = $(this).data('initial');
+                            if (selected === initial) return;
+                            $(this).data('initial', selected);
+                            var idDepartamento = selected;
+                            var url = '../persistencia/dProvincia.php';
+                            if (idDepartamento) {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: url,
+                                    data: { idDepartamento: idDepartamento },
+                                    dataType: 'json',
+                                    success: function(provincias) {
+                                        var options = '<option value="">Seleccionar</option>';
+                                        provincias.forEach(function(prov) {
+                                            options += `<option value="${prov.idProvincia}">${prov.nombre}</option>`;
+                                        });
+                                        $('#editProvincia').html(options);
+                                        $('#editProvincia').data('initial', $('#editProvincia').val());
+                                    },
+                                    error: function() {
+                                        alert('Error al cargar provincias');
+                                    }
+                                });
+                            } else {
+                                $('#editProvincia').html('<option value="">Seleccionar</option>');
+                                $('#editProvincia').data('initial', '');
+                            }
+                        });
+
+                        var initialProv = data.idProvincia || '';
+                        $('#editProvincia').data('initial', initialProv);
+                        $('#editProvincia').off('change').on('change', function() {
+                            var selected = $(this).val();
+                            var initial = $(this).data('initial');
+                            if (selected === initial) return;
+                            $(this).data('initial', selected);
+                            var idProvincia = selected;
+                            var url = '../persistencia/dDistrito.php';
+                            if (idProvincia) {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: url,
+                                    data: { idProvincia: idProvincia },
+                                    dataType: 'json',
+                                    success: function(distritos) {
+                                        var options = '<option value="">Seleccionar</option>';
+                                        distritos.forEach(function(dist) {
+                                            options += `<option value="${dist.idDistrito}">${dist.nombre}</option>`;
+                                        });
+                                        $('#editDistrito').html(options);
+                                        $('#editDistrito').data('initial', $('#editDistrito').val());
+                                    },
+                                    error: function() {
+                                        alert('Error al cargar distritos');
+                                    }
+                                });
+                            } else {
+                                $('#editDistrito').html('<option value="">Seleccionar</option>');
+                                $('#editDistrito').data('initial', '');
+                            }
+                        });
+
+                        $('#btnActualizarSede').off('click').on('click', guardarCambiosSede);
+
+                    } else {
+                        $('#sedeInfoContainer').html('<p class="text-muted">No se encontraron datos para esta sede.</p>');
+                    }
+                },
+                error: function() {
+                    $('#sedeInfoContainer').html('<p class="text-danger">Error al cargar los datos de la sede.</p>');
+                }
+            });
+        }
+
+        function generarOpcionesDepartamentos(selected) {
+            const data = <?= json_encode($departamentos) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.idDepartamento == selected) ? 'selected' : '';
+                options += `<option value="${item.idDepartamento}" ${sel}>${item.nombre}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesProvincias(selected) {
+            const data = <?= json_encode($provincias) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.idProvincia == selected) ? 'selected' : '';
+                options += `<option value="${item.idProvincia}" ${sel}>${item.nombre}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesDistritos(selected) {
+            const data = <?= json_encode($distritos) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.idDistrito == selected) ? 'selected' : '';
+                options += `<option value="${item.idDistrito}" ${sel}>${item.nombre}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesSituaciones(selected) {
+            const data = <?= json_encode($situaciones) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.idSituacionEstablecimiento == selected) ? 'selected' : '';
+                options += `<option value="${item.idSituacionEstablecimiento}" ${sel}>${item.nombre}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesEstadosRenipress(selected) {
+            const data = <?= json_encode($estadosRenipress) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.id_estado == selected) ? 'selected' : '';
+                options += `<option value="${item.id_estado}" ${sel}>${item.descripcion}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesInstituciones(selected) {
+            const data = <?= json_encode($institucionesRenipress) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.idInsticionRenipress == selected) ? 'selected' : '';
+                options += `<option value="${item.idInsticionRenipress}" ${sel}>${item.nombre}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesTiposRenipress(selected) {
+            const data = <?= json_encode($tiposRenipress) ?>;
+            let options = '<option value="">Seleccionar</option>';
+            data.forEach(function(item) {
+                const sel = (item.idTipoRenipress == selected) ? 'selected' : '';
+                options += `<option value="${item.idTipoRenipress}" ${sel}>${item.nombre}</option>`;
+            });
+            return options;
+        }
+
+        function generarOpcionesSiNoNa(selected) {
+            const opciones = ['SI', 'NO', 'NO APLICA'];
+            let options = '<option value="">Seleccionar</option>';
+            opciones.forEach(function(op) {
+                const sel = (op == selected) ? 'selected' : '';
+                options += `<option value="${op}" ${sel}>${op}</option>`;
+            });
+            return options;
+        }
+
+        function guardarCambiosSede() {
+            const formData = $('#formSedeEdit :input').serialize();
+            const status = $('#sedeUpdateStatus');
+
+            status.html('<i class="fas fa-spinner fa-spin"></i> Guardando...').show();
+
+            $.ajax({
+                type: 'POST',
+                url: '../persistencia/dSede.php',
+                data: formData + '&action=actualizarSedeDesdeExpediente',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        status.html('<span class="text-success"><i class="fas fa-check-circle"></i> ' + response.message + '</span>');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        status.html('<span class="text-danger"><i class="fas fa-exclamation-circle"></i> ' + (response.message || 'Error al guardar') + '</span>');
+                    }
+                },
+                error: function() {
+                    status.html('<span class="text-danger"><i class="fas fa-exclamation-circle"></i> Error de conexión</span>');
+                }
+            });
+        }
+
+        $('#idSede').change(function() {
+            const idSede = $(this).val();
+            if (idSede) {
+                <?php if ($idEditar > 0): ?>
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('editar', '<?= $idEditar ?>');
+                    url.searchParams.set('sede', idSede);
+                    window.location.href = url.href;
+                <?php else: ?>
+                    cargarSedeEnAcordeon(idSede);
+                <?php endif; ?>
+            } else {
+                $('#sedeInfoContainer').html('<p class="text-muted">Seleccione una sede para ver y editar sus datos.</p>');
+            }
+        });
+
+        <?php if ($idSede > 0): ?>
+            cargarSedeEnAcordeon(<?= $idSede ?>);
+        <?php endif; ?>
+
+        window.eliminarExpediente = function(id) {
+            if (confirm('¿Está seguro de eliminar este expediente?')) {
+                window.location.href = 'eliminarExpediente.php?id=' + id + '&area=UFRESBIT';
+            }
+        };
+    });
+
+    function cancelar() {
+        window.location.href = '<?php echo $_SERVER['PHP_SELF'] ?>';
+    }
+</script>
 </body>
 </html>
