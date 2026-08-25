@@ -1,4 +1,5 @@
 <?php
+//formSede.php
     include_once __DIR__ . '/../config.php';
     include_once __DIR__ . '/../persistencia/conexion.php';
     include_once __DIR__ . '/../persistencia/dSede.php';

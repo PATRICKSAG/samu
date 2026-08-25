@@ -700,12 +700,15 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
 
 <script>
     $(document).ready(function() {
+        // ============================================================
+        // 1. INICIALIZACIONES
+        // ============================================================
         $('#tablaExpedientes').DataTable({
             language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
             responsive: true,
             order: [[0, 'desc']]
         });
-
+ 
         if ($.fn.select2) {
             $('.select2-auto').select2({
                 width: '100%',
@@ -713,12 +716,12 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                 allowClear: true
             });
         }
-
+ 
         const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
         popoverTriggerList.map(function(popoverTriggerEl) {
             return new bootstrap.Popover(popoverTriggerEl, { trigger: 'hover', placement: 'top' });
         });
-
+ 
         $('#estadoExpediente').change(function() {
             if ($(this).val() === 'OTRO') {
                 $('#divOtroEstado').show();
@@ -726,85 +729,100 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                 $('#divOtroEstado').hide();
             }
         });
-
+ 
+        // ============================================================
+        // 2. VARIABLE DE CONTROL (solo para cambios manuales)
+        // ============================================================
         let actualizandoTipo = false;
-        let actualizandoClasificacion = false;
-
+ 
+        // ============================================================
+        // 3. CARGA DE CLASIFICACIONES (con selección opcional)
+        //    -- CORREGIDA: sin llamadas a la API vieja .select2('val', ...) --
+        // ============================================================
         function cargarClasificaciones(idTipo, selectedId = null) {
             const $clasificacion = $('#editClasificacionRenipress');
+ 
             if (!idTipo) {
                 $clasificacion.html('<option value="">Seleccionar</option>');
+                // .val('').trigger('change') ya deja vacío el select y refresca Select2
                 $clasificacion.val('').trigger('change');
-                if ($clasificacion.hasClass('select2-hidden-accessible')) {
-                    $clasificacion.select2('val', '');
-                    $clasificacion.trigger('change.select2');
-                }
-                return;
+                return $.Deferred().resolve();
             }
-
-            $.ajax({
+ 
+            return $.ajax({
                 type: 'POST',
                 url: '../persistencia/dRenipress.php',
                 data: { idTipo: idTipo },
-                dataType: 'json',
-                success: function(data) {
-                    let options = '<option value="">Seleccionar</option>';
-                    data.forEach(function(item) {
-                        const sel = (item.idClasificacionRenipress == selectedId) ? 'selected' : '';
-                        options += `<option value="${item.idClasificacionRenipress}" ${sel}>${item.nombre}</option>`;
-                    });
-
-                    let newVal = '';
-                    if (selectedId !== null && selectedId !== '') {
-                        newVal = selectedId;
-                    } else {
-                        const currentVal = $clasificacion.val();
-                        if (currentVal && data.some(item => item.idClasificacionRenipress == currentVal)) {
-                            newVal = currentVal;
-                        }
+                dataType: 'json'
+            })
+            .done(function(data) {
+                let options = '<option value="">Seleccionar</option>';
+                const strSelectedId = (selectedId !== null && selectedId !== '') ? String(selectedId) : null;
+ 
+                data.forEach(function(item) {
+                    const sel = (String(item.idClasificacionRenipress) === strSelectedId) ? 'selected' : '';
+                    options += `<option value="${item.idClasificacionRenipress}" ${sel}>${item.nombre}</option>`;
+                });
+ 
+                $clasificacion.html(options);
+ 
+                let newVal = '';
+                if (strSelectedId && data.some(item => String(item.idClasificacionRenipress) === strSelectedId)) {
+                    newVal = strSelectedId;
+                } else {
+                    const currentVal = $clasificacion.val();
+                    if (currentVal && data.some(item => String(item.idClasificacionRenipress) === String(currentVal))) {
+                        newVal = String(currentVal);
                     }
-
-                    $clasificacion.html(options);
-                    $clasificacion.val(newVal);
-
-                    if ($clasificacion.hasClass('select2-hidden-accessible')) {
-                        $clasificacion.select2('val', newVal);
-                        $clasificacion.trigger('change.select2');
-                    } else {
-                        $clasificacion.select2({
-                            width: '100%',
-                            placeholder: 'Seleccionar...',
-                            allowClear: true
-                        });
-                        $clasificacion.select2('val', newVal);
-                    }
-                },
-                error: function() {
-                    alert('Error al cargar clasificaciones');
                 }
+ 
+                // Si el select2 aún no está inicializado (primera carga), inicializarlo
+                if (!$clasificacion.hasClass('select2-hidden-accessible')) {
+                    $clasificacion.select2({
+                        width: '100%',
+                        placeholder: 'Seleccionar...',
+                        allowClear: true
+                    });
+                }
+ 
+                // Única línea necesaria en Select2 4.x para fijar valor + refrescar el widget
+                $clasificacion.val(newVal).trigger('change');
+            })
+            .fail(function() {
+                alert('Error al cargar clasificaciones');
             });
         }
-
-        $('#sedeInfoContainer').on('change', '#editTipoRenipress', function() {
-            if (actualizandoTipo) return;
-            actualizandoTipo = true;
-            const idTipo = $(this).val();
-            if ($(this).hasClass('select2-hidden-accessible')) {
-                $(this).select2('val', idTipo);
-                $(this).trigger('change.select2');
-            }
-            cargarClasificaciones(idTipo);
-            setTimeout(function() {
-                actualizandoTipo = false;
-            }, 200);
-        });
-
+ 
+        // ============================================================
+        // 4. ENLAZAR EVENTO CHANGE DEL TIPO (solo después de carga inicial)
+        // ============================================================
+        function enlazarEventoTipo() {
+            // Desenlazar cualquier evento previo para evitar duplicados
+            $('#sedeInfoContainer').off('change', '#editTipoRenipress');
+            // Enlazar el evento
+            $('#sedeInfoContainer').on('change', '#editTipoRenipress', function() {
+                console.log('Evento change del tipo ejecutado (manual)');
+                if (actualizandoTipo) return;
+                actualizandoTipo = true;
+                const idTipo = $(this).val();
+                cargarClasificaciones(idTipo); // Sin selectedId (cambio manual)
+                setTimeout(function() {
+                    actualizandoTipo = false;
+                }, 200);
+            });
+        }
+ 
+        // ============================================================
+        // 5. CARGA DE DATOS DE LA SEDE EN EL ACORDEÓN
+        // ============================================================
         function cargarSedeEnAcordeon(idSede) {
             if (!idSede) {
                 $('#sedeInfoContainer').html('<p class="text-muted">Seleccione una sede para ver sus datos.</p>');
+                // Si no hay sede, desenlazar el evento por si acaso
+                $('#sedeInfoContainer').off('change', '#editTipoRenipress');
                 return;
             }
-
+ 
             $.ajax({
                 type: 'POST',
                 url: '../persistencia/dSede.php',
@@ -815,6 +833,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                 dataType: 'json',
                 success: function(data) {
                     if (data && data.idSede) {
+                        // Construir el HTML del acordeón
                         let html = `
                             <div id="formSedeEdit">
                                 <input type="hidden" name="idSede" value="${data.idSede}">
@@ -894,29 +913,42 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                             </div>
                         `;
                         $('#sedeInfoContainer').html(html);
-
+ 
+                        // Inicializar Select2 para los nuevos selects
                         $('.select2-sede:not(.select2-hidden-accessible)').select2({
                             width: '100%',
                             placeholder: 'Seleccionar...',
                             allowClear: true
                         });
-
+ 
+                        // ==============================================
+                        // CARGA INICIAL: cargar clasificaciones según el tipo
+                        // -- CORREGIDO: ya no se fuerza el valor de Tipo con la
+                        //    API vieja de Select2 (.select2('val', ...)), porque
+                        //    el <option selected> ya viene marcado desde
+                        //    generarOpcionesTiposRenipress() y esa llamada era
+                        //    justo la que rompía la ejecución antes de llegar
+                        //    a cargarClasificaciones().
+                        // ==============================================
                         const tipoSeleccionado = data.idTipoRenipress || null;
                         const clasificacionSeleccionada = data.idClasificacionRenipress || null;
-
+ 
                         if (tipoSeleccionado) {
-                            $('#editTipoRenipress').val(tipoSeleccionado);
-                            if ($('#editTipoRenipress').hasClass('select2-hidden-accessible')) {
-                                $('#editTipoRenipress').select2('val', tipoSeleccionado);
-                                $('#editTipoRenipress').trigger('change.select2');
-                            }
-                            if (clasificacionSeleccionada) {
-                                cargarClasificaciones(tipoSeleccionado, clasificacionSeleccionada);
-                            } else {
-                                cargarClasificaciones(tipoSeleccionado);
-                            }
+                            cargarClasificaciones(tipoSeleccionado, clasificacionSeleccionada)
+                                .always(function() {
+                                    // Una vez cargadas las clasificaciones, enlazar el evento change del tipo
+                                    enlazarEventoTipo();
+                                    console.log('Evento del tipo enlazado después de carga inicial');
+                                });
+                        } else {
+                            cargarClasificaciones(null)
+                                .always(function() {
+                                    enlazarEventoTipo();
+                                });
                         }
-
+                        // ==============================================
+ 
+                        // ---- EVENTOS DE UBICACIÓN (provincias/distritos) ----
                         var initialDep = data.idDepartamento || '';
                         $('#editDepartamento').data('initial', initialDep);
                         $('#editDepartamento').off('change').on('change', function() {
@@ -949,7 +981,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                                 $('#editProvincia').data('initial', '');
                             }
                         });
-
+ 
                         var initialProv = data.idProvincia || '';
                         $('#editProvincia').data('initial', initialProv);
                         $('#editProvincia').off('change').on('change', function() {
@@ -982,19 +1014,26 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                                 $('#editDistrito').data('initial', '');
                             }
                         });
-
+ 
+                        // Botón guardar cambios de sede
                         $('#btnActualizarSede').off('click').on('click', guardarCambiosSede);
-
+ 
                     } else {
                         $('#sedeInfoContainer').html('<p class="text-muted">No se encontraron datos para esta sede.</p>');
+                        // Desenlazar evento por si acaso
+                        $('#sedeInfoContainer').off('change', '#editTipoRenipress');
                     }
                 },
                 error: function() {
                     $('#sedeInfoContainer').html('<p class="text-danger">Error al cargar los datos de la sede.</p>');
+                    $('#sedeInfoContainer').off('change', '#editTipoRenipress');
                 }
             });
         }
-
+ 
+        // ============================================================
+        // 6. FUNCIONES AUXILIARES (generar opciones de selects)
+        // ============================================================
         function generarOpcionesDepartamentos(selected) {
             const data = <?= json_encode($departamentos) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1004,7 +1043,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesProvincias(selected) {
             const data = <?= json_encode($provincias) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1014,7 +1053,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesDistritos(selected) {
             const data = <?= json_encode($distritos) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1024,7 +1063,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesSituaciones(selected) {
             const data = <?= json_encode($situaciones) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1034,7 +1073,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesEstadosRenipress(selected) {
             const data = <?= json_encode($estadosRenipress) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1044,7 +1083,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesInstituciones(selected) {
             const data = <?= json_encode($institucionesRenipress) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1054,7 +1093,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesTiposRenipress(selected) {
             const data = <?= json_encode($tiposRenipress) ?>;
             let options = '<option value="">Seleccionar</option>';
@@ -1064,7 +1103,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
         function generarOpcionesSiNoNa(selected) {
             const opciones = ['SI', 'NO', 'NO APLICA'];
             let options = '<option value="">Seleccionar</option>';
@@ -1074,13 +1113,14 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             });
             return options;
         }
-
+ 
+        // ============================================================
+        // 7. GUARDAR CAMBIOS DE SEDE (AJAX)
+        // ============================================================
         function guardarCambiosSede() {
             const formData = $('#formSedeEdit :input').serialize();
             const status = $('#sedeUpdateStatus');
-
             status.html('<i class="fas fa-spinner fa-spin"></i> Guardando...').show();
-
             $.ajax({
                 type: 'POST',
                 url: '../persistencia/dSede.php',
@@ -1089,9 +1129,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                 success: function(response) {
                     if (response.success) {
                         status.html('<span class="text-success"><i class="fas fa-check-circle"></i> ' + response.message + '</span>');
-                        setTimeout(function() {
-                            location.reload();
-                        }, 1000);
+                        setTimeout(function() { location.reload(); }, 1000);
                     } else {
                         status.html('<span class="text-danger"><i class="fas fa-exclamation-circle"></i> ' + (response.message || 'Error al guardar') + '</span>');
                     }
@@ -1101,7 +1139,10 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                 }
             });
         }
-
+ 
+        // ============================================================
+        // 8. EVENTO AL CAMBIAR LA SEDE EN EL SELECT PRINCIPAL
+        // ============================================================
         $('#idSede').change(function() {
             const idSede = $(this).val();
             if (idSede) {
@@ -1115,20 +1156,34 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                 <?php endif; ?>
             } else {
                 $('#sedeInfoContainer').html('<p class="text-muted">Seleccione una sede para ver y editar sus datos.</p>');
+                // Desenlazar evento
+                $('#sedeInfoContainer').off('change', '#editTipoRenipress');
             }
         });
-
+ 
+        // ============================================================
+        // 9. CARGA INICIAL DE LA SEDE (SI EXISTE)
+        // ============================================================
         <?php if ($idSede > 0): ?>
             cargarSedeEnAcordeon(<?= $idSede ?>);
+        <?php else: ?>
+            // Si no hay sede seleccionada, aseguramos que no quede evento
+            $('#sedeInfoContainer').off('change', '#editTipoRenipress');
         <?php endif; ?>
-
+ 
+        // ============================================================
+        // 10. FUNCIÓN ELIMINAR EXPEDIENTE (global)
+        // ============================================================
         window.eliminarExpediente = function(id) {
             if (confirm('¿Está seguro de eliminar este expediente?')) {
                 window.location.href = 'eliminarExpediente.php?id=' + id + '&area=UFRESBIT';
             }
         };
     });
-
+ 
+    // ============================================================
+    // 11. FUNCIÓN CANCELAR (global)
+    // ============================================================
     function cancelar() {
         window.location.href = '<?php echo $_SERVER['PHP_SELF'] ?>';
     }

@@ -1,5 +1,5 @@
 <?php
-
+//dRenipress.php
 function listarEstadosRenipress(PDO $pdo)
 {
     $sql = "SELECT id_estado, descripcion FROM estadoRenipress ORDER BY descripcion";
