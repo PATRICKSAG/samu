@@ -207,44 +207,45 @@ if (isset($_POST['action']) && $_POST['action'] === 'obtenerSedeCompleta' && iss
     exit;
 }
 
-// ============================================
-// ENDPOINT AJAX PARA ACTUALIZAR SEDE DESDE EXPEDIENTE
-// ============================================
 if (isset($_POST['action']) && $_POST['action'] === 'actualizarSedeDesdeExpediente') {
     include_once(__DIR__ . '/conexion.php');
     $pdo = Database::getConexion();
     $data = $_POST;
 
-    // Verificar que venga idSede
     if (empty($data['idSede'])) {
         http_response_code(400);
         echo json_encode(['error' => 'ID de sede no proporcionado']);
         exit;
     }
 
-    // Preparar datos para actualizar
-    $updateData = [
-        'idSede' => $data['idSede'],
-        'idDepartamento' => $data['idDepartamento'] ?? null,
-        'idProvincia' => $data['idProvincia'] ?? null,
-        'idDistrito' => $data['idDistrito'] ?? null,
-        'idSituacionEstablecimiento' => $data['idSituacionEstablecimiento'] ?? null,
-        'direccion' => $data['direccion'] ?? null,
-        // Campos UFRESBIT
-        'idEstadoRenipress' => $data['idEstadoRenipress'] ?? null,
-        'idInstitucionRenipress' => $data['idInstitucionRenipress'] ?? null,
-        'idTipoRenipress' => $data['idTipoRenipress'] ?? null,
-        'idClasificacionRenipress' => $data['idClasificacionRenipress'] ?? null,
-        'categorizacion' => $data['categorizacion'] ?? null,
-        'inicioActividad' => $data['inicioActividad'] ?? null,
-        // UFREMID (para futura implementación)
-        'tieneQuimicoFarmaceutico' => isset($data['tieneQuimicoFarmaceutico']) ? $data['tieneQuimicoFarmaceutico'] : null,
+    // Lista de campos que se pueden actualizar desde este formulario
+    $camposPermitidos = [
+        'idDepartamento',
+        'idProvincia',
+        'idDistrito',
+        'idSituacionEstablecimiento',
+        'direccion',
+        'idEstadoRenipress',
+        'idInstitucionRenipress',
+        'idTipoRenipress',
+        'idClasificacionRenipress',
+        'categorizacion',
+        'inicioActividad',
+        'tieneQuimicoFarmaceutico' // solo si se usa para UFREMID, pero para UFRESBIT no se envía
     ];
 
+    $updateData = ['idSede' => $data['idSede']];
+
+    // Solo agregar al array los campos que realmente vienen en la petición
+    foreach ($camposPermitidos as $campo) {
+        if (isset($data[$campo])) {
+            $updateData[$campo] = $data[$campo];
+        }
+    }
+
     try {
-        // Usar la función existente actualizarSede
-        $result = actualizarSede($pdo, $updateData);
-        if ($result) {
+        $result = actualizarSedeParcial($pdo, $updateData);
+        if ($result !== false) {
             echo json_encode(['success' => true, 'message' => 'Sede actualizada correctamente']);
         } else {
             echo json_encode(['success' => false, 'message' => 'No se realizaron cambios']);
@@ -254,4 +255,47 @@ if (isset($_POST['action']) && $_POST['action'] === 'actualizarSedeDesdeExpedien
         echo json_encode(['error' => $e->getMessage()]);
     }
     exit;
+}
+
+function actualizarSedeParcial(PDO $pdo, array $data)
+{
+    $idSede = $data['idSede'] ?? null;
+    if (!$idSede) {
+        throw new Exception("ID de sede no proporcionado");
+    }
+
+    // Construir el SET dinámicamente solo con los campos que vienen
+    $campos = [];
+    $params = [];
+
+    $camposPermitidos = [
+        'idDepartamento',
+        'idProvincia',
+        'idDistrito',
+        'idSituacionEstablecimiento',
+        'direccion',
+        'idEstadoRenipress',
+        'idInstitucionRenipress',
+        'idTipoRenipress',
+        'idClasificacionRenipress',
+        'categorizacion',
+        'inicioActividad'
+    ];
+
+    foreach ($camposPermitidos as $campo) {
+        if (array_key_exists($campo, $data)) {
+            $campos[] = "$campo = ?";
+            $params[] = $data[$campo];
+        }
+    }
+
+    if (empty($campos)) {
+        return 0; // No hay nada que actualizar
+    }
+
+    $params[] = $idSede;
+    $sql = "UPDATE sede SET " . implode(", ", $campos) . " WHERE idSede = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->rowCount();
 }
