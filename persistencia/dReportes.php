@@ -15,10 +15,18 @@ function reporteExpedientesGeneral(PDO $pdo, $filtros = [])
                     WHEN e.areaOrigen IN ('UFRESA', 'UFREMID') THEN CAT.NOMBRE 
                     ELSE NULL 
                 END AS Categoria,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN TR.nombre
+                    ELSE NULL 
+                END AS TipoIpress,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN CR.nombre
+                    ELSE NULL 
+                END AS ClasificacionIpress,
                 e.estadoExpediente,
                 e.responsable,
                 e.falsificado,
-                (SELECT nombre FROM tipoExpediente WHERE idTipoExpediente = e.idTipoExpediente) AS tipoExpediente,
+                (SELECT nombre FROM tipoExpediente WITH(NOLOCK) WHERE idTipoExpediente = e.idTipoExpediente) AS tipoExpediente,
                 s.nombre AS sedeNombre,
                 s.direccion AS sedeDireccion,
                 s.numeroEstacion,
@@ -27,13 +35,15 @@ function reporteExpedientesGeneral(PDO $pdo, $filtros = [])
                 d.nombre AS distrito,
                 p.nombre AS provincia,
                 dep.nombre AS departamento
-            FROM expediente e
-            LEFT JOIN sede s ON e.idSede = s.idSede
-            LEFT JOIN establecimiento est ON s.idEstablecimiento = est.idEstablecimiento
-            LEFT JOIN distrito d ON s.idDistrito = d.idDistrito
-            LEFT JOIN provincia p ON d.idProvincia = p.idProvincia
-            LEFT JOIN departamento dep ON p.idDepartamento = dep.idDepartamento
-            LEFT JOIN categoria CAT ON s.idCategoria = CAT.idCategoria
+            FROM expediente e WITH(NOLOCK)
+            LEFT JOIN sede s WITH(NOLOCK) ON e.idSede = s.idSede
+            LEFT JOIN establecimiento est WITH(NOLOCK) ON s.idEstablecimiento = est.idEstablecimiento
+            LEFT JOIN distrito d WITH(NOLOCK) ON s.idDistrito = d.idDistrito
+            LEFT JOIN provincia p WITH(NOLOCK) ON d.idProvincia = p.idProvincia
+            LEFT JOIN departamento dep WITH(NOLOCK) ON p.idDepartamento = dep.idDepartamento
+            LEFT JOIN categoria CAT WITH(NOLOCK) ON s.idCategoria = CAT.idCategoria
+            LEFT JOIN tipoRenipress TR WITH(NOLOCK) ON TR.idTipoRenipress = S.idTipoRenipress
+            LEFT JOIN clasificacionRenipress CR WITH(NOLOCK) ON CR.idClasificacionRenipress = S.idClasificacionRenipress
             WHERE 1=1";
 
     $params = [];
