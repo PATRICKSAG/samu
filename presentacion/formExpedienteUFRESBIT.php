@@ -198,7 +198,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Expedientes UFRESBIT</title>
+    <title>Gestión de Expedientes UFRESBYT</title>
     <?php include 'boostrap-css.php'; ?>
     <?php include 'datatable-css.php'; ?>
     <?php include 'select2-css.php'; ?>
@@ -280,8 +280,8 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
 
     <div class="page-header">
         <div class="container">
-            <h2><i class="fas fa-file-alt me-2"></i>Expedientes UFRESBIT</h2>
-            <p><i class="fas fa-plus-circle me-1"></i>Registro de expedientes del área UFRESBIT</p>
+            <h2><i class="fas fa-file-alt me-2"></i>Expedientes UFRESBYT</h2>
+            <p><i class="fas fa-plus-circle me-1"></i>Registro de expedientes del área UFRESBYT</p>
         </div>
     </div>
 
@@ -303,7 +303,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
         <div class="card card-modern mb-4">
             <div class="card-body">
                 <h5 class="card-title fw-bold mb-3" style="color: #0b2a4a;">
-                    <i class="fas fa-pen-alt me-2"></i><?= $esEdicion ? 'Editar Expediente UFRESBIT' : 'Nuevo Expediente UFRESBIT' ?>
+                    <i class="fas fa-pen-alt me-2"></i><?= $esEdicion ? 'Editar Expediente UFRESBYT' : 'Nuevo Expediente UFRESBYT' ?>
                 </h5>
                 <form method="POST" action="">
                     <input type="hidden" name="idExpediente" value="<?= $idExpediente ?>">
@@ -394,7 +394,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                                             <input type="text" class="form-control form-control-modern" name="oficioOtorgaDeniegaPlazo" id="oficioOtorgaDeniegaPlazo" value="<?= htmlspecialchars($oficioOtorgaDeniegaPlazo ?? '') ?>" placeholder="N° de oficio">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="idEstadoRenipressSeleccionado" class="form-label">Seleccionar Estado del Local (RENIPRESS)</label>
+                                            <label for="idEstadoRenipressSeleccionado" class="form-label">Seleccionar Estado del Local (IPRESS)</label>
                                             <select name="idEstadoRenipressSeleccionado" id="idEstadoRenipressSeleccionado" class="form-select">
                                                 <option value="">-- Seleccionar --</option>
                                                 <?php foreach ($estadosRenipress as $est): ?>
@@ -403,7 +403,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <small class="text-muted">Al guardar, se actualizará el estado RENIPRESS de la sede seleccionada.</small>
+                                            <small class="text-muted">Al guardar, se actualizará el estado IPRESS de la sede seleccionada.</small>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="docElevaNulidad" class="form-label">Doc. Eleva nulidad</label>
@@ -631,7 +631,7 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                     <h5 class="card-title fw-bold" style="color: #0b2a4a;">
-                        <i class="fas fa-list me-2"></i>Expedientes UFRESBIT Registrados
+                        <i class="fas fa-list me-2"></i>Expedientes UFRESBYT Registrados
                     </h5>
                 </div>
                 <div class="table-responsive table-modern">

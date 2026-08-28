@@ -386,7 +386,7 @@ $alertas = obtenerPlazosCriticos($pdo);
                     <div class="card-body">
                         <div class="card-icon"><i class="fas fa-folder-open"></i></div>
                         <h5 class="card-title-modern">Expedientes</h5>
-                        <p class="card-text-modern">Expedientes según área de origen: UFREMID, UFRESA y UFRESBIT.</p>
+                        <p class="card-text-modern">Expedientes según área de origen: UFREMID, UFRESA y UFRESBYT.</p>
                         <div class="d-grid gap-2 mt-2">
                             <a href="<?= BASE_URL . '/presentacion/formExpedienteUFREMID.php' ?>" class="btn btn-primary-custom btn-sm">
                                 <i class="fas fa-file-alt me-1"></i> UFREMID
@@ -395,7 +395,7 @@ $alertas = obtenerPlazosCriticos($pdo);
                                 <i class="fas fa-file-alt me-1"></i> UFRESA
                             </a>
                             <a href="<?= BASE_URL . '/presentacion/formExpedienteUFRESBIT.php' ?>" class="btn btn-primary-custom btn-sm">
-                                <i class="fas fa-file-alt me-1"></i> UFRESBIT
+                                <i class="fas fa-file-alt me-1"></i> UFRESBYT
                             </a>
                         </div>
                     </div>

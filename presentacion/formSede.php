@@ -398,7 +398,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                             <select name="txtAreaOrigen" id="txtAreaOrigen" class="form-select" required>
                                 <option value="UFREMID" <?php echo($txtAreaOrigen == 'UFREMID') ? 'selected' : '' ?>>UFREMID</option>
                                 <option value="UFRESA" <?php echo($txtAreaOrigen == 'UFRESA') ? 'selected' : '' ?>>UFRESA</option>
-                                <option value="UFRESBIT" <?php echo($txtAreaOrigen == 'UFRESBIT') ? 'selected' : '' ?>>UFRESBIT</option>
+                                <option value="UFRESBIT" <?php echo($txtAreaOrigen == 'UFRESBIT') ? 'selected' : '' ?>>UFRESBYT</option>
                             </select>
                         </div>
 
@@ -659,7 +659,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                             <option value="">Todas</option>
                             <option value="UFREMID">UFREMID</option>
                             <option value="UFRESA">UFRESA</option>
-                            <option value="UFRESBIT">UFRESBIT</option>
+                            <option value="UFRESBIT">UFRESBYT</option>
                         </select>
                     </div>
                 </div>

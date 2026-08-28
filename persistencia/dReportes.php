@@ -9,7 +9,10 @@ function reporteExpedientesGeneral(PDO $pdo, $filtros = [])
     $sql = "SELECT 
                 e.idExpediente,
                 e.numeroActa,
-                e.areaOrigen,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
                 e.fechaInspeccion,
                 CASE 
                     WHEN e.areaOrigen IN ('UFRESA', 'UFREMID') THEN CAT.NOMBRE 
@@ -81,7 +84,10 @@ function reportePlazosCriticos(PDO $pdo, $filtros = [])
     $sql = "SELECT 
                 e.idExpediente,
                 e.numeroActa,
-                e.areaOrigen,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
                 e.responsable,
                 p.evento,
                 p.fechaOrigen,
@@ -183,7 +189,10 @@ function reporteSedes(PDO $pdo, $filtros = [])
                 s.telefono,
                 s.horarioFuncionamiento,
                 s.tieneQuimicoFarmaceutico AS qf,
-                s.areaOrigen,
+                CASE 
+                    WHEN s.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE s.areaOrigen 
+                END AS areaOrigen,
                 s.categorizacion,
                 s.inicioActividad,
                 est.ruc,
@@ -238,7 +247,10 @@ function reporteMedidasSeguridad(PDO $pdo, $filtros = [])
     $sql = "SELECT 
                 e.idExpediente,
                 e.numeroActa,
-                e.areaOrigen,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
                 e.fechaInspeccion,
                 s.nombre AS sedeNombre,
                 est.ruc,
@@ -319,7 +331,10 @@ function reporteFaseInstructora(PDO $pdo, $filtros = [])
     $sql = "SELECT 
                 e.idExpediente,
                 e.numeroActa,
-                e.areaOrigen,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
                 e.fechaInspeccion,
                 e.responsable,
                 fi.idExpedienteFI,
@@ -386,7 +401,10 @@ function reporteFaseSancionadora(PDO $pdo, $filtros = [])
     $sql = "SELECT 
                 e.idExpediente,
                 e.numeroActa,
-                e.areaOrigen,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
                 e.fechaInspeccion,
                 e.responsable,
                 fs.idExpedienteFS,
@@ -463,7 +481,10 @@ function reporteJudicializados(PDO $pdo, $filtros = [])
     $sql = "SELECT 
                 e.idExpediente,
                 e.numeroActa,
-                e.areaOrigen,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
                 e.fechaInspeccion,
                 e.estadoExpediente,
                 e.responsable,
