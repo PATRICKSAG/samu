@@ -473,7 +473,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label for="txtSituacionDigemid" class="form-label"><i class="fas fa-medical-alt me-1"></i>Situación <span class="text-danger">*</span></label>
+                                    <label for="txtSituacionDigemid" class="form-label"><i class="fas fa-medical-alt me-1"></i>Estado del local <span class="text-danger">*</span></label>
                                     <select name="txtSituacionDigemid" id="txtSituacionDigemid" class="form-select" required>
                                         <option value="">Seleccionar</option>
                                         <?php foreach ($digemids as $dig): ?>

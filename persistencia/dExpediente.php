@@ -929,7 +929,7 @@ function obtenerPlazosCriticos(PDO $pdo, $limite = 5, $area = null, $estado = nu
                 p.fechaVencimiento,
                 p.fechaCumplimiento,
                 p.estado AS estadoGuardado,
-                e.numeroActa,
+                e.numeroActa, 
                                 CASE 
                     WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
                     ELSE e.areaOrigen 
