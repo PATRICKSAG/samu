@@ -961,7 +961,7 @@ function obtenerPlazosCriticos(PDO $pdo, $limite = 7, $area = null, $estado = nu
 
         if ($hoy > $fechaVenc) {
             $estadoPlazo = 'VENCIDO';
-        } elseif ($diferencia <= 3) {
+        } elseif ($diferencia <= 12) {
             $estadoPlazo = 'PROXIMO_VENCER';
         } else {
             continue; // descartar plazos lejanos
