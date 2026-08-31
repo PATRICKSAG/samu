@@ -308,37 +308,36 @@ $alertas = obtenerPlazosCriticos($pdo);
                             <i class="fas fa-check-circle me-2"></i>¡Todo en orden! No hay plazos críticos.
                         </div>
                     <?php else: ?>
-                        <?php
-                        // Mostrar solo las primeras 5 alertas (para no saturar)
-                        $mostrar = array_slice($alertas['lista'], 0, 5);
-                        ?>
-                        <?php foreach ($mostrar as $alerta): ?>
-                            <div class="alerta-item">
-                                <span class="badge-estado <?= $alerta['estado'] == 'VENCIDO' ? 'badge-vencido' : 'badge-proximo' ?>">
-                                    <?= $alerta['estado'] == 'VENCIDO' ? 'VENCIDO' : 'PRÓXIMO' ?>
-                                </span>
-                                <a href="presentacion/seguimiento.php?id=<?= $alerta['idExpediente'] ?>" class="acta-link">
-                                    Acta <?= htmlspecialchars($alerta['numeroActa']) ?>
-                                </a>
-                                <span class="text-muted ms-2">
-                                    <i class="fas fa-tag me-1"></i><?= htmlspecialchars($alerta['areaOrigen']) ?>
-                                </span>
-                                <span class="text-muted ms-2">
-                                    <i class="fas fa-clock me-1"></i>
-                                    <?php if ($alerta['estado'] == 'VENCIDO'): ?>
-                                        Vence: <?= date('d/m/Y', strtotime($alerta['fechaVencimiento'])) ?> (hace <?= $alerta['dias'] ?> días)
-                                    <?php else: ?>
-                                        Vence: <?= date('d/m/Y', strtotime($alerta['fechaVencimiento'])) ?> (en <?= $alerta['dias'] ?> días)
-                                    <?php endif; ?>
-                                </span>
-                                <span class="ms-2">
-                                    <span class="badge bg-secondary"><?= htmlspecialchars($alerta['evento']) ?></span>
-                                </span>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php if ($alertas['total'] > 5): ?>
+                        <div style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                            <?php foreach ($alertas['lista'] as $alerta): ?>
+                                <div class="alerta-item">
+                                    <span class="badge-estado <?= $alerta['estado'] == 'VENCIDO' ? 'badge-vencido' : 'badge-proximo' ?>">
+                                        <?= $alerta['estado'] == 'VENCIDO' ? 'VENCIDO' : 'PRÓXIMO' ?>
+                                    </span>
+                                    <a href="presentacion/seguimiento.php?id=<?= $alerta['idExpediente'] ?>" class="acta-link">
+                                        Acta <?= htmlspecialchars($alerta['numeroActa']) ?>
+                                    </a>
+                                    <span class="text-muted ms-2">
+                                        <i class="fas fa-tag me-1"></i><?= htmlspecialchars($alerta['areaOrigen']) ?>
+                                    </span>
+                                    <span class="text-muted ms-2">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <?php if ($alerta['estado'] == 'VENCIDO'): ?>
+                                            Vence: <?= date('d/m/Y', strtotime($alerta['fechaVencimiento'])) ?> (hace <?= $alerta['dias'] ?> días)
+                                        <?php else: ?>
+                                            Vence: <?= date('d/m/Y', strtotime($alerta['fechaVencimiento'])) ?> (en <?= $alerta['dias'] ?> días)
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="ms-2">
+                                        <span class="badge bg-secondary"><?= htmlspecialchars($alerta['evento']) ?></span>
+                                    </span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if ($alertas['total'] > count($alertas['lista'])): ?>
                             <div class="text-muted mt-2">
-                                <i class="fas fa-ellipsis-h me-1"></i> y <?= $alertas['total'] - 5 ?> más...
+                                <i class="fas fa-ellipsis-h me-1"></i> Mostrando <?= count($alertas['lista']) ?> de <?= $alertas['total'] ?> alertas.
+                                <a href="presentacion/alertas.php" class="ms-2">Ver todas</a>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>

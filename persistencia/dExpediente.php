@@ -915,11 +915,12 @@ function listarExpedientesUFRESBIT(PDO $pdo)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function obtenerPlazosCriticos(PDO $pdo)
+function obtenerPlazosCriticos(PDO $pdo, $limite = 7, $area = null, $estado = null)
 {
     $hoy = new DateTime();
-    $hoyStr = $hoy->format('Y-m-d');
+    $estadosActivos = ['EN PROCESO', 'ENVIADO AL EJECUTOR'];
 
+    // Construir la consulta base
     $sql = "SELECT
                 p.idPlazo,
                 p.idExpediente,
@@ -935,7 +936,17 @@ function obtenerPlazosCriticos(PDO $pdo)
             FROM expediente_plazos p
             INNER JOIN expediente e ON p.idExpediente = e.idExpediente
             WHERE p.fechaVencimiento IS NOT NULL
-            ORDER BY p.fechaVencimiento ASC";
+              AND p.fechaCumplimiento IS NULL
+              AND e.estadoExpediente IN ('" . implode("','", $estadosActivos) . "')";
+
+    // Aplicar filtro por área si se especifica
+    if ($area) {
+        $sql .= " AND e.areaOrigen = '" . addslashes($area) . "'";
+    }
+
+    $sql .= " ORDER BY 
+                CASE WHEN p.fechaVencimiento < GETDATE() THEN 0 ELSE 1 END,
+                p.fechaVencimiento ASC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
@@ -945,18 +956,19 @@ function obtenerPlazosCriticos(PDO $pdo)
     $contador = 0;
 
     foreach ($plazos as $p) {
-        if (!empty($p['fechaCumplimiento'])) {
-            continue;
-        }
-
         $fechaVenc = new DateTime($p['fechaVencimiento']);
         $diferencia = $hoy->diff($fechaVenc)->days;
 
         if ($hoy > $fechaVenc) {
-            $estado = 'VENCIDO';
+            $estadoPlazo = 'VENCIDO';
         } elseif ($diferencia <= 3) {
-            $estado = 'PROXIMO_VENCER';
+            $estadoPlazo = 'PROXIMO_VENCER';
         } else {
+            continue; // descartar plazos lejanos
+        }
+
+        // Aplicar filtro por estado si se especifica
+        if ($estado && $estadoPlazo != $estado) {
             continue;
         }
 
@@ -967,18 +979,23 @@ function obtenerPlazosCriticos(PDO $pdo)
             'evento' => $p['evento'],
             'fechaVencimiento' => $p['fechaVencimiento'],
             'dias' => $diferencia,
-            'estado' => $estado,
-            'responsable' => $p['responsable'] ?? 'Sin responsable'
+            'estado' => $estadoPlazo,
+            'responsable' => $p['responsable'] ?? 'Sin responsable',
+            'idPlazo' => $p['idPlazo']
         ];
         $contador++;
     }
 
+    // Limitar el número de resultados (si `$limite` > 0)
+    if ($limite > 0 && count($criticos) > $limite) {
+        $criticos = array_slice($criticos, 0, $limite);
+    }
+
     return [
-        'total' => $contador,
+        'total' => $contador, // total real (sin límite)
         'lista' => $criticos
     ];
 }
-
 // ============================================
 // FUNCIONES PARA EQUIPO/ACTIVIDAD/TIPO
 // ============================================
