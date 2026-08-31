@@ -271,7 +271,7 @@ if (isset($_GET['editar'])) {
     <!-- Cabecera de página -->
     <div class="page-header">
         <div class="container">
-            <h2><i class="fas fa-store me-2"></i>Gestión de Establecimientos</h2>
+            <h2><i class="fas fa-store me-2"></i>Gestión de Dueños</h2>
             <p><i class="fas fa-edit me-1"></i>Registra, edita y administra los establecimientos fiscalizados</p>
         </div>
     </div>
@@ -356,7 +356,7 @@ if (isset($_GET['editar'])) {
         <div class="card card-modern">
             <div class="card-body">
                 <h5 class="card-title fw-bold mb-3" style="color: #0b2a4a;">
-                    <i class="fas fa-list me-2"></i>Establecimientos Registrados
+                    <i class="fas fa-list me-2"></i>Dueños Registrados
                 </h5>
                 <div class="table-responsive table-modern">
                     <table id="example" class="table table-hover table-striped" style="width:100%">

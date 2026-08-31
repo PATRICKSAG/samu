@@ -358,7 +358,7 @@ $alertas = obtenerPlazosCriticos($pdo);
                 <div class="card card-modern text-center">
                     <div class="card-body">
                         <div class="card-icon"><i class="fas fa-store"></i></div>
-                        <h5 class="card-title-modern">Establecimiento</h5>
+                        <h5 class="card-title-modern">Dueño</h5>
                         <p class="card-text-modern">Registro y mantenimiento de establecimientos, RUC, razón social y responsables.</p>
                         <a href="<?= BASE_URL . '/presentacion/formEstablecimiento.php' ?>" class="btn btn-outline-primary-custom mt-2">
                             <i class="fas fa-arrow-right me-2"></i>Gestionar
@@ -371,7 +371,7 @@ $alertas = obtenerPlazosCriticos($pdo);
                 <div class="card card-modern text-center">
                     <div class="card-body">
                         <div class="card-icon"><i class="fas fa-building"></i></div>
-                        <h5 class="card-title-modern">Sede</h5>
+                        <h5 class="card-title-modern">Local</h5>
                         <p class="card-text-modern">Administración de sedes, direcciones, categorías y situación DIGEMID.</p>
                         <a href="<?= BASE_URL . '/presentacion/formSede.php' ?>" class="btn btn-outline-primary-custom mt-2">
                             <i class="fas fa-arrow-right me-2"></i>Gestionar

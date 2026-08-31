@@ -362,8 +362,8 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
     <!-- Cabecera -->
     <div class="page-header">
         <div class="container">
-            <h2><i class="fas fa-building me-2"></i>Gestión de Sedes</h2>
-            <p><i class="fas fa-edit me-1"></i>Registra, edita y administra las sedes de los establecimientos</p>
+            <h2><i class="fas fa-building me-2"></i>Gestión de Locales</h2>
+            <p><i class="fas fa-edit me-1"></i>Registra, edita y administra los locales de los dueños</p>
         </div>
     </div>
 
@@ -649,7 +649,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                     <h5 class="card-title fw-bold" style="color: #0b2a4a;">
-                        <i class="fas fa-list me-2"></i>Sedes Registradas
+                        <i class="fas fa-list me-2"></i>Locales Registrados
                     </h5>
                     <div style="min-width: 200px;">
                         <label for="filtroArea" class="form-label mb-0 me-2 fw-bold" style="color: #0b2a4a;">

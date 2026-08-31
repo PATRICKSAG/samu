@@ -11,8 +11,8 @@ $BASE_URL = defined('BASE_URL') ? BASE_URL : '../';
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item"><a class="nav-link" href="<?= $BASE_URL . '/index.php' ?>">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="<?= $BASE_URL . '/presentacion/formEstablecimiento.php' ?>">Establecimiento</a></li>
-                <li class="nav-item"><a class="nav-link" href="<?= $BASE_URL . '/presentacion/formSede.php' ?>">Sede</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $BASE_URL . '/presentacion/formEstablecimiento.php' ?>">Dueño</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $BASE_URL . '/presentacion/formSede.php' ?>">Local</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Expediente
