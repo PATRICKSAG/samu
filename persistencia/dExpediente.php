@@ -915,10 +915,10 @@ function listarExpedientesUFRESBIT(PDO $pdo)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function obtenerPlazosCriticos(PDO $pdo, $limite = 7, $area = null, $estado = null)
+function obtenerPlazosCriticos(PDO $pdo, $limite = 5, $area = null, $estado = null)
 {
     $hoy = new DateTime();
-    $estadosActivos = ['EN PROCESO', 'ENVIADO AL EJECUTOR'];
+    $estadosActivos = ['EN PROCESO', 'ENVIADO AL EJECUTOR','OTRO'];
 
     // Construir la consulta base
     $sql = "SELECT
@@ -961,7 +961,7 @@ function obtenerPlazosCriticos(PDO $pdo, $limite = 7, $area = null, $estado = nu
 
         if ($hoy > $fechaVenc) {
             $estadoPlazo = 'VENCIDO';
-        } elseif ($diferencia <= 12) {
+        } elseif ($diferencia <= 7) {
             $estadoPlazo = 'PROXIMO_VENCER';
         } else {
             continue; // descartar plazos lejanos
