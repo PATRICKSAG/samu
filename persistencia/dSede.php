@@ -131,7 +131,10 @@ function listarSedes(PDO $pdo)
                 s.tieneQuimicoFarmaceutico,
                 s.horarioFuncionamiento,
                 s.telefono,
-                s.areaOrigen,
+                CASE 
+                    WHEN s.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE s.areaOrigen 
+                END AS areaOrigen,
                 s.idEstadoRenipress,
                 s.idInstitucionRenipress,
                 s.idTipoRenipress,

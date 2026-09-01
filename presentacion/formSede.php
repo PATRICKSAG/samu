@@ -659,7 +659,7 @@ $jsonData = json_encode($dataTable, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
                             <option value="">Todas</option>
                             <option value="UFREMID">UFREMID</option>
                             <option value="UFRESA">UFRESA</option>
-                            <option value="UFRESBIT">UFRESBYT</option>
+                            <option value="UFRESBYT">UFRESBYT</option>
                         </select>
                     </div>
                 </div>
