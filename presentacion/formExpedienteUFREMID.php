@@ -459,6 +459,7 @@ $tiposActividad     = []; // se cargarán vía AJAX
                                 <option value="CERRADO" <?php echo ($estadoExpediente == 'CERRADO') ? 'selected' : '' ?>>CERRADO</option>
                                 <option value="ARCHIVADO" <?php echo ($estadoExpediente == 'ARCHIVADO') ? 'selected' : '' ?>>ARCHIVADO</option>
                                 <option value="ENVIADO AL EJECUTOR" <?php echo ($estadoExpediente == 'ENVIADO AL EJECUTOR') ? 'selected' : '' ?>>ENVIADO AL EJECUTOR</option>
+                                <option value="ENVIADO A FISCALIA" <?php echo ($estadoExpediente == 'ENVIADO A FISCALIA') ? 'selected' : '' ?>>ENVIADO A FISCALIA</option>
                                 <option value="OTRO" <?php echo ($estadoExpediente == 'OTRO') ? 'selected' : '' ?>>OTRO</option>
                             </select>
                         </div>
