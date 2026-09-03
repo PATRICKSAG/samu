@@ -51,6 +51,8 @@ $rsgLevantamientoCierre            = '';
 $fechaNotificacionRSGLevantamiento = '';
 $cierreDefinitivo                  = '';
 $fechaNotificacionCierreDefinitivo = '';
+$fechaEnvioFiscalia = '';
+$nroDocumentoFiscalia = '';
 
 // NUEVOS CAMPOS DIGEMID (acordeón)
 $atendidoPor               = '';
@@ -113,6 +115,8 @@ if ($idEditar > 0) {
         $fechaNotificacionRSGLevantamiento = $expData['fechaNotificacionRSGLevantamiento'] ?? '';
         $cierreDefinitivo                  = $expData['cierreDefinitivo'] ?? '';
         $fechaNotificacionCierreDefinitivo = $expData['fechaNotificacionCierreDefinitivo'] ?? '';
+        $fechaEnvioFiscalia                = $expData['fechaEnvioFiscalia'] ?? '';
+        $nroDocumentoFiscalia              = $expData['nroDocumentoFiscalia'] ?? '';
         // DIGEMID
         $atendidoPor         = $expData['atendidoPor'] ?? '';
         $horarioAtencionQF   = $expData['horarioAtencionQF'] ?? '';
@@ -170,6 +174,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $fechaNotificacionRSGLevantamiento = $_POST['fechaNotificacionRSGLevantamiento'] ?? '';
     $cierreDefinitivo                  = $_POST['cierreDefinitivo'] ?? '';
     $fechaNotificacionCierreDefinitivo = $_POST['fechaNotificacionCierreDefinitivo'] ?? '';
+    $fechaEnvioFiscalia                = $_POST['fechaEnvioFiscalia'] ?? '';
+    $nroDocumentoFiscalia              = trim($_POST['nroDocumentoFiscalia'] ?? '');
     // Digemid
     $atendidoPor         = $_POST['atendidoPor'] ?? '';
     $horarioAtencionQF   = $_POST['horarioAtencionQF'] ?? '';
@@ -252,6 +258,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
             'fechaNotificacionRSGLevantamiento' => $fechaNotificacionRSGLevantamiento,
             'cierreDefinitivo'                  => $cierreDefinitivo,
             'fechaNotificacionCierreDefinitivo' => $fechaNotificacionCierreDefinitivo,
+            'fechaEnvioFiscalia'                => $fechaEnvioFiscalia,
+            'nroDocumentoFiscalia'              => $nroDocumentoFiscalia,
+
             // Digemid
             'atendidoPor'         => $atendidoPor,
             'horarioAtencionQF'   => $horarioAtencionQF,
@@ -795,6 +804,14 @@ $tiposActividad     = []; // se cargarán vía AJAX
                                             <label for="fechaNotificacionCierreDefinitivo" class="form-label">Fecha de notificación del cierre de envío</label>
                                             <input type="date" class="form-control form-control-modern" name="fechaNotificacionCierreDefinitivo" id="fechaNotificacionCierreDefinitivo" value="<?php echo $fechaNotificacionCierreDefinitivo ?? '' ?>">
                                         </div>
+                                        <div class="col-md-6">
+                                            <label for="fechaEnvioFiscalia" class="form-label">Fecha envío a Fiscalía</label>
+                                            <input type="date" class="form-control form-control-modern" name="fechaEnvioFiscalia" id="fechaEnvioFiscalia" value="<?php echo $fechaEnvioFiscalia ?? '' ?>">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="nroDocumentoFiscalia" class="form-label">N° de documento envío a Fiscalía</label>
+                                            <input type="text" class="form-control form-control-modern" name="nroDocumentoFiscalia" id="nroDocumentoFiscalia" value="<?php echo htmlspecialchars($nroDocumentoFiscalia ?? '') ?>" placeholder="N° de documento">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -830,6 +847,7 @@ $tiposActividad     = []; // se cargarán vía AJAX
                                 <th>Sede</th>
                                 <th>Fecha Inspección</th>
                                 <th>Categoría</th>
+                                <th>RUC</th>
                                 <th>Estado</th>
                                 <th>Inspector</th>
                                 <th>Acciones</th>
@@ -843,6 +861,7 @@ $tiposActividad     = []; // se cargarán vía AJAX
                                 <td><?php echo htmlspecialchars($exp['nombreSede'] ?? '') ?></td>
                                 <td><?php echo $exp['fechaInspeccion'] ?? '' ?></td>
                                 <td><?php echo htmlspecialchars($exp['categoria'] ?? '') ?></td>
+                                <td><?php echo htmlspecialchars($exp['ruc'] ?? '') ?></td>
                                 <td>
                                     <?php
                                         $estado     = $exp['estadoExpediente'] ?? '';

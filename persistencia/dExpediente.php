@@ -83,15 +83,16 @@ function insertarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
         // Insertar MS si hay datos
         if (tieneDatosMS($data)) {
             $sqlMS = "INSERT INTO expediente_ms (
-                        idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
-                        idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
-                        informeTecnicoInspeccion, nCertificadoBuenasPracticas,
-                        fechaInicioCertificadoBP, fechaFinCertificadoBP,
-                        rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
-                        descargoApelacion, nDocResuelveRecurso,
-                        rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
-                        cierreDefinitivo, fechaNotificacionCierreDefinitivo
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
+                idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
+                informeTecnicoInspeccion, nCertificadoBuenasPracticas,
+                fechaInicioCertificadoBP, fechaFinCertificadoBP,
+                rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
+                descargoApelacion, nDocResuelveRecurso,
+                rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
+                cierreDefinitivo, fechaNotificacionCierreDefinitivo,
+                fechaEnvioFiscalia, nroDocumentoFiscalia
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmtMS = $pdo->prepare($sqlMS);
             $stmtMS->execute([
                 $idExpediente,
@@ -112,6 +113,8 @@ function insertarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
                 $data['fechaNotificacionRSGLevantamiento'] ?? null,
                 $data['cierreDefinitivo'] ?? null,
                 $data['fechaNotificacionCierreDefinitivo'] ?? null,
+                $data['fechaEnvioFiscalia'] ?? null,
+                $data['nroDocumentoFiscalia'] ?? null
             ]);
         }
 
@@ -210,8 +213,9 @@ function actualizarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
                         rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
                         descargoApelacion, nDocResuelveRecurso,
                         rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
-                        cierreDefinitivo, fechaNotificacionCierreDefinitivo
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        cierreDefinitivo, fechaNotificacionCierreDefinitivo,
+                        fechaEnvioFiscalia, nroDocumentoFiscalia
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmtMS = $pdo->prepare($sqlMS);
             $stmtMS->execute([
                 $data['idExpediente'],
@@ -232,6 +236,8 @@ function actualizarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
                 $data['fechaNotificacionRSGLevantamiento'] ?? null,
                 $data['cierreDefinitivo'] ?? null,
                 $data['fechaNotificacionCierreDefinitivo'] ?? null,
+                $data['fechaEnvioFiscalia'] ?? null,
+                $data['nroDocumentoFiscalia'] ?? null
             ]);
         }
 
@@ -349,9 +355,11 @@ function listarExpedientesUFREMID(PDO $pdo)
                 C.nombre as categoria,
                 e.estadoExpediente,
                 e.responsable,
-                CONCAT(s.nombre, ' - ', s.direccion) AS nombreSede
+                CONCAT(s.nombre, ' - ', s.direccion) AS nombreSede,
+                ES.ruc
             FROM expediente e WITH(NOLOCK)
                 LEFT JOIN sede S WITH(NOLOCK) ON E.idSede = S.idSede
+                LEFT JOIN establecimiento ES WITH(NOLOCK) ON ES.idEstablecimiento = S.idEstablecimiento
                 LEFT JOIN categoria C WITH(NOLOCK) ON S.idCategoria = C.idCategoria
             WHERE e.areaOrigen = 'UFREMID'
             ORDER BY e.fechaInspeccion DESC";
@@ -1163,7 +1171,8 @@ function tieneDatosMS($data) {
         'rgrRatificaCierreTemporal', 'fechaNotificacionRGRCierre',
         'descargoApelacion', 'nDocResuelveRecurso',
         'rsgLevantamientoCierre', 'fechaNotificacionRSGLevantamiento',
-        'cierreDefinitivo', 'fechaNotificacionCierreDefinitivo'
+        'cierreDefinitivo', 'fechaNotificacionCierreDefinitivo',
+        'fechaEnvioFiscalia', 'nroDocumentoFiscalia'
     ];
     foreach ($msFields as $field) {
         if (!empty($data[$field])) {
