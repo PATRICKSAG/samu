@@ -210,6 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $fechaNotificacionRGRCierre = empty($fechaNotificacionRGRCierre) ? null : $fechaNotificacionRGRCierre;
     $fechaNotificacionRSGLevantamiento = empty($fechaNotificacionRSGLevantamiento) ? null : $fechaNotificacionRSGLevantamiento;
     $fechaNotificacionCierreDefinitivo = empty($fechaNotificacionCierreDefinitivo) ? null : $fechaNotificacionCierreDefinitivo;
+    $fechaEnvioFiscalia = empty($fechaEnvioFiscalia) ? null : $fechaEnvioFiscalia;
 
 
     $errores = [];
