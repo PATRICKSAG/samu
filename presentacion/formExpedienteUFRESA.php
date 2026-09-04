@@ -1,4 +1,5 @@
 <?php
+//formExpedienteUFRESA.php
     include_once __DIR__ . '/../config.php';
     include_once __DIR__ . '/../persistencia/conexion.php';
     include_once __DIR__ . '/../persistencia/dSede.php';
@@ -62,7 +63,7 @@
         $falsificado                       = $expData['falsificado'] ?? 0;
         $fechaDescargoActa                 = $expData['fechaDescargoActa'] ?? '';
         $oficioOtorgaDeniegaPlazo          = $expData['oficioOtorgaDeniegaPlazo'] ?? '';
-        $idSituacionDigemidSeleccionada    = $expData['idSituacionDigemidSeleccionada'] ?? '';
+        $idSituacionDigemidSeleccionada    = $expData['idSituacionDigemidSede'] ?? $expData['idSituacionDigemidSeleccionada'] ?? '';
         $docElevaNulidad                   = $expData['docElevaNulidad'] ?? '';
         $resuelveNulidad                   = $expData['resuelveNulidad'] ?? '';
         $informeTecnicoInspeccion          = $expData['informeTecnicoInspeccion'] ?? '';
@@ -77,6 +78,8 @@
         $fechaNotificacionRSGLevantamiento = $expData['fechaNotificacionRSGLevantamiento'] ?? '';
         $cierreDefinitivo                  = $expData['cierreDefinitivo'] ?? '';
         $fechaNotificacionCierreDefinitivo = $expData['fechaNotificacionCierreDefinitivo'] ?? '';
+        
+        // var_dump($idSituacionDigemidSeleccionada);
     }
     }
 
@@ -111,6 +114,33 @@
     $fechaNotificacionRSGLevantamiento = $_POST['fechaNotificacionRSGLevantamiento'] ?? '';
     $cierreDefinitivo                  = $_POST['cierreDefinitivo'] ?? '';
     $fechaNotificacionCierreDefinitivo = $_POST['fechaNotificacionCierreDefinitivo'] ?? '';
+
+        // ============================================================
+    // CONVERTIR FECHAS VACÍAS A NULL
+    // ============================================================
+    $fechaInspeccion                   = empty($fechaInspeccion) ? null : $fechaInspeccion;
+    $fechaDescargoActa                 = empty($fechaDescargoActa) ? null : $fechaDescargoActa;
+    $fechaInicioCertificadoBP          = empty($fechaInicioCertificadoBP) ? null : $fechaInicioCertificadoBP;
+    $fechaFinCertificadoBP             = empty($fechaFinCertificadoBP) ? null : $fechaFinCertificadoBP;
+    $fechaNotificacionRGRCierre        = empty($fechaNotificacionRGRCierre) ? null : $fechaNotificacionRGRCierre;
+    $fechaNotificacionRSGLevantamiento = empty($fechaNotificacionRSGLevantamiento) ? null : $fechaNotificacionRSGLevantamiento;
+    $fechaNotificacionCierreDefinitivo = empty($fechaNotificacionCierreDefinitivo) ? null : $fechaNotificacionCierreDefinitivo;
+
+        // Convertir fechas vacías o 1900-01-01 a NULL
+    $fechas = [
+        'fechaInspeccion',
+        'fechaDescargoActa',
+        'fechaInicioCertificadoBP',
+        'fechaFinCertificadoBP',
+        'fechaNotificacionRGRCierre',
+        'fechaNotificacionRSGLevantamiento',
+        'fechaNotificacionCierreDefinitivo'
+    ];
+    foreach ($fechas as $campo) {
+        if (isset($$campo) && (empty($$campo) || $$campo === '1900-01-01')) {
+            $$campo = null;
+        }
+    }
 
     $errores = [];
     if (empty($idSede)) {
@@ -387,14 +417,14 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label for="idSituacionDigemidSeleccionada" class="form-label">Seleccionar Estado del Local</label>
-                                            <select name="idSituacionDigemidSeleccionada" id="idSituacionDigemidSeleccionada" class="form-select">
-                                                <option value="">-- Seleccionar --</option>
-                                                <?php foreach ($situacionesDigemid as $sit): ?>
-                                                    <option value="<?php echo $sit['idSituacionDigemid'] ?>" <?php echo ($idSituacionDigemidSeleccionada == $sit['idSituacionDigemid']) ? 'selected' : '' ?>>
-                                                        <?php echo htmlspecialchars($sit['nombre']) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                                <select name="idSituacionDigemidSeleccionada" id="idSituacionDigemidSeleccionada" class="form-select">
+                                                    <option value="">-- Seleccionar --</option>
+                                                    <?php foreach ($situacionesDigemid as $sit): ?>
+                                                        <option value="<?php echo $sit['idSituacionDigemid'] ?>" <?php echo ((string)$idSituacionDigemidSeleccionada == (string)$sit['idSituacionDigemid']) ? 'selected' : '' ?>>
+                                                            <?php echo htmlspecialchars($sit['nombre']) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             <small class="text-muted">Al guardar, se actualizará el estado de la sede seleccionada.</small>
                                         </div>
                                         <div class="col-md-6">

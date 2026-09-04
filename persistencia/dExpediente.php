@@ -332,10 +332,11 @@ function eliminarExpediente(PDO $pdo, $idExpediente)
 
 function obtenerExpedienteCompleto(PDO $pdo, $idExpediente)
 {
-    $sql = "SELECT e.*, ms.*, dg.*
+    $sql = "SELECT e.*, ms.*, dg.*, s.idSituacionDigemid AS idSituacionDigemidSede
             FROM expediente e
             LEFT JOIN expediente_ms ms ON e.idExpediente = ms.idExpediente
             LEFT JOIN expediente_digemid dg ON e.idExpediente = dg.idExpediente
+            LEFT JOIN sede s ON e.idSede = s.idSede
             WHERE e.idExpediente = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$idExpediente]);
@@ -419,6 +420,7 @@ function listarExpedienteFI(PDO $pdo, $idExpediente)
                 fi.fechaNotificacionRecurso,
                 fi.informeFinalInstruccion,
                 fi.fechaCreacion,
+                fi.procesoPara,
                 (SELECT TOP 1 estado FROM expediente_plazos
                  WHERE idExpediente = fi.idExpediente AND evento = 'DESCARGO_PAS'
                  AND idExpedienteFI = fi.idExpedienteFI ORDER BY idPlazo DESC) AS estadoDescargo,
@@ -509,24 +511,24 @@ function insertarExpedienteFI(PDO $pdo, array $data, $area = 'UFREMID')
     $plazos = getPlazosArea($area);
     $diasDescargo = $plazos['descargoPAS'];
     $mesesCaducidad = $plazos['caducidadPAS'];
-
+    $procesoPara = $data['procesoPara'] ?? null;
     try {
         $pdo->beginTransaction();
 
-        $sql = "INSERT INTO expediente_fi (
+                $sql = "INSERT INTO expediente_fi (
                     idExpediente, tipoEvento, informeTecnicoInicioPAS, fechaInformeTecnico,
                     oficioIniciaPAS, fechaNotificacionInicioPAS, fechaDescargoPresentado,
                     documentoElevaEscrito, informeLegalCaducidad, resolucionCaducidad,
                     recursoInterpuesto, resolucionRecurso, fechaNotificacionRecurso,
-                    informeFinalInstruccion
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    informeFinalInstruccion, procesoPara
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $idExpediente, $tipoEvento, $informeTecnicoInicioPAS, $fechaInformeTecnico,
             $oficioIniciaPAS, $fechaNotificacionInicioPAS, $fechaDescargoPresentado,
             $documentoElevaEscrito, $informeLegalCaducidad, $resolucionCaducidad,
             $recursoInterpuesto, $resolucionRecurso, $fechaNotificacionRecurso,
-            $informeFinalInstruccion,
+            $informeFinalInstruccion, $procesoPara
         ]);
         $idExpedienteFI = $pdo->lastInsertId();
 
