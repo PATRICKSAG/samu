@@ -1,4 +1,5 @@
 <?php
+//reporte1.php
 include_once __DIR__ . '/../config.php';
 include_once __DIR__ . '/../persistencia/conexion.php';
 include_once __DIR__ . '/../persistencia/dReportes.php';
@@ -77,6 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
                 $data = reporteJudicializados($pdo, $filtros);
                 $titulo = 'Reporte_Judicializados';
                 break;
+            case 'fases':
+                $data = reporteFasesCompleto($pdo, $filtros);
+                $titulo = 'Reporte_Fases_FI_FS';
+                break;
             default:
                 throw new Exception('Reporte no válido');
         }
@@ -106,7 +111,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             $sheet->setCellValue($col . '1', $header);
             $col = str_increment($col);
         }
-        $lastCol = chr(ord('A') + count($cleanHeaders) - 1);
+        $lastCol = $col; 
+
+        $colCount = count($cleanHeaders);
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colCount);
+        $lastCol = $lastColLetter;
 
         // Estilo de encabezado
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
@@ -133,9 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             $row++;
         }
 
-        // Autoajustar columnas
-        foreach (range('A', $lastCol) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+        // Autoajustar columnas usando índice numérico
+        for ($i = 1; $i <= $colCount; $i++) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
 
         // Aplicar bordes
@@ -143,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
         ]);
 
-        // Insertar título en la primera fila
+        // Título
         $sheet->insertNewRowBefore(1);
         $sheet->setCellValue('A1', str_replace('_', ' ', $titulo));
         $sheet->mergeCells("A1:{$lastCol}1");
@@ -363,6 +373,9 @@ $mensajeError = $_GET['error'] ?? '';
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="tab-judicializados" data-bs-toggle="tab" data-bs-target="#judicializados" type="button" role="tab">Judicializados</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-fases" data-bs-toggle="tab" data-bs-target="#fases" type="button" role="tab">Fases (FI/FS)</button>
                         </li>
                     </ul>
 
@@ -670,6 +683,53 @@ $mensajeError = $_GET['error'] ?? '';
                                             <input type="date" name="filtros[fecha_desde]" class="form-control form-control-modern">
                                         </div>
                                         <div class="col-md-4">
+                                            <label class="form-label">Fecha hasta</label>
+                                            <input type="date" name="filtros[fecha_hasta]" class="form-control form-control-modern">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" name="exportar" class="btn btn-primary-custom">
+                                    <i class="fas fa-file-excel me-2"></i> Exportar a Excel
+                                </button>
+                            </form>
+                        </div>
+                        <!-- FASES (FI/FS) -->
+                        <div class="tab-pane fade" id="fases" role="tabpanel">
+                            <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Reporte detallado de expedientes que tienen fase instructora (FI) y, opcionalmente, fase sancionadora (FS). Incluye todos los datos de ambas tablas.</p>
+                            <form method="POST" action="">
+                                <input type="hidden" name="reporte" value="fases">
+                                <div class="filtro-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Área</label>
+                                            <select name="filtros[area]" class="form-select form-control-modern">
+                                                <option value="">Todas</option>
+                                                <?php foreach ($areas as $area): ?>
+                                                    <option value="<?= $area ?>"><?= $area ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Proceso para (FI)</label>
+                                            <select name="filtros[proceso_para]" class="form-select form-control-modern">
+                                                <option value="">Todos</option>
+                                                <option value="ESTABLECIMIENTO">ESTABLECIMIENTO</option>
+                                                <option value="QUÍMICO">QUÍMICO</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Tiene FS</label>
+                                            <select name="filtros[tiene_fs]" class="form-select form-control-modern">
+                                                <option value="">Todos</option>
+                                                <option value="SI">SI</option>
+                                                <option value="NO">NO</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Fecha desde</label>
+                                            <input type="date" name="filtros[fecha_desde]" class="form-control form-control-modern">
+                                        </div>
+                                        <div class="col-md-3">
                                             <label class="form-label">Fecha hasta</label>
                                             <input type="date" name="filtros[fecha_hasta]" class="form-control form-control-modern">
                                         </div>

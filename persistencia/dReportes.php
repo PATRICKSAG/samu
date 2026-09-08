@@ -517,3 +517,96 @@ function reporteJudicializados(PDO $pdo, $filtros = [])
     $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+/**
+ * Reporte 9: Fases Instructora y Sancionadora (detallado)
+ */
+function reporteFasesCompleto(PDO $pdo, $filtros = [])
+{
+    $sql = "SELECT 
+                e.idExpediente,
+                e.numeroActa,
+                CASE 
+                    WHEN e.areaOrigen IN ('UFRESBIT') THEN 'UFRESBYT'
+                    ELSE e.areaOrigen 
+                END AS areaOrigen,
+                e.fechaInspeccion,
+                e.estadoExpediente,
+                e.responsable,
+                s.nombre AS sedeNombre,
+                est.ruc,
+                est.razonSocial,
+                -- FI
+                fi.idExpedienteFI,
+                fi.tipoEvento,
+                fi.oficioIniciaPAS,
+                fi.fechaNotificacionInicioPAS,
+                fi.fechaDescargoPresentado,
+                fi.informeLegalCaducidad,
+                fi.resolucionCaducidad,
+                fi.recursoInterpuesto,
+                fi.resolucionRecurso,
+                fi.fechaNotificacionRecurso,
+                fi.informeFinalInstruccion,
+                fi.procesoPara,
+                -- FS
+                fs.idExpedienteFS,
+                fs.oficioTrasladaIFI,
+                fs.fechaNotificacionIFI,
+                fs.fechaDescargoIFI,
+                fs.nResolucionSancion,
+                fs.nInfraccion,
+                fs.sancionImpuesta,
+                fs.fechaNotificacionSancion,
+                fs.recursoInterpuestoSancion,
+                fs.fechaRecursoSancion,
+                fs.pagoApela,
+                fs.resolucionRecursoSancion,
+                fs.resultadoRecurso,
+                fs.fechaNotificacionRecursoSancion,
+                fs.resolucionConsentida,
+                fs.fechaNotificacionConsentida,
+                fs.oficioElevaApelacion,
+                fs.resolucionApelacion,
+                fs.fechaNotificacionApelacion,
+                fs.pagaDemandaContenciosa,
+                fs.estadoContencioso,
+                fs.observacionesContencioso,
+                CASE WHEN fs.idExpedienteFS IS NOT NULL THEN 'SI' ELSE 'NO' END AS tieneFS
+            FROM expediente e
+            LEFT JOIN sede s ON e.idSede = s.idSede
+            LEFT JOIN establecimiento est ON s.idEstablecimiento = est.idEstablecimiento
+            INNER JOIN expediente_fi fi ON e.idExpediente = fi.idExpediente
+            LEFT JOIN expediente_fs fs ON fi.idExpedienteFI = fs.idExpedienteFI
+            WHERE 1=1";
+
+    $params = [];
+    if (!empty($filtros['area'])) {
+        $sql .= " AND e.areaOrigen = ?";
+        $params[] = $filtros['area'];
+    }
+    if (!empty($filtros['fecha_desde'])) {
+        $sql .= " AND e.fechaInspeccion >= ?";
+        $params[] = $filtros['fecha_desde'];
+    }
+    if (!empty($filtros['fecha_hasta'])) {
+        $sql .= " AND e.fechaInspeccion <= ?";
+        $params[] = $filtros['fecha_hasta'];
+    }
+    if (!empty($filtros['proceso_para'])) {
+        $sql .= " AND fi.procesoPara = ?";
+        $params[] = $filtros['proceso_para'];
+    }
+    if (isset($filtros['tiene_fs'])) {
+        if ($filtros['tiene_fs'] === 'SI') {
+            $sql .= " AND fs.idExpedienteFS IS NOT NULL";
+        } elseif ($filtros['tiene_fs'] === 'NO') {
+            $sql .= " AND fs.idExpedienteFS IS NULL";
+        }
+    }
+
+    $sql .= " ORDER BY e.fechaInspeccion DESC, e.idExpediente DESC, fi.idExpedienteFI DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}

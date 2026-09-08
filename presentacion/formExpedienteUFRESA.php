@@ -456,11 +456,11 @@
                                             <input type="date" class="form-control form-control-modern" name="fechaFinCertificadoBP" id="fechaFinCertificadoBP" value="<?php echo $fechaFinCertificadoBP ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="rgrRatificaCierreTemporal" class="form-label">RGR. Ratifica Medida de Cierre Temporal</label>
+                                            <label for="rgrRatificaCierreTemporal" class="form-label">RGR. Ratifica Medida de Seguridad</label>
                                             <input type="text" class="form-control form-control-modern" name="rgrRatificaCierreTemporal" id="rgrRatificaCierreTemporal" value="<?php echo htmlspecialchars($rgrRatificaCierreTemporal ?? '') ?>" placeholder="Ej. RGR. N° 0300-2018">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="fechaNotificacionRGRCierre" class="form-label">Fecha de Notificación de la RGR. de Cierre temporal</label>
+                                            <label for="fechaNotificacionRGRCierre" class="form-label">Fecha de Notificación de la RGR. de Medida de Seguridad</label>
                                             <input type="date" class="form-control form-control-modern" name="fechaNotificacionRGRCierre" id="fechaNotificacionRGRCierre" value="<?php echo $fechaNotificacionRGRCierre ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
@@ -472,11 +472,11 @@
                                             <input type="text" class="form-control form-control-modern" name="nDocResuelveRecurso" id="nDocResuelveRecurso" value="<?php echo htmlspecialchars($nDocResuelveRecurso ?? '') ?>" placeholder="N° de documento">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="rsgLevantamientoCierre" class="form-label">RSG. de Levantamiento de cierre</label>
+                                            <label for="rsgLevantamientoCierre" class="form-label">RSG. de Levantamiento de Medida de Seguridad</label>
                                             <input type="text" class="form-control form-control-modern" name="rsgLevantamientoCierre" id="rsgLevantamientoCierre" value="<?php echo htmlspecialchars($rsgLevantamientoCierre ?? '') ?>" placeholder="Ej. RSG N° 200-2026">
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="fechaNotificacionRSGLevantamiento" class="form-label">Fecha de Notificación RSG. Levantamiento de cierre</label>
+                                            <label for="fechaNotificacionRSGLevantamiento" class="form-label">Fecha de Notificación RSG. Levantamiento de Medida de Seguridad</label>
                                             <input type="date" class="form-control form-control-modern" name="fechaNotificacionRSGLevantamiento" id="fechaNotificacionRSGLevantamiento" value="<?php echo $fechaNotificacionRSGLevantamiento ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
@@ -524,6 +524,7 @@
                                 <th>Categoría</th>
                                 <th>Estado</th>
                                 <th>Inspector</th>
+                                <!-- <th>RUC</th> -->
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -549,6 +550,7 @@
                                     <span class="badge-estado <?php echo $badgeClass ?>"><?php echo htmlspecialchars($estado) ?></span>
                                 </td>
                                 <td><?php echo htmlspecialchars($exp['responsable'] ?? '') ?></td>
+                                <!-- <td><?php echo htmlspecialchars($exp['RUC'] ?? '') ?></td> -->
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">

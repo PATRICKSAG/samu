@@ -899,9 +899,11 @@ function listarExpedientesUFRESA(PDO $pdo)
                 C.nombre as categoria,
                 e.estadoExpediente,
                 e.responsable,
+                ES.RUC,
                 CONCAT(s.nombre, ' - ', s.direccion) AS nombreSede
             FROM expediente e WITH(NOLOCK)
                 LEFT JOIN sede S WITH(NOLOCK) ON E.idSede = S.idSede
+                LEFT JOIN establecimiento ES WITH(NOLOCK) ON S.idEstablecimiento = ES.idEstablecimiento
                 LEFT JOIN categoria C WITH(NOLOCK) ON S.idCategoria = C.idCategoria
             WHERE e.areaOrigen = 'UFRESA'
             ORDER BY e.fechaInspeccion DESC";
@@ -917,8 +919,13 @@ function listarExpedientesUFRESBIT(PDO $pdo)
                 e.fechaInspeccion,
                 e.estadoExpediente,
                 e.responsable,
+                ES.RUC,
+                ER.descripcion AS 'ESTADO',
                 (SELECT CONCAT(s.nombre, ' - ', s.direccion) FROM sede s WHERE s.idSede = e.idSede) AS nombreSede
-            FROM expediente e
+            FROM    expediente e
+                    LEFT JOIN sede S WITH(NOLOCK) ON E.idSede = S.idSede
+                    LEFT JOIN establecimiento ES WITH(NOLOCK) ON S.idEstablecimiento = ES.idEstablecimiento
+                    LEFT JOIN estadoRenipress ER WITH(NOLOCK) ON S.idEstadoRenipress = ER.id_estado
             WHERE e.areaOrigen = 'UFRESBIT'
             ORDER BY e.fechaInspeccion DESC";
     $stmt = $pdo->query($sql);

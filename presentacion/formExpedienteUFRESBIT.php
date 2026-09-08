@@ -644,6 +644,8 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                                 <th>Fecha Inspección</th>
                                 <th>Estado</th>
                                 <th>Inspector</th>
+                                <th>RUC</th>
+                                <th>Estado IPRESS</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -664,6 +666,8 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                                     <span class="badge-estado <?= $badgeClass ?>"><?= htmlspecialchars($estado) ?></span>
                                 </td>
                                 <td><?= htmlspecialchars($exp['responsable'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($exp['RUC'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($exp['ESTADO'] ?? '') ?></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">

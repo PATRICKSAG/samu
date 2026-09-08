@@ -444,10 +444,7 @@ if (isset($_GET['mensaje'])) {
                                     <input type="text" class="form-control form-control-modern" value="ESTABLECIMIENTO" disabled>
                                 </div>
                             <?php endif; ?>
-                            <div class="col-md-6">
-                                <label for="oficioIniciaPAS" class="form-label">Oficio de Inicio P.A.S. <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-modern" name="oficioIniciaPAS" id="oficioIniciaPAS" placeholder="N° de oficio" required>
-                            </div>
+
                             <div class="col-md-6">
                                 <label for="informeTecnicoInicioPAS" class="form-label">Informe Técnico de Inicio de PAS</label>
                                 <input type="text" class="form-control form-control-modern" name="informeTecnicoInicioPAS" id="informeTecnicoInicioPAS" placeholder="N° de informe">
@@ -457,8 +454,8 @@ if (isset($_GET['mensaje'])) {
                                 <input type="date" class="form-control form-control-modern" name="fechaInformeTecnico" id="fechaInformeTecnico">
                             </div>
                             <div class="col-md-6">
-                                <label for="informeFinalInstruccion" class="form-label">Informe Final de Instrucción (IFI)</label>
-                                <input type="text" class="form-control form-control-modern" name="informeFinalInstruccion" id="informeFinalInstruccion" placeholder="N° de informe">
+                                <label for="oficioIniciaPAS" class="form-label">Oficio de Inicio P.A.S. <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-modern" name="oficioIniciaPAS" id="oficioIniciaPAS" placeholder="N° de oficio" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="fechaNotificacionInicioPAS" class="form-label">
@@ -468,10 +465,6 @@ if (isset($_GET['mensaje'])) {
                                 <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS"
                                     value="<?php echo $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
                             </div>
-                        <?php endif; ?>
-
-
-                        <?php if ($accion !== 'editar'): ?>
                             <div class="col-md-6">
                                 <?php
                                 // Determinamos los días según el área
@@ -484,7 +477,15 @@ if (isset($_GET['mensaje'])) {
                                 <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
                                     value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
                             </div>
+                            <div class="col-md-6">
+                                <label for="informeFinalInstruccion" class="form-label">6. Informe Final de Instrucción (IFI)</label>
+                                <input type="text" class="form-control form-control-modern" name="informeFinalInstruccion" id="informeFinalInstruccion" placeholder="N° de informe">
+                            </div>
 
+                        <?php endif; ?>
+
+
+                        <?php if ($accion !== 'editar'): ?>
                             <!-- Campos de caducidad/recurso (aparecen si pasan 9 meses, pero en el formulario los dejamos visibles) -->
                             <div class="col-12 mt-3">
                                 <h6 class="fw-bold" style="color: #0b2a4a;">Campos posteriores a la caducidad</h6>
