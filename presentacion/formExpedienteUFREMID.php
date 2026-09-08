@@ -71,6 +71,8 @@ $bpsf                      = '';
 $bpdt                      = '';
 $medidaSeguridad           = '';
 
+$certificacionAutomatica   = 0;
+
 $mensaje      = '';
 $mensajeError = '';
 $esEdicion    = false;
@@ -84,6 +86,9 @@ if ($idEditar > 0) {
         $idExpediente     = intval($expData['idExpediente']);
         $idSede           = $expData['idSede'];
         $numeroActa       = $expData['numeroActa'];
+
+        $certificacionAutomatica = ($numeroActa === 'CERTIFICACIÓN AUTOMÁTICA') ? 1 : 0;    
+
         $fechaInspeccion  = $expData['fechaInspeccion'];
         $estadoExpediente = $expData['estadoExpediente'];
         $idTipoExpediente = $expData['idTipoExpediente'] ?? '';
@@ -140,6 +145,23 @@ if ($idEditar > 0) {
 // Procesar POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $idPost = isset($_GET['editar']) ? intval($_GET['editar']) : (isset($_POST['idExpediente']) ? intval($_POST['idExpediente']) : 0);
+
+        // ============================================================
+    // RECOGER CHECKBOX PRIMERO
+    // ============================================================
+    $certificacionAutomatica = isset($_POST['certificacionAutomatica']) ? 1 : 0;
+
+    // ============================================================
+    // SI ES CERTIFICACIÓN, FORZAR VALORES VACÍOS
+    // ============================================================
+    if ($certificacionAutomatica) {
+        $_POST['numeroActa'] = 'CERTIFICACIÓN AUTOMÁTICA';
+        $_POST['fechaInspeccion'] = '';
+        $_POST['idEquipoDCVS'] = '';
+        $_POST['idActividadAbrev'] = '';
+        $_POST['idTipoActividad'] = '';
+        $_POST['condicionEjecucion'] = '';
+    }
 
     // Recoger datos generales
     $idSede          = $_POST['idSede'] ?? '';
@@ -215,16 +237,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $fechaNotificacionCierreDefinitivo = empty($fechaNotificacionCierreDefinitivo) ? null : $fechaNotificacionCierreDefinitivo;
     $fechaEnvioFiscalia = empty($fechaEnvioFiscalia) ? null : $fechaEnvioFiscalia;
     $fechaNotificacionOficioPlazo = empty($fechaNotificacionOficioPlazo) ? null : $fechaNotificacionOficioPlazo;
-
+    
     $errores = [];
     if (empty($idSede)) $errores[] = "La sede es requerida.";
     if (empty($numeroActa)) $errores[] = "El número de acta es requerido.";
     if (empty($estadoExpediente)) $errores[] = "El estado del expediente es requerido.";
-    // Nuevos campos obligatorios
-    if (empty($idEquipoDCVS)) $errores[] = "El equipo DCVS es requerido.";
-    if (empty($idActividadAbrev)) $errores[] = "La actividad abreviada es requerida.";
-    if (empty($idTipoActividad)) $errores[] = "El tipo de actividad es requerido.";
-    if (empty($condicionEjecucion)) $errores[] = "La condición de ejecución es requerida.";
+
+    // Si NO es certificación automática, validar campos de inspección
+    if (!$certificacionAutomatica) {
+        if (empty($fechaInspeccion)) $errores[] = "La fecha de inspección es requerida.";
+        if (empty($idEquipoDCVS)) $errores[] = "El equipo DCVS es requerido.";
+        if (empty($idActividadAbrev)) $errores[] = "La actividad abreviada es requerida.";
+        if (empty($idTipoActividad)) $errores[] = "El tipo de actividad es requerido.";
+        if (empty($condicionEjecucion)) $errores[] = "La condición de ejecución es requerida.";
+    } else {
+        // Si es certificación, forzar valores a NULL
+        $numeroActa = 'CERTIFICACIÓN AUTOMÁTICA';
+        $fechaInspeccion = null;
+        $idEquipoDCVS = null;
+        $idActividadAbrev = null;
+        $idTipoActividad = null;
+        $condicionEjecucion = null;
+        }
 
     if (empty($errores)) {
         $data = [
@@ -437,10 +471,17 @@ $tiposActividad     = []; // se cargarán vía AJAX
         <!-- Formulario -->
         <div class="card card-modern mb-4">
             <div class="card-body">
-                <h5 class="card-title fw-bold mb-3" style="color: #0b2a4a;">
-                    <i class="fas fa-pen-alt me-2"></i><?php echo $esEdicion ? 'Editar Expediente UFREMID' : 'Nuevo Expediente UFREMID' ?>
-                </h5>
-                <form method="POST" action="">
+            <h5 class="card-title fw-bold mb-3 d-flex align-items-center" style="color: #0b2a4a;">
+                <i class="fas fa-pen-alt me-2"></i><?php echo $esEdicion ? 'Editar Expediente UFREMID' : 'Nuevo Expediente UFREMID' ?>
+                <div class="form-check ms-3">
+                    <input class="form-check-input" type="checkbox" name="certificacionAutomatica" id="certificacionAutomatica" value="1" form="formExpedienteUFREMID" <?= $certificacionAutomatica ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="certificacionAutomatica" style="font-size: 0.9rem;">
+                        <i class="fas fa-check-circle me-1" style="color: #1b4f8b;"></i> Certificación automática
+                        <i class="fas fa-info-circle text-primary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="No requiere fecha de inspección ni equipo DCVS."></i>
+                    </label>
+                </div>
+            </h5>
+                <form method="POST" action="" id="formExpedienteUFREMID">
                     <input type="hidden" name="idExpediente" value="<?php echo $idExpediente ?>">
 
                     <!-- Sección 1: Datos Generales -->
@@ -460,10 +501,12 @@ $tiposActividad     = []; // se cargarán vía AJAX
                             <label for="numeroActa" class="form-label"><i class="fas fa-hashtag me-1"></i>N° de Acta <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-modern" name="numeroActa" id="numeroActa" value="<?php echo htmlspecialchars($numeroActa ?? '') ?>" placeholder="Ingrese el número de acta" required>
                         </div>
-                        <div class="col-md-4">
-                            <label for="fechaInspeccion" class="form-label"><i class="fas fa-calendar-alt me-1"></i>Fecha de Inspección <span class="text-danger">*</span></label>
+                        
+                        <div class="col-md-4 campo-inspeccion">
+                            <label for="fechaInspeccion" class="form-label">Fecha de Inspección <span class="text-danger">*</span></label>
                             <input type="date" class="form-control form-control-modern" name="fechaInspeccion" id="fechaInspeccion" value="<?php echo $fechaInspeccion ?? '' ?>" required>
                         </div>
+
                         <div class="col-md-4">
                             <label for="estadoExpediente" class="form-label"><i class="fas fa-info-circle me-1"></i>Estado del Expediente <span class="text-danger">*</span></label>
                             <select name="estadoExpediente" id="estadoExpediente" class="form-select" required>
@@ -520,33 +563,32 @@ $tiposActividad     = []; // se cargarán vía AJAX
                                 </label>
                             </div>
                         </div>
-
-                        <!-- NUEVOS CAMPOS OBLIGATORIOS (Equipo DCVS, Actividad, Tipo, Condición) -->
-                        <div class="col-md-3">
-                            <label for="idEquipoDCVS" class="form-label"><i class="fas fa-users me-1"></i>Equipo DCVS <span class="text-danger">*</span></label>
-                            <select name="idEquipoDCVS" id="idEquipoDCVS" class="form-select select2-auto" required>
-                                <option value="">Seleccionar</option>
-                                <?php foreach ($equiposDCVS as $eq): ?>
-                                    <option value="<?php echo $eq['idEquipo'] ?>" <?php echo ($idEquipoDCVS == $eq['idEquipo']) ? 'selected' : '' ?>>
-                                        <?php echo htmlspecialchars($eq['nombre']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="idActividadAbrev" class="form-label"><i class="fas fa-tasks me-1"></i>Actividad Abrev. <span class="text-danger">*</span></label>
-                            <select name="idActividadAbrev" id="idActividadAbrev" class="form-select select2-auto" required>
-                                <option value="">Primero seleccione Equipo DCVS</option>
-                                <!-- Se llenará vía AJAX -->
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="idTipoActividad" class="form-label"><i class="fas fa-tag me-1"></i>Tipo de Actividad <span class="text-danger">*</span></label>
-                            <select name="idTipoActividad" id="idTipoActividad" class="form-select select2-auto" required>
-                                <option value="">Primero seleccione Actividad</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
+                            <!-- NUEVOS CAMPOS OBLIGATORIOS (Equipo DCVS, Actividad, Tipo, Condición) -->
+                            <div class="col-md-3 campo-inspeccion">
+                                <label for="idEquipoDCVS" class="form-label"><i class="fas fa-users me-1"></i>Equipo DCVS <span class="text-danger">*</span></label>
+                                <select name="idEquipoDCVS" id="idEquipoDCVS" class="form-select select2-auto" required>
+                                    <option value="">Seleccionar</option>
+                                    <?php foreach ($equiposDCVS as $eq): ?>
+                                        <option value="<?php echo $eq['idEquipo'] ?>" <?php echo ($idEquipoDCVS == $eq['idEquipo']) ? 'selected' : '' ?>>
+                                            <?php echo htmlspecialchars($eq['nombre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3 campo-inspeccion">
+                                <label for="idActividadAbrev" class="form-label"><i class="fas fa-tasks me-1"></i>Actividad Abrev. <span class="text-danger">*</span></label>
+                                <select name="idActividadAbrev" id="idActividadAbrev" class="form-select select2-auto" required>
+                                    <option value="">Primero seleccione Equipo DCVS</option>
+                                    <!-- Se llenará vía AJAX -->
+                                </select>
+                            </div>
+                            <div class="col-md-3 campo-inspeccion">
+                                <label for="idTipoActividad" class="form-label"><i class="fas fa-tag me-1"></i>Tipo de Actividad <span class="text-danger">*</span></label>
+                                <select name="idTipoActividad" id="idTipoActividad" class="form-select select2-auto" required>
+                                    <option value="">Primero seleccione Actividad</option>
+                                </select>
+                            </div>
+                        <div class="col-md-3 campo-inspeccion">
                             <label for="condicionEjecucion" class="form-label"><i class="fas fa-check-circle me-1"></i>Condición Ejecución <span class="text-danger">*</span></label>
                             <select name="condicionEjecucion" id="condicionEjecucion" class="form-select" required>
                                 <option value="">Seleccionar</option>
@@ -946,6 +988,12 @@ $tiposActividad     = []; // se cargarán vía AJAX
                 });
             });
 
+            // Inicializar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
             // Mostrar/ocultar campo "Otro estado"
             $('#estadoExpediente').change(function() {
                 if ($(this).val() === 'OTRO') {
@@ -1061,6 +1109,26 @@ $tiposActividad     = []; // se cargarán vía AJAX
                     window.location.href = 'eliminarExpediente.php?id=' + id + '&area=UFREMID';
                 }
             };
+
+        function toggleCertificacionAutomatica() {
+            var checked = $('#certificacionAutomatica').is(':checked');
+            if (checked) {
+                // Si está marcado, fijar acta y ocultar campos
+                $('#numeroActa').val('CERTIFICACIÓN AUTOMÁTICA').prop('readonly', true);
+                $('.campo-inspeccion').hide();
+                $('#fechaInspeccion, #idEquipoDCVS, #idActividadAbrev, #idTipoActividad, #condicionEjecucion').prop('required', false);
+            } else {
+                // Si no está marcado, solo mostrar campos y quitar readonly, pero NO borrar el acta
+                $('#numeroActa').prop('readonly', false);
+                $('.campo-inspeccion').show();
+                $('#fechaInspeccion, #idEquipoDCVS, #idActividadAbrev, #idTipoActividad, #condicionEjecucion').prop('required', true);
+                // El valor del acta se mantiene (no se modifica)
+            }
+        }
+
+            $('#certificacionAutomatica').change(toggleCertificacionAutomatica);
+            // Ejecutar al cargar
+            toggleCertificacionAutomatica();
         });
 
         function cancelar() {
