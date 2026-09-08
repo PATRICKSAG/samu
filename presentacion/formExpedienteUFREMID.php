@@ -1,4 +1,5 @@
 <?php
+//formExpedienteUFREMID.php
 include_once __DIR__ . '/../config.php';
 include_once __DIR__ . '/../persistencia/conexion.php';
 include_once __DIR__ . '/../persistencia/dSede.php';
@@ -53,7 +54,7 @@ $cierreDefinitivo                  = '';
 $fechaNotificacionCierreDefinitivo = '';
 $fechaEnvioFiscalia = '';
 $nroDocumentoFiscalia = '';
-
+$fechaNotificacionOficioPlazo = '';
 // NUEVOS CAMPOS DIGEMID (acordeón)
 $atendidoPor               = '';
 $horarioAtencionQF         = '';
@@ -117,6 +118,7 @@ if ($idEditar > 0) {
         $fechaNotificacionCierreDefinitivo = $expData['fechaNotificacionCierreDefinitivo'] ?? '';
         $fechaEnvioFiscalia                = $expData['fechaEnvioFiscalia'] ?? '';
         $nroDocumentoFiscalia              = $expData['nroDocumentoFiscalia'] ?? '';
+        $fechaNotificacionOficioPlazo      = $expData['fechaNotificacionOficioPlazo'] ?? '';
         // DIGEMID
         $atendidoPor         = $expData['atendidoPor'] ?? '';
         $horarioAtencionQF   = $expData['horarioAtencionQF'] ?? '';
@@ -176,6 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $fechaNotificacionCierreDefinitivo = $_POST['fechaNotificacionCierreDefinitivo'] ?? '';
     $fechaEnvioFiscalia                = $_POST['fechaEnvioFiscalia'] ?? '';
     $nroDocumentoFiscalia              = trim($_POST['nroDocumentoFiscalia'] ?? '');
+    $fechaNotificacionOficioPlazo      = $_POST['fechaNotificacionOficioPlazo'] ?? '';
     // Digemid
     $atendidoPor         = $_POST['atendidoPor'] ?? '';
     $horarioAtencionQF   = $_POST['horarioAtencionQF'] ?? '';
@@ -211,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
     $fechaNotificacionRSGLevantamiento = empty($fechaNotificacionRSGLevantamiento) ? null : $fechaNotificacionRSGLevantamiento;
     $fechaNotificacionCierreDefinitivo = empty($fechaNotificacionCierreDefinitivo) ? null : $fechaNotificacionCierreDefinitivo;
     $fechaEnvioFiscalia = empty($fechaEnvioFiscalia) ? null : $fechaEnvioFiscalia;
-
+    $fechaNotificacionOficioPlazo = empty($fechaNotificacionOficioPlazo) ? null : $fechaNotificacionOficioPlazo;
 
     $errores = [];
     if (empty($idSede)) $errores[] = "La sede es requerida.";
@@ -261,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardar'])) {
             'fechaNotificacionCierreDefinitivo' => $fechaNotificacionCierreDefinitivo,
             'fechaEnvioFiscalia'                => $fechaEnvioFiscalia,
             'nroDocumentoFiscalia'              => $nroDocumentoFiscalia,
-
+            'fechaNotificacionOficioPlazo'      => $fechaNotificacionOficioPlazo,
             // Digemid
             'atendidoPor'         => $atendidoPor,
             'horarioAtencionQF'   => $horarioAtencionQF,
@@ -733,6 +736,10 @@ $tiposActividad     = []; // se cargarán vía AJAX
                                         <div class="col-md-6">
                                             <label for="oficioOtorgaDeniegaPlazo" class="form-label">Oficio que otorga o deniega el plazo</label>
                                             <input type="text" class="form-control form-control-modern" name="oficioOtorgaDeniegaPlazo" id="oficioOtorgaDeniegaPlazo" value="<?php echo htmlspecialchars($oficioOtorgaDeniegaPlazo ?? '') ?>" placeholder="N° de oficio">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="fechaNotificacionOficioPlazo" class="form-label">Fecha de Notificación Oficio de Plazo</label>
+                                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionOficioPlazo" id="fechaNotificacionOficioPlazo" value="<?php echo $fechaNotificacionOficioPlazo ?? '' ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="idSituacionDigemidSeleccionada" class="form-label">Seleccionar Estado del Local</label>

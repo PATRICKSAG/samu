@@ -91,8 +91,9 @@ function insertarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
                 descargoApelacion, nDocResuelveRecurso,
                 rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
                 cierreDefinitivo, fechaNotificacionCierreDefinitivo,
-                fechaEnvioFiscalia, nroDocumentoFiscalia
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                fechaEnvioFiscalia, nroDocumentoFiscalia,
+                fechaNotificacionOficioPlazo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmtMS = $pdo->prepare($sqlMS);
             $stmtMS->execute([
                 $idExpediente,
@@ -114,7 +115,8 @@ function insertarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
                 $data['cierreDefinitivo'] ?? null,
                 $data['fechaNotificacionCierreDefinitivo'] ?? null,
                 $data['fechaEnvioFiscalia'] ?? null,
-                $data['nroDocumentoFiscalia'] ?? null
+                $data['nroDocumentoFiscalia'] ?? null,
+                $data['fechaNotificacionOficioPlazo'] ?? null
             ]);
         }
 
@@ -205,41 +207,43 @@ function actualizarExpediente(PDO $pdo, array $data, $area = 'UFREMID')
         $stmtDeleteMS->execute([$data['idExpediente']]);
 
         if (tieneDatosMS($data)) {
-            $sqlMS = "INSERT INTO expediente_ms (
-                        idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
-                        idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
-                        informeTecnicoInspeccion, nCertificadoBuenasPracticas,
-                        fechaInicioCertificadoBP, fechaFinCertificadoBP,
-                        rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
-                        descargoApelacion, nDocResuelveRecurso,
-                        rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
-                        cierreDefinitivo, fechaNotificacionCierreDefinitivo,
-                        fechaEnvioFiscalia, nroDocumentoFiscalia
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmtMS = $pdo->prepare($sqlMS);
-            $stmtMS->execute([
-                $data['idExpediente'],
-                $data['fechaDescargoActa'] ?? null,
-                $data['oficioOtorgaDeniegaPlazo'] ?? null,
-                $data['idSituacionDigemidSeleccionada'] ?? null,
-                $data['docElevaNulidad'] ?? null,
-                $data['resuelveNulidad'] ?? null,
-                $data['informeTecnicoInspeccion'] ?? null,
-                $data['nCertificadoBuenasPracticas'] ?? null,
-                $data['fechaInicioCertificadoBP'] ?? null,
-                $data['fechaFinCertificadoBP'] ?? null,
-                $data['rgrRatificaCierreTemporal'] ?? null,
-                $data['fechaNotificacionRGRCierre'] ?? null,
-                $data['descargoApelacion'] ?? null,
-                $data['nDocResuelveRecurso'] ?? null,
-                $data['rsgLevantamientoCierre'] ?? null,
-                $data['fechaNotificacionRSGLevantamiento'] ?? null,
-                $data['cierreDefinitivo'] ?? null,
-                $data['fechaNotificacionCierreDefinitivo'] ?? null,
-                $data['fechaEnvioFiscalia'] ?? null,
-                $data['nroDocumentoFiscalia'] ?? null
-            ]);
-        }
+        $sqlMS = "INSERT INTO expediente_ms (
+            idExpediente, fechaDescargoActa, oficioOtorgaDeniegaPlazo,
+            idSituacionDigemidSeleccionada, docElevaNulidad, resuelveNulidad,
+            informeTecnicoInspeccion, nCertificadoBuenasPracticas,
+            fechaInicioCertificadoBP, fechaFinCertificadoBP,
+            rgrRatificaCierreTemporal, fechaNotificacionRGRCierre,
+            descargoApelacion, nDocResuelveRecurso,
+            rsgLevantamientoCierre, fechaNotificacionRSGLevantamiento,
+            cierreDefinitivo, fechaNotificacionCierreDefinitivo,
+            fechaEnvioFiscalia, nroDocumentoFiscalia,
+            fechaNotificacionOficioPlazo
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmtMS = $pdo->prepare($sqlMS);
+        $stmtMS->execute([
+            $data['idExpediente'],
+            $data['fechaDescargoActa'] ?? null,
+            $data['oficioOtorgaDeniegaPlazo'] ?? null,
+            $data['idSituacionDigemidSeleccionada'] ?? null,
+            $data['docElevaNulidad'] ?? null,
+            $data['resuelveNulidad'] ?? null,
+            $data['informeTecnicoInspeccion'] ?? null,
+            $data['nCertificadoBuenasPracticas'] ?? null,
+            $data['fechaInicioCertificadoBP'] ?? null,
+            $data['fechaFinCertificadoBP'] ?? null,
+            $data['rgrRatificaCierreTemporal'] ?? null,
+            $data['fechaNotificacionRGRCierre'] ?? null,
+            $data['descargoApelacion'] ?? null,
+            $data['nDocResuelveRecurso'] ?? null,
+            $data['rsgLevantamientoCierre'] ?? null,
+            $data['fechaNotificacionRSGLevantamiento'] ?? null,
+            $data['cierreDefinitivo'] ?? null,
+            $data['fechaNotificacionCierreDefinitivo'] ?? null,
+            $data['fechaEnvioFiscalia'] ?? null,
+            $data['nroDocumentoFiscalia'] ?? null,
+            $data['fechaNotificacionOficioPlazo'] ?? null
+        ]);
+    }
 
         // Actualizar sede
         if (!empty($data['idSituacionDigemidSeleccionada']) && $area != 'UFRESBIT') {
@@ -1181,7 +1185,8 @@ function tieneDatosMS($data) {
         'descargoApelacion', 'nDocResuelveRecurso',
         'rsgLevantamientoCierre', 'fechaNotificacionRSGLevantamiento',
         'cierreDefinitivo', 'fechaNotificacionCierreDefinitivo',
-        'fechaEnvioFiscalia', 'nroDocumentoFiscalia'
+        'fechaEnvioFiscalia', 'nroDocumentoFiscalia',
+        'fechaNotificacionOficioPlazo'
     ];
     foreach ($msFields as $field) {
         if (!empty($data[$field])) {
