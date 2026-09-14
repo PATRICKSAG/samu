@@ -11,9 +11,9 @@ function listarCategoriasPorArea(PDO $pdo, $area)
 {
     $sql = "SELECT * FROM categoria WHERE activo = 1";
     if ($area == 'UFREMID') {
-        $sql .= " AND idCategoria <= 8";
+        $sql .= " AND areaOrigen = 'UFREMID'";
     } elseif ($area == 'UFRESA') {
-        $sql .= " AND idCategoria >= 9";
+        $sql .= " AND areaOrigen = 'UFRESA'";
     } else {
         $sql .= " AND 1=0"; // no mostrar ninguna
     }
