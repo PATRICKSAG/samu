@@ -38,6 +38,7 @@ function reporteExpedientesGeneral(PDO $pdo, $filtros = [])
                 d.nombre AS distrito,
                 p.nombre AS provincia,
                 dep.nombre AS departamento,
+                ISNULL(e.observacion, ' ') AS observacion,
                 CASE WHEN EXISTS (SELECT 1 FROM expediente_fi WHERE idExpediente = e.idExpediente) THEN 'Sí' ELSE 'No' END AS tieneFI,
                 CASE WHEN EXISTS (SELECT 1 FROM expediente_fs WHERE idExpediente = e.idExpediente) THEN 'Sí' ELSE 'No' END AS tieneFS
             FROM expediente e WITH(NOLOCK)
