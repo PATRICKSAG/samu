@@ -566,8 +566,19 @@ function insertarExpedienteFI(PDO $pdo, array $data, $area = 'UFREMID')
     }
 }
 
-function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificacion, $nuevaFechaDescargo = null, $area = 'UFREMID')
+function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, array $data, $area = 'UFREMID')
 {
+    // Extraer datos del array
+    $nuevaFechaNotificacion   = !empty($data['fechaNotificacionInicioPAS']) ? $data['fechaNotificacionInicioPAS'] : null;
+    $nuevaFechaDescargo       = !empty($data['fechaDescargoPresentado']) ? $data['fechaDescargoPresentado'] : null;
+    $informeFinalInstruccion  = $data['informeFinalInstruccion'] ?? null;
+    $documentoElevaEscrito    = $data['documentoElevaEscrito'] ?? null;
+    $informeLegalCaducidad    = $data['informeLegalCaducidad'] ?? null;
+    $resolucionCaducidad      = $data['resolucionCaducidad'] ?? null;
+    $recursoInterpuesto       = $data['recursoInterpuesto'] ?? null;
+    $resolucionRecurso        = $data['resolucionRecurso'] ?? null;
+    $fechaNotificacionRecurso = !empty($data['fechaNotificacionRecurso']) ? $data['fechaNotificacionRecurso'] : null;
+
     $plazos = getPlazosArea($area);
     $diasDescargo = $plazos['descargoPAS'];
     $mesesCaducidad = $plazos['caducidadPAS'];
@@ -575,6 +586,7 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificaci
     try {
         $pdo->beginTransaction();
 
+        // Obtener idExpediente
         $sql = "SELECT idExpediente FROM expediente_fi WHERE idExpedienteFI = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$idExpedienteFI]);
@@ -584,21 +596,43 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificaci
         }
         $idExpediente = $row['idExpediente'];
 
-        if (empty($nuevaFechaDescargo) || $nuevaFechaDescargo == '1900-01-01') {
+        // Normalizar fecha 1900-01-01 a NULL
+        if ($nuevaFechaDescargo == '1900-01-01') {
             $nuevaFechaDescargo = null;
         }
 
+        // Actualizar todos los campos
         $sqlUpdate = "UPDATE expediente_fi SET
                         fechaNotificacionInicioPAS = ?,
-                        fechaDescargoPresentado = ?
+                        fechaDescargoPresentado = ?,
+                        informeFinalInstruccion = ?,
+                        documentoElevaEscrito = ?,
+                        informeLegalCaducidad = ?,
+                        resolucionCaducidad = ?,
+                        recursoInterpuesto = ?,
+                        resolucionRecurso = ?,
+                        fechaNotificacionRecurso = ?
                       WHERE idExpedienteFI = ?";
         $stmtUpdate = $pdo->prepare($sqlUpdate);
-        $stmtUpdate->execute([$nuevaFechaNotificacion, $nuevaFechaDescargo, $idExpedienteFI]);
+        $stmtUpdate->execute([
+            $nuevaFechaNotificacion,
+            $nuevaFechaDescargo,
+            $informeFinalInstruccion,
+            $documentoElevaEscrito,
+            $informeLegalCaducidad,
+            $resolucionCaducidad,
+            $recursoInterpuesto,
+            $resolucionRecurso,
+            $fechaNotificacionRecurso,
+            $idExpedienteFI
+        ]);
 
+        // Eliminar plazos anteriores
         $sqlDelete = "DELETE FROM expediente_plazos WHERE idExpedienteFI = ? AND evento IN ('DESCARGO_PAS', 'CADUCIDAD_PAS')";
         $stmtDelete = $pdo->prepare($sqlDelete);
         $stmtDelete->execute([$idExpedienteFI]);
 
+        // Recalcular plazos si hay fecha de notificación
         $fechaVencimientoDescargo = null;
         if (!empty($nuevaFechaNotificacion)) {
             $fechaVencimientoDescargo = sumarDiasHabiles($pdo, $nuevaFechaNotificacion, $diasDescargo);
@@ -622,6 +656,7 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificaci
             }
         }
 
+        // Si hay fecha de descargo, marcar el plazo como CUMPLIDO o VENCIDO
         if (!empty($nuevaFechaDescargo) && !empty($fechaVencimientoDescargo)) {
             $estado = (strtotime($nuevaFechaDescargo) <= strtotime($fechaVencimientoDescargo)) ? 'CUMPLIDO' : 'VENCIDO';
             $sqlUpdateEstado = "UPDATE expediente_plazos SET estado = ?, fechaCumplimiento = ?
@@ -637,7 +672,6 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, $nuevaFechaNotificaci
         throw $e;
     }
 }
-
 function obtenerOCrearFS(PDO $pdo, $idExpedienteFI)
 {
     $sql = "SELECT * FROM expediente_fs WHERE idExpedienteFI = ?";

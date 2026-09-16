@@ -78,8 +78,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
         // No se exige oficio ni otros campos.
         if (empty($errores)) {
             try {
-                // Llamamos a la nueva función que actualiza ambas fechas
-                actualizarExpedienteFI($pdo, $idFI, $fechaNotificacion, $fechaDescargo, $area);
+                $dataEdit = [
+                'fechaNotificacionInicioPAS' => $fechaNotificacion,
+                'fechaDescargoPresentado'    => $fechaDescargo,
+                'informeFinalInstruccion'    => $informeFinal,
+                'documentoElevaEscrito'      => $documentoEleva,
+                'informeLegalCaducidad'      => $informeLegal,
+                'resolucionCaducidad'        => $resolucionCaducidad,
+                'recursoInterpuesto'         => $recurso,
+                'resolucionRecurso'          => $resolucionRecurso,
+                'fechaNotificacionRecurso'   => $fechaNotifRecurso,
+            ];
+            actualizarExpedienteFI($pdo, $idFI, $dataEdit, $area);
                 $mensaje = "Fecha de notificación y descargo actualizadas correctamente.";
                 header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area=" . urlencode($area) . "&mensaje=" . urlencode($mensaje));
                 exit;
@@ -396,139 +406,164 @@ if (isset($_GET['mensaje'])) {
                         <i class="fas fa-plus-circle me-2"></i>Nuevo Inicio de PAS
                     <?php endif; ?>
                 </h5>
-                <form method="POST" action="">
-                    <?php if ($accion === 'editar'): ?>
-                        <!-- ... (ocultar otros campos, solo mostrar fecha de notificación y descargo) -->
-                        <div class="col-md-6">
-                            <label for="fechaNotificacionInicioPAS" class="form-label">
-                                Fecha de notificación de Inicio de PAS <span class="text-danger">*</span>
-                                <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="1° ALARMA principal por 9 meses"></i>
-                            </label>
-                            <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS"
-                                value="<?php echo $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
-                        </div>
-                        <div class="col-md-6">
-                            <?php
-                            // Determinamos los días según el área
-                            $dias = ($area == 'UFRESA') ? 10 : 5;
-                            ?>
-                            <label for="fechaDescargoPresentado" class="form-label">Fecha de Descargo o impugnación <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="<?php echo $dias; ?> días hábiles"></i></label>
-                            <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
-                                value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
-                        </div>
-                    <?php endif; ?>
+<form method="POST" action="">
+    <div class="row g-3">
+        <?php if ($accion === 'editar'): ?>
+            <!-- ============================================ -->
+            <!-- MODO EDICIÓN: todos los campos editables -->
+            <!-- ============================================ -->
+            <div class="col-md-6">
+                <label for="fechaNotificacionInicioPAS" class="form-label">
+                    Fecha de notificación de Inicio de PAS <span class="text-danger">*</span>
+                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="1° ALARMA principal por 9 meses"></i>
+                </label>
+                <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS"
+                    value="<?= htmlspecialchars($datosEdicion['fechaNotificacionInicioPAS'] ?? '') ?>" required>
+            </div>
+            <div class="col-md-6">
+                <label for="fechaDescargoPresentado" class="form-label">
+                    Fecha de Descargo o impugnación
+                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="<?= ($area == 'UFRESA') ? 10 : 5 ?> días hábiles"></i>
+                </label>
+                <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
+                    value="<?= htmlspecialchars($datosEdicion['fechaDescargoPresentado'] ?? '') ?>">
+            </div>
+            <div class="col-md-6">
+                <label for="informeFinalInstruccion" class="form-label">Informe Final de Instrucción (IFI)</label>
+                <input type="text" class="form-control form-control-modern" name="informeFinalInstruccion" id="informeFinalInstruccion"
+                    value="<?= htmlspecialchars($datosEdicion['informeFinalInstruccion'] ?? '') ?>" placeholder="N° de informe">
+            </div>
+            <div class="col-md-6">
+                <label for="documentoElevaEscrito" class="form-label">Documento que eleva el escrito</label>
+                <input type="text" class="form-control form-control-modern" name="documentoElevaEscrito" id="documentoElevaEscrito"
+                    value="<?= htmlspecialchars($datosEdicion['documentoElevaEscrito'] ?? '') ?>" placeholder="N° de documento">
+            </div>
+            <div class="col-md-6">
+                <label for="informeLegalCaducidad" class="form-label">Informe legal para declarar caducidad</label>
+                <input type="text" class="form-control form-control-modern" name="informeLegalCaducidad" id="informeLegalCaducidad"
+                    value="<?= htmlspecialchars($datosEdicion['informeLegalCaducidad'] ?? '') ?>" placeholder="N° de informe">
+            </div>
+            <div class="col-md-6">
+                <label for="resolucionCaducidad" class="form-label">Resolución de caducidad</label>
+                <input type="text" class="form-control form-control-modern" name="resolucionCaducidad" id="resolucionCaducidad"
+                    value="<?= htmlspecialchars($datosEdicion['resolucionCaducidad'] ?? '') ?>" placeholder="N° de resolución">
+            </div>
+            <div class="col-md-6">
+                <label for="recursoInterpuesto" class="form-label">Recurso interpuesto</label>
+                <input type="text" class="form-control form-control-modern" name="recursoInterpuesto" id="recursoInterpuesto"
+                    value="<?= htmlspecialchars($datosEdicion['recursoInterpuesto'] ?? '') ?>" placeholder="Descripción o número">
+            </div>
+            <div class="col-md-6">
+                <label for="resolucionRecurso" class="form-label">RSG que resuelve recurso</label>
+                <input type="text" class="form-control form-control-modern" name="resolucionRecurso" id="resolucionRecurso"
+                    value="<?= htmlspecialchars($datosEdicion['resolucionRecurso'] ?? '') ?>" placeholder="Ej. RSG N° 083-2014">
+            </div>
+            <div class="col-md-6">
+                <label for="fechaNotificacionRecurso" class="form-label">Fecha de Notificación de la RSG que resuelve Recurso</label>
+                <input type="date" class="form-control form-control-modern" name="fechaNotificacionRecurso" id="fechaNotificacionRecurso"
+                    value="<?= htmlspecialchars($datosEdicion['fechaNotificacionRecurso'] ?? '') ?>">
+            </div>
 
-                    <div class="row g-3">
-                        <?php if ($accion !== 'editar'): ?>
-                            <!-- Campos para nuevo registro -->
-                            <div class="col-md-6">
-                                <label for="tipoEvento" class="form-label">Tipo de Evento</label>
-                                <select name="tipoEvento" id="tipoEvento" class="form-select">
-                                    <option value="INICIO">Inicio de PAS</option>
-                                    <option value="REINICIO">Reinicio de PAS</option>
-                                </select>
-                            </div>
-                            <?php if ($area == 'UFREMID'): ?>
-                                <div class="col-md-6">
-                                    <label for="procesoPara" class="form-label">Proceso para <span class="text-danger">*</span></label>
-                                    <select name="procesoPara" id="procesoPara" class="form-select" required>
-                                        <option value="ESTABLECIMIENTO" <?php echo ($procesoPara == 'ESTABLECIMIENTO') ? 'selected' : '' ?>>ESTABLECIMIENTO</option>
-                                        <option value="QUÍMICO" <?php echo ($procesoPara == 'QUÍMICO') ? 'selected' : '' ?>>QUÍMICO</option>
-                                    </select>
-                                </div>
-                            <?php else: ?>
-                                <!-- Para UFRESA y UFRESBIT, campo fijo -->
-                                <input type="hidden" name="procesoPara" value="ESTABLECIMIENTO">
-                                <div class="col-md-6">
-                                    <label class="form-label">Proceso para</label>
-                                    <input type="text" class="form-control form-control-modern" value="ESTABLECIMIENTO" disabled>
-                                </div>
-                            <?php endif; ?>
+        <?php else: ?>
+            <!-- ============================================ -->
+            <!-- MODO NUEVO: campos para crear el registro -->
+            <!-- ============================================ -->
+            <div class="col-md-6">
+                <label for="tipoEvento" class="form-label">Tipo de Evento</label>
+                <select name="tipoEvento" id="tipoEvento" class="form-select">
+                    <option value="INICIO">Inicio de PAS</option>
+                    <option value="REINICIO">Reinicio de PAS</option>
+                </select>
+            </div>
+            <?php if ($area == 'UFREMID'): ?>
+                <div class="col-md-6">
+                    <label for="procesoPara" class="form-label">Proceso para <span class="text-danger">*</span></label>
+                    <select name="procesoPara" id="procesoPara" class="form-select" required>
+                        <option value="ESTABLECIMIENTO" <?= ($procesoPara == 'ESTABLECIMIENTO') ? 'selected' : '' ?>>ESTABLECIMIENTO</option>
+                        <option value="QUÍMICO" <?= ($procesoPara == 'QUÍMICO') ? 'selected' : '' ?>>QUÍMICO</option>
+                    </select>
+                </div>
+            <?php else: ?>
+                <input type="hidden" name="procesoPara" value="ESTABLECIMIENTO">
+                <div class="col-md-6">
+                    <label class="form-label">Proceso para</label>
+                    <input type="text" class="form-control form-control-modern" value="ESTABLECIMIENTO" disabled>
+                </div>
+            <?php endif; ?>
 
-                            <div class="col-md-6">
-                                <label for="informeTecnicoInicioPAS" class="form-label">Informe Técnico de Inicio de PAS</label>
-                                <input type="text" class="form-control form-control-modern" name="informeTecnicoInicioPAS" id="informeTecnicoInicioPAS" placeholder="N° de informe">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="fechaInformeTecnico" class="form-label">Fecha del Informe Técnico</label>
-                                <input type="date" class="form-control form-control-modern" name="fechaInformeTecnico" id="fechaInformeTecnico">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="oficioIniciaPAS" class="form-label">Oficio de Inicio P.A.S. <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-modern" name="oficioIniciaPAS" id="oficioIniciaPAS" placeholder="N° de oficio" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="fechaNotificacionInicioPAS" class="form-label">
-                                    Fecha de notificación de Inicio de PAS <span class="text-danger">*</span>
-                                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="1° ALARMA principal por 9 meses"></i>
-                                </label>
-                                <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS"
-                                    value="<?php echo $datosEdicion ? $datosEdicion['fechaNotificacionInicioPAS'] : '' ?>" required>
-                            </div>
-                            <div class="col-md-6">
-                                <?php
-                                // Determinamos los días según el área
-                                $dias = ($area == 'UFRESA') ? 10 : 5;
-                                ?>
-                                <label for="fechaDescargoPresentado" class="form-label">
-                                    Fecha de Descargo o impugnación
-                                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="<?php echo $dias; ?> días hábiles"></i>
-                                </label>
-                                <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado"
-                                    value="<?php echo $datosEdicion ? $datosEdicion['fechaDescargoPresentado'] : '' ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="informeFinalInstruccion" class="form-label">6. Informe Final de Instrucción (IFI)</label>
-                                <input type="text" class="form-control form-control-modern" name="informeFinalInstruccion" id="informeFinalInstruccion" placeholder="N° de informe">
-                            </div>
+            <div class="col-md-6">
+                <label for="informeTecnicoInicioPAS" class="form-label">Informe Técnico de Inicio de PAS</label>
+                <input type="text" class="form-control form-control-modern" name="informeTecnicoInicioPAS" id="informeTecnicoInicioPAS" placeholder="N° de informe">
+            </div>
+            <div class="col-md-6">
+                <label for="fechaInformeTecnico" class="form-label">Fecha del Informe Técnico</label>
+                <input type="date" class="form-control form-control-modern" name="fechaInformeTecnico" id="fechaInformeTecnico">
+            </div>
+            <div class="col-md-6">
+                <label for="oficioIniciaPAS" class="form-label">Oficio de Inicio P.A.S. <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-modern" name="oficioIniciaPAS" id="oficioIniciaPAS" placeholder="N° de oficio" required>
+            </div>
+            <div class="col-md-6">
+                <label for="fechaNotificacionInicioPAS" class="form-label">
+                    Fecha de notificación de Inicio de PAS <span class="text-danger">*</span>
+                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="1° ALARMA principal por 9 meses"></i>
+                </label>
+                <input type="date" class="form-control form-control-modern" name="fechaNotificacionInicioPAS" id="fechaNotificacionInicioPAS" required>
+            </div>
+            <div class="col-md-6">
+                <label for="fechaDescargoPresentado" class="form-label">
+                    Fecha de Descargo o impugnación
+                    <i class="fas fa-info-circle text-primary" data-bs-toggle="popover" data-bs-content="<?= ($area == 'UFRESA') ? 10 : 5 ?> días hábiles"></i>
+                </label>
+                <input type="date" class="form-control form-control-modern" name="fechaDescargoPresentado" id="fechaDescargoPresentado">
+            </div>
+            <div class="col-md-6">
+                <label for="informeFinalInstruccion" class="form-label">Informe Final de Instrucción (IFI)</label>
+                <input type="text" class="form-control form-control-modern" name="informeFinalInstruccion" id="informeFinalInstruccion" placeholder="N° de informe">
+            </div>
 
-                        <?php endif; ?>
+            <div class="col-12 mt-3">
+                <h6 class="fw-bold" style="color: #0b2a4a;">Campos posteriores a la caducidad</h6>
+            </div>
+            <div class="col-md-6">
+                <label for="documentoElevaEscrito" class="form-label">Documento que eleva el escrito</label>
+                <input type="text" class="form-control form-control-modern" name="documentoElevaEscrito" id="documentoElevaEscrito" placeholder="N° de documento">
+            </div>
+            <div class="col-md-6">
+                <label for="informeLegalCaducidad" class="form-label">Informe legal para declarar caducidad</label>
+                <input type="text" class="form-control form-control-modern" name="informeLegalCaducidad" id="informeLegalCaducidad" placeholder="N° de informe">
+            </div>
+            <div class="col-md-6">
+                <label for="resolucionCaducidad" class="form-label">Resolución de caducidad</label>
+                <input type="text" class="form-control form-control-modern" name="resolucionCaducidad" id="resolucionCaducidad" placeholder="N° de resolución">
+            </div>
+            <div class="col-md-6">
+                <label for="recursoInterpuesto" class="form-label">Recurso interpuesto</label>
+                <input type="text" class="form-control form-control-modern" name="recursoInterpuesto" id="recursoInterpuesto" placeholder="Descripción o número">
+            </div>
+            <div class="col-md-6">
+                <label for="resolucionRecurso" class="form-label">RSG que resuelve recurso</label>
+                <input type="text" class="form-control form-control-modern" name="resolucionRecurso" id="resolucionRecurso" placeholder="Ej. RSG N° 083-2014">
+            </div>
+            <div class="col-md-6">
+                <label for="fechaNotificacionRecurso" class="form-label">Fecha de Notificación de la RSG que resuelve Recurso</label>
+                <input type="date" class="form-control form-control-modern" name="fechaNotificacionRecurso" id="fechaNotificacionRecurso">
+            </div>
+        <?php endif; ?>
+    </div>
 
-
-                        <?php if ($accion !== 'editar'): ?>
-                            <!-- Campos de caducidad/recurso (aparecen si pasan 9 meses, pero en el formulario los dejamos visibles) -->
-                            <div class="col-12 mt-3">
-                                <h6 class="fw-bold" style="color: #0b2a4a;">Campos posteriores a la caducidad</h6>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="documentoElevaEscrito" class="form-label">Documento que eleva el escrito</label>
-                                <input type="text" class="form-control form-control-modern" name="documentoElevaEscrito" id="documentoElevaEscrito" placeholder="N° de documento">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="informeLegalCaducidad" class="form-label">Informe legal para declarar caducidad</label>
-                                <input type="text" class="form-control form-control-modern" name="informeLegalCaducidad" id="informeLegalCaducidad" placeholder="N° de informe">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="resolucionCaducidad" class="form-label">Resolución de caducidad</label>
-                                <input type="text" class="form-control form-control-modern" name="resolucionCaducidad" id="resolucionCaducidad" placeholder="N° de resolución">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="recursoInterpuesto" class="form-label">Recurso interpuesto</label>
-                                <input type="text" class="form-control form-control-modern" name="recursoInterpuesto" id="recursoInterpuesto" placeholder="Descripción o número">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="resolucionRecurso" class="form-label">RSG que resuelve recurso</label>
-                                <input type="text" class="form-control form-control-modern" name="resolucionRecurso" id="resolucionRecurso" placeholder="Ej. RSG N° 083-2014">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="fechaNotificacionRecurso" class="form-label">Fecha de Notificación de la RSG que resuelve Recurso</label>
-                                <input type="date" class="form-control form-control-modern" name="fechaNotificacionRecurso" id="fechaNotificacionRecurso">
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="mt-4 d-flex flex-wrap gap-2">
-                        <button type="submit" name="btnGuardarFI" class="btn btn-primary-custom">
-                            <i class="fas fa-save me-2"></i><?php echo ($accion === 'editar') ? 'Actualizar Fecha' : 'Guardar Inicio PAS' ?>
-                        </button>
-                        <a href="formExpedienteFI.php?idExpediente=<?php echo $idExpediente ?>&area=<?php echo urlencode($area) ?>" class="btn btn-outline-secondary-custom">
-                            <i class="fas fa-times me-2"></i>Cancelar
-                        </a>
-                        <a href="formExpediente<?php echo urlencode($area); ?>.php" class="btn btn-outline-secondary-custom">
-                            <i class="fas fa-arrow-left me-2"></i>Volver a Expedientes
-                        </a>
-                    </div>
-                </form>
+    <div class="mt-4 d-flex flex-wrap gap-2">
+        <button type="submit" name="btnGuardarFI" class="btn btn-primary-custom">
+            <i class="fas fa-save me-2"></i><?= ($accion === 'editar') ? 'Actualizar Registro' : 'Guardar Inicio PAS' ?>
+        </button>
+        <a href="formExpedienteFI.php?idExpediente=<?= $idExpediente ?>&area=<?= urlencode($area) ?>" class="btn btn-outline-secondary-custom">
+            <i class="fas fa-times me-2"></i>Cancelar
+        </a>
+        <a href="formExpediente<?= urlencode($area); ?>.php" class="btn btn-outline-secondary-custom">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Expedientes
+        </a>
+    </div>
+</form>
             </div>
         </div>
 
