@@ -625,6 +625,20 @@ function reporteCEPLAN(PDO $pdo, $filtros = [])
     $areas = [
         'UFREMID'  => [
             'sql' => "SELECT 
+                        CASE 
+                            WHEN te.nombre = 'I' THEN 'Inspecciones reglamentarias a oficinas farmaceuticas publicos y privados'
+                            WHEN te.nombre = 'V' THEN 'INSPECCIÓN POR VERIFICACIÓN A EE.FF. Y NO FF. (OPERATIVOS PROPIOS Y CONJUNTOS)'
+                            WHEN te.nombre = 'IVP' THEN 'Inspección de Verificacion de Registro y Cumplimiento de Información al Sistema nacional de Información de Precios.'
+                            WHEN te.nombre = 'BPA' THEN 'Inspecciones reglamentarias a droguerias y almacenes especializados'
+                            WHEN te.nombre = 'BPDT' THEN 'Inspección por certifiacion de Buenas Practicas de Almacenamiento, Distribucion y Transporte de Droguerias, almacenes especializados y Buenas Practicas de Farmacovigilancia cuando corresponda.'
+                            WHEN te.nombre = 'PROA' THEN 'Inspección por verificación de Antimicrobianos (PROA) a establecimientos farmacéuticos.'
+                            WHEN te.nombre = 'LG' THEN 'Inspección por verificación de Disponibilidad de Medicamentos Esenciales Genéricos en DCI a establecimientos farmaceuticos privados.'
+                            WHEN te.nombre = 'FARES' THEN 'Inspecciones reglamentarias realizadas en FARES.'
+                            WHEN te.nombre = 'A.V.' THEN 'Inspección por verificación (funcionamiento, documentos y productos) a establecimientos farmacéuticos.'
+                            WHEN te.nombre = 'BPOF' THEN 'Buenas Prácticas de Oficina Farmacéutica'
+                            WHEN te.nombre = 'BPF' THEN 'Buenas Prácticas de Farmacovigilancia'
+                            ELSE 'SIN ACTIVIDAD OPERATIVA'
+                        END AS actividad,
                         te.nombre + ' - ' + te.descripcion AS categoria,
                         MONTH(e.fechaInspeccion) AS mes,
                         COUNT(e.idExpediente) AS total
@@ -637,6 +651,16 @@ function reporteCEPLAN(PDO $pdo, $filtros = [])
         ],
         'UFRESA'   => [
             'sql' => "SELECT 
+                        CASE 
+                            WHEN CAT.nombre = 'Agua de consumo' THEN 'Fiscalización a entidades públicas y privadas en gestión de calidad del agua para consumo humano.'
+                            WHEN CAT.nombre = 'ALIMENTOS Y BEBIDAS DE CONSUMO HUMANO' THEN 'Fiscalización en inocuidad alimentaria a entidades dispensadoras de alimentos crudos y cocidos.'
+                            WHEN CAT.nombre = 'Piscinas' THEN 'Fiscalización de piscinas públicas y privadas de uso colectivo.'
+                            WHEN CAT.nombre = 'Juguetes y útiles' THEN 'Fiscalizacion a empresas que fabrican, importan, distribuyen y comercializan juguetes y/o útiles de escritorio.'
+                            WHEN CAT.nombre = 'Empresas de saneamiento' THEN 'Fiscalización a empresas de saneamiento ambiental.'
+                            WHEN CAT.nombre = 'Residuos sólidos, establecimientos de salud y apoyo' THEN 'Fiscalización a establecimientos de salud y servicios médicos de apoyo; sobre la Gestión y Manejo Residuos Solidos.'
+                            WHEN CAT.nombre = 'SERVICIOS FUNERARIOS' THEN 'SERVICIOS FUNERARIOS'
+                            ELSE 'SIN ACTIVIDAD OPERATIVA'
+                        END AS actividad,
                         CAT.nombre AS categoria,
                         MONTH(e.fechaInspeccion) AS mes,
                         COUNT(e.idExpediente) AS total
@@ -663,45 +687,41 @@ function reporteCEPLAN(PDO $pdo, $filtros = [])
         ],
     ];
 
-    $resultado = [
-        'anio' => $anio,
-        'areas' => [],
-    ];
+    $resultado = ['anio' => $anio, 'areas' => []];
 
     foreach ($areas as $areaNombre => $info) {
         $stmt = $pdo->prepare($info['sql']);
         $stmt->execute([$anio]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Recolectar categorías únicas y matriz
-        $categorias = [];
-        $matriz = [];
-        $totalesMes = array_fill(1, 12, 0);
+        $categorias   = [];
+        $matriz       = [];
+        $actividades  = []; // categoria => actividad
+        $totalesMes   = array_fill(1, 12, 0);
         $totalGeneral = 0;
 
         foreach ($rows as $row) {
-            $cat = $row['categoria'] ?: 'SIN CATEGORÍA';
-            $mes = (int)$row['mes'];
+            $cat   = $row['categoria'] ?: 'SIN CATEGORÍA';
+            $mes   = (int)$row['mes'];
             $total = (int)$row['total'];
 
             if (!in_array($cat, $categorias)) {
-                $categorias[] = $cat;
-                if (!isset($matriz[$cat])) {
-                    $matriz[$cat] = array_fill(1, 12, 0);
-                }
+                $categorias[]     = $cat;
+                $matriz[$cat]     = array_fill(1, 12, 0);
+                $actividades[$cat] = $row['actividad'] ?? '';
             }
             $matriz[$cat][$mes] += $total;
-            $totalesMes[$mes] += $total;
-            $totalGeneral += $total;
+            $totalesMes[$mes]   += $total;
+            $totalGeneral       += $total;
         }
 
-        // Ordenar categorías alfabéticamente
         sort($categorias);
 
         $resultado['areas'][$areaNombre] = [
-            'categorias' => $categorias,
-            'matriz' => $matriz,
-            'totalesMes' => $totalesMes,
+            'categorias'   => $categorias,
+            'matriz'       => $matriz,
+            'actividades'  => $actividades,
+            'totalesMes'   => $totalesMes,
             'totalGeneral' => $totalGeneral,
         ];
     }

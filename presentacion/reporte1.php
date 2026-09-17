@@ -19,6 +19,13 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
+use PhpOffice\PhpSpreadsheet\Chart\Chart;
+use PhpOffice\PhpSpreadsheet\Chart\DataSeries;
+use PhpOffice\PhpSpreadsheet\Chart\DataSeriesValues;
+use PhpOffice\PhpSpreadsheet\Chart\PlotArea;
+use PhpOffice\PhpSpreadsheet\Chart\Title;
+use PhpOffice\PhpSpreadsheet\Chart\Legend;
+
 $pdo = Database::getConexion();
 
 // Obtener listas para filtros
@@ -65,18 +72,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             $sheet = $spreadsheet->createSheet();
             $sheet->setTitle($areaNombre);
 
+            $tieneActividad = in_array($areaNombre, ['UFREMID', 'UFRESA']);
+
             // Título
             $sheet->setCellValue('A1', "CEPLAN - Área $areaNombre - Año {$datosCeplan['anio']}");
-            $sheet->mergeCells('A1:N1');
+            $sheet->mergeCells('A1:O1');
             $sheet->getStyle('A1')->applyFromArray([
                 'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => '0B2A4A']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ]);
             $sheet->getRowDimension(1)->setRowHeight(28);
 
-            // Encabezados (fila 2) - con índice numérico para evitar ++ de letras
+            // ============================================
+            // ENCABEZADOS
+            // Col A: Categoría
+            // Col B (si aplica): Actividad Operativa
+            // Resto: Meses y Total
+            // ============================================
             $sheet->setCellValue('A2', 'Categoría');
-            $colIndex = 2; // B
+            $startMonthCol = $tieneActividad ? 3 : 2; // C si hay actividad, B si no
+
+            if ($tieneActividad) {
+                $sheet->setCellValue('B2', 'Actividad Operativa');
+            }
+
+            $colIndex = $startMonthCol;
             foreach ($meses as $m) {
                 $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
                 $sheet->setCellValue($colLetter . '2', $m);
@@ -90,14 +110,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             $sheet->getStyle("A2:{$lastColLetter}2")->applyFromArray([
                 'font' => $headerFont,
                 'fill' => $headerFill,
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true],
             ]);
+            $sheet->getRowDimension(2)->setRowHeight(30);
 
-            // Datos
+            // ============================================
+            // DATOS
+            // ============================================
             $row = 3;
             foreach ($info['categorias'] as $cat) {
                 $sheet->setCellValue('A' . $row, $cat);
-                $colIndex = 2; // B
+                if ($tieneActividad) {
+                    $sheet->setCellValue('B' . $row, $info['actividades'][$cat] ?? '');
+                }
+
+                $colIndex = $startMonthCol;
                 $totalFila = 0;
                 for ($m = 1; $m <= 12; $m++) {
                     $val = $info['matriz'][$cat][$m] ?? 0;
@@ -113,7 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
 
             // Fila de totales
             $sheet->setCellValue('A' . $row, 'TOTAL');
-            $colIndex = 2;
+            if ($tieneActividad) {
+                $sheet->setCellValue('B' . $row, '');
+            }
+            $colIndex = $startMonthCol;
             for ($m = 1; $m <= 12; $m++) {
                 $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
                 $sheet->setCellValue($colLetter . $row, $info['totalesMes'][$m]);
@@ -127,8 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             ]);
             $totalesGenerales[$areaNombre] = $info['totalGeneral'];
 
-            // Ajustar ancho de columnas
-            for ($i = 1; $i <= $lastColIndex; $i++) {
+            // Ancho de columnas
+            $sheet->getColumnDimension('A')->setWidth(45);
+            if ($tieneActividad) {
+                $sheet->getColumnDimension('B')->setWidth(70);
+                $sheet->getStyle("B3:B" . ($row - 1))->getAlignment()->setWrapText(true);
+            }
+            for ($i = $startMonthCol; $i <= $lastColIndex; $i++) {
                 $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
                 $sheet->getColumnDimension($colLetter)->setAutoSize(true);
             }
@@ -137,6 +172,136 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             $sheet->getStyle("A2:{$colLetter}" . $row)->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
             ]);
+
+        // ============================================
+        // GRÁFICO: Expedientes por Actividad/Categoría y mes (multiserie)
+        // ============================================
+        $startMonthLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startMonthCol);
+        $endMonthLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startMonthCol + 11);
+        $sheetRef         = "'" . $areaNombre . "'!";
+
+        // --------------------------------------------
+        // 1) Construir el conjunto de series según el área
+        //    - UFREMID / UFRESA : agrupar por Actividad Operativa (suma de categorías)
+        //    - UFRESBIT         : cada categoría es su propia serie
+        // --------------------------------------------
+        $seriesData = [];
+        if ($tieneActividad) {
+            foreach ($info['categorias'] as $cat) {
+                $act = $info['actividades'][$cat] ?? 'SIN ACTIVIDAD';
+                if ($act === '') $act = 'SIN ACTIVIDAD';
+                if (!isset($seriesData[$act])) {
+                    $seriesData[$act] = array_fill(1, 12, 0);
+                }
+                for ($m = 1; $m <= 12; $m++) {
+                    $seriesData[$act][$m] += $info['matriz'][$cat][$m] ?? 0;
+                }
+            }
+        } else {
+            foreach ($info['categorias'] as $cat) {
+                $seriesData[$cat] = [];
+                for ($m = 1; $m <= 12; $m++) {
+                    $seriesData[$cat][$m] = $info['matriz'][$cat][$m] ?? 0;
+                }
+            }
+        }
+        ksort($seriesData); // orden alfabético para que sea predecible
+
+        // --------------------------------------------
+        // 2) Escribir datos auxiliares en columnas AE en adelante
+        //    (el gráfico referenciará estas celdas)
+        // --------------------------------------------
+        $auxColStartIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString('AE');
+        $auxColLetra      = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($auxColStartIndex);
+
+        $sheet->setCellValue($auxColLetra . '1', 'Auxiliar para gráfico');
+        $sheet->getStyle($auxColLetra . '1')->getFont()->setItalic(true)->getColor()->setRGB('999999');
+
+        $auxRow        = 2;
+        $seriesLabels  = [];
+        $seriesValues  = [];
+
+        foreach ($seriesData as $nombreSerie => $valoresMes) {
+            // Escribir nombre de la serie
+            $sheet->setCellValue($auxColLetra . $auxRow, $nombreSerie);
+
+            // Escribir los 12 valores mensuales
+            for ($m = 1; $m <= 12; $m++) {
+                $colLetra = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($auxColStartIndex + $m);
+                $sheet->setCellValue($colLetra . $auxRow, $valoresMes[$m]);
+            }
+
+            // Construir referencias para el chart
+            $refNombre  = $sheetRef . '$' . $auxColLetra . '$' . $auxRow;
+            $colValIni  = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($auxColStartIndex + 1);
+            $colValFin  = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($auxColStartIndex + 12);
+            $refValores = $sheetRef . '$' . $colValIni . '$' . $auxRow . ':$' . $colValFin . '$' . $auxRow;
+
+            $seriesLabels[] = new DataSeriesValues(
+                DataSeriesValues::DATASERIES_TYPE_STRING,
+                $refNombre,
+                null,
+                1
+            );
+            $seriesValues[] = new DataSeriesValues(
+                DataSeriesValues::DATASERIES_TYPE_NUMBER,
+                $refValores,
+                null,
+                12
+            );
+
+            $auxRow++;
+        }
+
+        // --------------------------------------------
+        // 3) Categorías del eje X: los meses (fila 2 del rango original)
+        // --------------------------------------------
+        $dataSeriesCategories = [
+            new DataSeriesValues(
+                DataSeriesValues::DATASERIES_TYPE_STRING,
+                $sheetRef . '$' . $startMonthLetter . '$2:$' . $endMonthLetter . '$2',
+                null,
+                12
+            ),
+        ];
+
+        // --------------------------------------------
+        // 4) Crear el DataSeries y el Chart
+        // --------------------------------------------
+        $seriesCount = count($seriesValues);
+        if ($seriesCount > 0) {
+            // Si hay más de 2 series, apilado; si no, agrupado
+            $grouping = ($seriesCount > 2) ? DataSeries::GROUPING_STACKED : DataSeries::GROUPING_CLUSTERED;
+
+            $series = new DataSeries(
+                DataSeries::TYPE_BARCHART,
+                $grouping,
+                range(0, $seriesCount - 1),
+                $seriesLabels,
+                $dataSeriesCategories,
+                $seriesValues
+            );
+            $series->setPlotDirection(DataSeries::DIRECTION_COL);
+
+            $plotArea = new PlotArea(null, [$series]);
+            $legend   = new Legend(Legend::POSITION_BOTTOM, null, false);
+
+            $chartTitleText = $tieneActividad
+                ? "Expedientes por Actividad Operativa y mes - $areaNombre"
+                : "Expedientes por Categoría y mes - $areaNombre";
+
+            $chartTitle = new Title($chartTitleText);
+
+            $chart = new Chart(
+                'chart_' . $areaNombre,
+                $chartTitle,
+                $legend,
+                $plotArea
+            );
+            $chart->setTopLeftPosition('Q2');
+            $chart->setBottomRightPosition('AC34');
+            $sheet->addChart($chart);
+        }
         }
         // Hoja de Resumen
         $sheetR = $spreadsheet->createSheet();
@@ -179,6 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
         header('Content-Disposition: attachment; filename="Reporte_CEPLAN_' . $datosCeplan['anio'] . '_' . date('Ymd_His') . '.xlsx"');
         header('Cache-Control: max-age=0');
         $writer = new Xlsx($spreadsheet);
+        $writer->setIncludeCharts(true);   //sin esto, los gráficos se descartan
         $writer->save('php://output');
         exit;
     }
