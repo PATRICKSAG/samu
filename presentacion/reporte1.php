@@ -74,18 +74,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             ]);
             $sheet->getRowDimension(1)->setRowHeight(28);
 
-            // Encabezados (fila 2)
+            // Encabezados (fila 2) - con índice numérico para evitar ++ de letras
             $sheet->setCellValue('A2', 'Categoría');
-            $col = 'B';
+            $colIndex = 2; // B
             foreach ($meses as $m) {
-                $sheet->setCellValue($col . '2', $m);
-                $col = ++$col; // incremento de letra
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet->setCellValue($colLetter . '2', $m);
+                $colIndex++;
             }
-            $sheet->setCellValue($col . '2', 'Total');
+            $lastColIndex = $colIndex;
+            $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex);
+            $sheet->setCellValue($lastColLetter . '2', 'Total');
 
             // Estilo encabezado
-            $lastCol = $col;
-            $sheet->getStyle("A2:{$lastCol}2")->applyFromArray([
+            $sheet->getStyle("A2:{$lastColLetter}2")->applyFromArray([
                 'font' => $headerFont,
                 'fill' => $headerFill,
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
@@ -95,43 +97,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
             $row = 3;
             foreach ($info['categorias'] as $cat) {
                 $sheet->setCellValue('A' . $row, $cat);
-                $col = 'B';
+                $colIndex = 2; // B
                 $totalFila = 0;
                 for ($m = 1; $m <= 12; $m++) {
                     $val = $info['matriz'][$cat][$m] ?? 0;
-                    $sheet->setCellValue($col . $row, $val);
+                    $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                    $sheet->setCellValue($colLetter . $row, $val);
                     $totalFila += $val;
-                    $col = ++$col;
+                    $colIndex++;
                 }
-                $sheet->setCellValue($col . $row, $totalFila);
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet->setCellValue($colLetter . $row, $totalFila);
                 $row++;
             }
 
             // Fila de totales
             $sheet->setCellValue('A' . $row, 'TOTAL');
-            $col = 'B';
+            $colIndex = 2;
             for ($m = 1; $m <= 12; $m++) {
-                $sheet->setCellValue($col . $row, $info['totalesMes'][$m]);
-                $col = ++$col;
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet->setCellValue($colLetter . $row, $info['totalesMes'][$m]);
+                $colIndex++;
             }
-            $sheet->setCellValue($col . $row, $info['totalGeneral']);
-            $sheet->getStyle("A{$row}:{$col}{$row}")->applyFromArray([
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue($colLetter . $row, $info['totalGeneral']);
+            $sheet->getStyle("A{$row}:{$colLetter}{$row}")->applyFromArray([
                 'font' => ['bold' => true],
                 'fill' => $totalFill,
             ]);
             $totalesGenerales[$areaNombre] = $info['totalGeneral'];
 
             // Ajustar ancho de columnas
-            foreach (range('A', $col) as $c) {
-                $sheet->getColumnDimension($c)->setAutoSize(true);
+            for ($i = 1; $i <= $lastColIndex; $i++) {
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
             }
 
             // Bordes
-            $sheet->getStyle("A2:{$col}" . $row)->applyFromArray([
+            $sheet->getStyle("A2:{$colLetter}" . $row)->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
             ]);
         }
-
         // Hoja de Resumen
         $sheetR = $spreadsheet->createSheet();
         $sheetR->setTitle('Resumen');
