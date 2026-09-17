@@ -27,7 +27,7 @@ $provincias = [];
 $distritos = [];
 $equiposDCVS = listarEquiposDCVS($pdo);
 $areas = ['UFREMID', 'UFRESA', 'UFRESBIT'];
-$estadosExpediente = ['EN PROCESO', 'CERRADO', 'ARCHIVADO', 'ENVIADO AL EJECUTOR'];
+$estadosExpediente = ['EN PROCESO', 'CERRADO', 'ARCHIVADO', 'ENVIADO AL EJECUTOR','ENVIADO A FISCALIA','FALTA INFORME TECNICO','TIENE INFORME INICIO PAS','PROCESO CONCLUIDO','OTRO'];
 $eventosPlazos = ['DESCARGO_ACTA', 'DESCARGO_PAS', 'CADUCIDAD_PAS', 'DESCARGO_IFI', 'RECURSO_SANCION', 'CUMPLIMIENTO_CONSENTIDA'];
 $cumplimientos = ['SI', 'NO', 'N.A.'];
 
@@ -40,7 +40,142 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
 
     $reporte = $_POST['reporte'] ?? '';
     $filtros = $_POST['filtros'] ?? [];
+    // Detectar CEPLAN (Excel multi-hoja)
+    if ($reporte === 'ceplan') {
+        $datosCeplan = reporteCEPLAN($pdo, $filtros);
+        require_once __DIR__ . '/../vendor/autoload.php';
 
+        $spreadsheet = new Spreadsheet();
+        // Quitar hoja por defecto
+        $spreadsheet->removeSheetByIndex(0);
+
+        $meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+        // Paleta de estilos
+        $headerFill = ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1B4F8B']];
+        $headerFont = ['bold' => true, 'color' => ['rgb' => 'FFFFFF']];
+        $totalFill  = ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DCE3ED']];
+
+        $totalesGenerales = ['UFREMID' => 0, 'UFRESA' => 0, 'UFRESBIT' => 0];
+
+        foreach (['UFREMID', 'UFRESA', 'UFRESBIT'] as $areaNombre) {
+            $info = $datosCeplan['areas'][$areaNombre] ?? null;
+            if (!$info) continue;
+
+            $sheet = $spreadsheet->createSheet();
+            $sheet->setTitle($areaNombre);
+
+            // Título
+            $sheet->setCellValue('A1', "CEPLAN - Área $areaNombre - Año {$datosCeplan['anio']}");
+            $sheet->mergeCells('A1:N1');
+            $sheet->getStyle('A1')->applyFromArray([
+                'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => '0B2A4A']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(28);
+
+            // Encabezados (fila 2)
+            $sheet->setCellValue('A2', 'Categoría');
+            $col = 'B';
+            foreach ($meses as $m) {
+                $sheet->setCellValue($col . '2', $m);
+                $col = ++$col; // incremento de letra
+            }
+            $sheet->setCellValue($col . '2', 'Total');
+
+            // Estilo encabezado
+            $lastCol = $col;
+            $sheet->getStyle("A2:{$lastCol}2")->applyFromArray([
+                'font' => $headerFont,
+                'fill' => $headerFill,
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+
+            // Datos
+            $row = 3;
+            foreach ($info['categorias'] as $cat) {
+                $sheet->setCellValue('A' . $row, $cat);
+                $col = 'B';
+                $totalFila = 0;
+                for ($m = 1; $m <= 12; $m++) {
+                    $val = $info['matriz'][$cat][$m] ?? 0;
+                    $sheet->setCellValue($col . $row, $val);
+                    $totalFila += $val;
+                    $col = ++$col;
+                }
+                $sheet->setCellValue($col . $row, $totalFila);
+                $row++;
+            }
+
+            // Fila de totales
+            $sheet->setCellValue('A' . $row, 'TOTAL');
+            $col = 'B';
+            for ($m = 1; $m <= 12; $m++) {
+                $sheet->setCellValue($col . $row, $info['totalesMes'][$m]);
+                $col = ++$col;
+            }
+            $sheet->setCellValue($col . $row, $info['totalGeneral']);
+            $sheet->getStyle("A{$row}:{$col}{$row}")->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => $totalFill,
+            ]);
+            $totalesGenerales[$areaNombre] = $info['totalGeneral'];
+
+            // Ajustar ancho de columnas
+            foreach (range('A', $col) as $c) {
+                $sheet->getColumnDimension($c)->setAutoSize(true);
+            }
+
+            // Bordes
+            $sheet->getStyle("A2:{$col}" . $row)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+        }
+
+        // Hoja de Resumen
+        $sheetR = $spreadsheet->createSheet();
+        $sheetR->setTitle('Resumen');
+        $sheetR->setCellValue('A1', "Resumen CEPLAN - Año {$datosCeplan['anio']}");
+        $sheetR->mergeCells('A1:D1');
+        $sheetR->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => '0B2A4A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+        $sheetR->setCellValue('A2', 'Área');
+        $sheetR->setCellValue('B2', 'Total Expedientes');
+        $sheetR->getStyle('A2:B2')->applyFromArray([
+            'font' => $headerFont,
+            'fill' => $headerFill,
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+        $r = 3;
+        $granTotal = 0;
+        foreach ($totalesGenerales as $area => $total) {
+            $sheetR->setCellValue('A' . $r, $area);
+            $sheetR->setCellValue('B' . $r, $total);
+            $granTotal += $total;
+            $r++;
+        }
+        $sheetR->setCellValue('A' . $r, 'TOTAL GENERAL');
+        $sheetR->setCellValue('B' . $r, $granTotal);
+        $sheetR->getStyle("A{$r}:B{$r}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => $totalFill,
+        ]);
+        $sheetR->getColumnDimension('A')->setAutoSize(true);
+        $sheetR->getColumnDimension('B')->setAutoSize(true);
+        $sheetR->getStyle("A2:B{$r}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ]);
+
+        // Enviar Excel
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="Reporte_CEPLAN_' . $datosCeplan['anio'] . '_' . date('Ymd_His') . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
     try {
         $data = [];
         $titulo = '';
@@ -82,6 +217,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exportar'])) {
                 $data = reporteFasesCompleto($pdo, $filtros);
                 $titulo = 'Reporte_Fases_FI_FS';
                 break;
+            case 'ceplan':
+                // Este caso ya fue manejado antes, no debería llegar aquí
+                throw new Exception('Reporte CEPLAN ya fue procesado.');
             default:
                 throw new Exception('Reporte no válido');
         }
@@ -376,6 +514,9 @@ $mensajeError = $_GET['error'] ?? '';
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="tab-fases" data-bs-toggle="tab" data-bs-target="#fases" type="button" role="tab">Fases (FI/FS)</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-ceplan" data-bs-toggle="tab" data-bs-target="#ceplan" type="button" role="tab">CEPLAN</button>
                         </li>
                     </ul>
 
@@ -737,6 +878,33 @@ $mensajeError = $_GET['error'] ?? '';
                                 </div>
                                 <button type="submit" name="exportar" class="btn btn-primary-custom">
                                     <i class="fas fa-file-excel me-2"></i> Exportar a Excel
+                                </button>
+                            </form>
+                        </div>
+                        <!-- REPORTE CEPLAN -->
+                        <div class="tab-pane fade" id="ceplan" role="tabpanel">
+                            <p class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Conteo de expedientes por categoría y por mes (Enero-Diciembre). Genera un Excel con una hoja por área (UFREMID, UFRESA, UFRESBIT) y una hoja de Resumen.
+                            </p>
+                            <form method="POST" action="">
+                                <input type="hidden" name="reporte" value="ceplan">
+                                <div class="filtro-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Año</label>
+                                            <select name="filtros[anio]" class="form-select form-control-modern">
+                                                <?php
+                                                $anioActual = (int)date('Y');
+                                                for ($a = $anioActual; $a >= $anioActual - 5; $a--): ?>
+                                                    <option value="<?= $a ?>" <?= $a === $anioActual ? 'selected' : '' ?>><?= $a ?></option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" name="exportar" class="btn btn-primary-custom">
+                                    <i class="fas fa-file-excel me-2"></i> Exportar a Excel (Multi-hoja)
                                 </button>
                             </form>
                         </div>

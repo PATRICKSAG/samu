@@ -613,3 +613,98 @@ function reporteFasesCompleto(PDO $pdo, $filtros = [])
     $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+/**
+ * Reporte CEPLAN: conteo de expedientes por categoría y mes para cada área.
+ * Retorna datos listos para armar el Excel multi-hoja.
+ */
+function reporteCEPLAN(PDO $pdo, $filtros = [])
+{
+    $anio = isset($filtros['anio']) && $filtros['anio'] !== '' ? (int)$filtros['anio'] : (int)date('Y');
+
+    $areas = [
+        'UFREMID'  => [
+            'sql' => "SELECT 
+                        te.nombre + ' - ' + te.descripcion AS categoria,
+                        MONTH(e.fechaInspeccion) AS mes,
+                        COUNT(e.idExpediente) AS total
+                      FROM expediente e WITH(NOLOCK)
+                      INNER JOIN tipoExpediente te WITH(NOLOCK) ON e.idTipoExpediente = te.idTipoExpediente
+                      WHERE e.areaOrigen = 'UFREMID'
+                        AND YEAR(e.fechaInspeccion) = ?
+                      GROUP BY te.nombre, te.descripcion, MONTH(e.fechaInspeccion)
+                      ORDER BY te.nombre, te.descripcion"
+        ],
+        'UFRESA'   => [
+            'sql' => "SELECT 
+                        CAT.nombre AS categoria,
+                        MONTH(e.fechaInspeccion) AS mes,
+                        COUNT(e.idExpediente) AS total
+                      FROM expediente e WITH(NOLOCK)
+                      INNER JOIN sede S WITH(NOLOCK) ON e.idSede = S.idSede
+                      INNER JOIN categoria CAT WITH(NOLOCK) ON S.idCategoria = CAT.idCategoria
+                      WHERE e.areaOrigen = 'UFRESA'
+                        AND YEAR(e.fechaInspeccion) = ?
+                      GROUP BY CAT.nombre, MONTH(e.fechaInspeccion)
+                      ORDER BY CAT.nombre"
+        ],
+        'UFRESBIT' => [
+            'sql' => "SELECT 
+                        CAT.nombre AS categoria,
+                        MONTH(e.fechaInspeccion) AS mes,
+                        COUNT(e.idExpediente) AS total
+                      FROM expediente e WITH(NOLOCK)
+                      INNER JOIN sede S WITH(NOLOCK) ON e.idSede = S.idSede
+                      INNER JOIN clasificacionRenipress CAT WITH(NOLOCK) ON S.idClasificacionRenipress = CAT.idClasificacionRenipress
+                      WHERE e.areaOrigen = 'UFRESBIT'
+                        AND YEAR(e.fechaInspeccion) = ?
+                      GROUP BY CAT.nombre, MONTH(e.fechaInspeccion)
+                      ORDER BY CAT.nombre"
+        ],
+    ];
+
+    $resultado = [
+        'anio' => $anio,
+        'areas' => [],
+    ];
+
+    foreach ($areas as $areaNombre => $info) {
+        $stmt = $pdo->prepare($info['sql']);
+        $stmt->execute([$anio]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Recolectar categorías únicas y matriz
+        $categorias = [];
+        $matriz = [];
+        $totalesMes = array_fill(1, 12, 0);
+        $totalGeneral = 0;
+
+        foreach ($rows as $row) {
+            $cat = $row['categoria'] ?: 'SIN CATEGORÍA';
+            $mes = (int)$row['mes'];
+            $total = (int)$row['total'];
+
+            if (!in_array($cat, $categorias)) {
+                $categorias[] = $cat;
+                if (!isset($matriz[$cat])) {
+                    $matriz[$cat] = array_fill(1, 12, 0);
+                }
+            }
+            $matriz[$cat][$mes] += $total;
+            $totalesMes[$mes] += $total;
+            $totalGeneral += $total;
+        }
+
+        // Ordenar categorías alfabéticamente
+        sort($categorias);
+
+        $resultado['areas'][$areaNombre] = [
+            'categorias' => $categorias,
+            'matriz' => $matriz,
+            'totalesMes' => $totalesMes,
+            'totalGeneral' => $totalGeneral,
+        ];
+    }
+
+    return $resultado;
+}
