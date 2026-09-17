@@ -440,9 +440,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                             Iniciar sesión
                         </button>
                     </form>
+                    <hr class="my-4" style="border-color: #dde3ee;">
 
+                    <div class="d-grid gap-2">
+                        <a href="dashboard_publico.php" class="btn btn-outline-primary" style="border-radius: 10px; padding: 10px; font-weight: 600; color: #123a63; border-color: #123a63;">
+                            <i class="fas fa-chart-line me-2"></i>Ver Dashboard Público
+                        </a>
+                        <a href="denuncias_publico.php" class="btn btn-outline-danger" style="border-radius: 10px; padding: 10px; font-weight: 600; color: #8a2332; border-color: #8a2332;">
+                            <i class="fas fa-bullhorn me-2"></i>Registrar Denuncia
+                        </a>
+                    </div>
                     <div class="form-footnote">
-                        ¿Problemas para acceder? <a href="mailto:soporte@sgrs.gob.pe">Contacta al administrador del sistema</a>
+                        ¿Problemas para acceder? <a href="mailto:regulacion_sectorial@diresalalibertad.gob.pe">Contacta al administrador del sistema</a>
                     </div>
                 </div>
             </div>
