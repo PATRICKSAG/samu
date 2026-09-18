@@ -359,6 +359,11 @@
                                 <option value="CERRADO" <?php echo ($estadoExpediente == 'CERRADO') ? 'selected' : '' ?>>CERRADO</option>
                                 <option value="ARCHIVADO" <?php echo ($estadoExpediente == 'ARCHIVADO') ? 'selected' : '' ?>>ARCHIVADO</option>
                                 <option value="ENVIADO AL EJECUTOR" <?php echo ($estadoExpediente == 'ENVIADO AL EJECUTOR') ? 'selected' : '' ?>>ENVIADO AL EJECUTOR</option>
+                                <option value="ENVIADO A FISCALIA" <?php echo ($estadoExpediente == 'ENVIADO A FISCALIA') ? 'selected' : '' ?>>ENVIADO A FISCALIA</option>
+                                <option value="FALTA INFORME TECNICO" <?php echo ($estadoExpediente == 'FALTA INFORME TECNICO') ? 'selected' : '' ?>>FALTA INFORME TECNICO</option>
+                                <option value="TIENE INFORME INICIO PAS" <?php echo ($estadoExpediente == 'TIENE INFORME INICIO PAS') ? 'selected' : '' ?>>TIENE INFORME INICIO PAS</option>
+                                <option value="PROCESO CONCLUIDO" <?php echo ($estadoExpediente == 'PROCESO CONCLUIDO') ? 'selected' : '' ?>>PROCESO CONCLUIDO</option>
+                                <option value="EN APELACION" <?php echo ($estadoExpediente == 'EN APELACION') ? 'selected' : '' ?>>EN APELACION</option>
                                 <option value="OTRO" <?php echo ($estadoExpediente == 'OTRO') ? 'selected' : '' ?>>OTRO</option>
                             </select>
                         </div>

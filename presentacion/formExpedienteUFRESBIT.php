@@ -333,11 +333,16 @@ $opcionesSiNoNa = ['SI', 'NO', 'NO APLICA'];
                             <label for="estadoExpediente" class="form-label"><i class="fas fa-info-circle me-1"></i>Estado del Expediente <span class="text-danger">*</span></label>
                             <select name="estadoExpediente" id="estadoExpediente" class="form-select" required>
                                 <option value="">Seleccionar</option>
-                                <option value="EN PROCESO" <?= ($estadoExpediente == 'EN PROCESO') ? 'selected' : '' ?>>EN PROCESO</option>
-                                <option value="CERRADO" <?= ($estadoExpediente == 'CERRADO') ? 'selected' : '' ?>>CERRADO</option>
-                                <option value="ARCHIVADO" <?= ($estadoExpediente == 'ARCHIVADO') ? 'selected' : '' ?>>ARCHIVADO</option>
-                                <option value="ENVIADO AL EJECUTOR" <?= ($estadoExpediente == 'ENVIADO AL EJECUTOR') ? 'selected' : '' ?>>ENVIADO AL EJECUTOR</option>
-                                <option value="OTRO" <?= ($estadoExpediente == 'OTRO') ? 'selected' : '' ?>>OTRO</option>
+                                <option value="EN PROCESO" <?php echo ($estadoExpediente == 'EN PROCESO') ? 'selected' : '' ?>>EN PROCESO</option>
+                                <option value="CERRADO" <?php echo ($estadoExpediente == 'CERRADO') ? 'selected' : '' ?>>CERRADO</option>
+                                <option value="ARCHIVADO" <?php echo ($estadoExpediente == 'ARCHIVADO') ? 'selected' : '' ?>>ARCHIVADO</option>
+                                <option value="ENVIADO AL EJECUTOR" <?php echo ($estadoExpediente == 'ENVIADO AL EJECUTOR') ? 'selected' : '' ?>>ENVIADO AL EJECUTOR</option>
+                                <option value="ENVIADO A FISCALIA" <?php echo ($estadoExpediente == 'ENVIADO A FISCALIA') ? 'selected' : '' ?>>ENVIADO A FISCALIA</option>
+                                <option value="FALTA INFORME TECNICO" <?php echo ($estadoExpediente == 'FALTA INFORME TECNICO') ? 'selected' : '' ?>>FALTA INFORME TECNICO</option>
+                                <option value="TIENE INFORME INICIO PAS" <?php echo ($estadoExpediente == 'TIENE INFORME INICIO PAS') ? 'selected' : '' ?>>TIENE INFORME INICIO PAS</option>
+                                <option value="PROCESO CONCLUIDO" <?php echo ($estadoExpediente == 'PROCESO CONCLUIDO') ? 'selected' : '' ?>>PROCESO CONCLUIDO</option>
+                                <option value="EN APELACION" <?php echo ($estadoExpediente == 'EN APELACION') ? 'selected' : '' ?>>EN APELACION</option>
+                                <option value="OTRO" <?php echo ($estadoExpediente == 'OTRO') ? 'selected' : '' ?>>OTRO</option>
                             </select>
                         </div>
                         <div class="col-md-4" id="divOtroEstado" style="<?= ($estadoExpediente == 'OTRO') ? '' : 'display:none;' ?>">

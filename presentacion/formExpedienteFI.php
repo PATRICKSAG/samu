@@ -39,6 +39,21 @@ $mensajeError = '';
 $accion       = $_GET['accion'] ?? '';
 $idFI         = isset($_GET['idFI']) ? intval($_GET['idFI']) : 0;
 
+/* ============================================================
+   ELIMINAR REGISTRO FI (GET)  — va ANTES del POST y del editar
+   ============================================================ */
+if ($accion === 'eliminar' && $idFI) {
+    try {
+        eliminarExpedienteFI($pdo, $idFI);
+        $mensaje = "Registro FI eliminado correctamente.";
+        header("Location: formExpedienteFI.php?idExpediente=$idExpediente&area="
+             . urlencode($area) . "&mensaje=" . urlencode($mensaje));
+        exit;
+    } catch (Throwable $e) {
+        $mensajeError = "Error al eliminar: " . $e->getMessage();
+    }
+}
+
 // Si es edición, cargar datos
 $datosEdicion = null;
 if ($accion === 'editar' && $idFI) {
@@ -140,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnGuardarFI'])) {
             $mensajeError = implode("<br>", $errores);
         }
     }
+
 }
 
 // Obtener listado de FI
@@ -637,7 +653,12 @@ if (isset($_GET['mensaje'])) {
                                         <a href="formExpedienteFS.php?idFI=<?php echo (int) $fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>" class="btn btn-sm btn-success accion-boton" title="Fase Sancionadora">
                                             <i class="fas fa-balance-scale"></i> FS
                                         </a>
-                                        <!-- No hay botón eliminar (solo historial) -->
+                                        <a href="?idExpediente=<?php echo $idExpediente ?>&accion=eliminar&idFI=<?php echo $fi['idExpedienteFI'] ?>&area=<?php echo urlencode($area) ?>"
+                                        class="btn btn-sm btn-danger accion-boton"
+                                        title="Eliminar"
+                                        onclick="return confirm('¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

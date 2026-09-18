@@ -672,6 +672,33 @@ function actualizarExpedienteFI(PDO $pdo, $idExpedienteFI, array $data, $area = 
         throw $e;
     }
 }
+function eliminarExpedienteFI(PDO $pdo, $idExpedienteFI)
+{
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Eliminar registros dependientes de expediente_fs
+        $sql = "DELETE FROM expediente_fs WHERE idExpedienteFI = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpedienteFI]);
+
+        // 2. Eliminar plazos asociados
+        $sql = "DELETE FROM expediente_plazos WHERE idExpedienteFI = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpedienteFI]);
+
+        // 3. Eliminar el registro principal de FI
+        $sql = "DELETE FROM expediente_fi WHERE idExpedienteFI = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$idExpedienteFI]);
+
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
 function obtenerOCrearFS(PDO $pdo, $idExpedienteFI)
 {
     $sql = "SELECT * FROM expediente_fs WHERE idExpedienteFI = ?";
